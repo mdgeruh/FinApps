@@ -112,34 +112,16 @@
     }
   }
 
-  // ---------- Tab Profil (gear -> Profil): nama pemilik, tema, kesehatan data, akun sinkron ----------
+  // ---------- Tab Profil (icon user di header): nama pemilik untuk sapaan di Ringkasan ----------
   function renderProfilTab() {
     const el = $('profil-name-input');
     if (el) el.value = getOwnerName();
 
-    const themeBtn = $('profil-theme-btn');
-    if (themeBtn) themeBtn.textContent = THEME_LABELS[currentThemeMode()] || THEME_LABELS.system;
-
-    const backupEl = $('profil-last-backup');
-    if (backupEl && typeof lastExportSummary === 'function') backupEl.textContent = lastExportSummary();
-
-    const configured = typeof syncConfigured === 'function' && syncConfigured();
     const active = !!(typeof sync !== 'undefined' && sync.ready);
-    const statusEl = $('profil-sync-status');
-    if (statusEl) {
-      statusEl.textContent = configured
-        ? (SYNC_STATUS_TEXT[sync.status] || '')
-        : 'Mode lokal (sinkron cloud tidak diaktifkan di app ini)';
-    }
-
-    const unavailEl = $('profil-sync-unavailable');
     const noneEl = $('profil-sync-none');
     const sectionEl = $('profil-sync-section');
-    const dangerEl = $('profil-danger-block');
-    if (unavailEl) unavailEl.style.display = configured ? 'none' : 'block';
-    if (noneEl) noneEl.style.display = (configured && !active) ? 'block' : 'none';
+    if (noneEl) noneEl.style.display = active ? 'none' : 'block';
     if (sectionEl) sectionEl.style.display = active ? 'block' : 'none';
-    if (dangerEl) dangerEl.style.display = active ? 'block' : 'none';
     if (active) {
       const emailEl = $('profil-current-email');
       if (emailEl) emailEl.textContent = sync.email || '-';
@@ -179,10 +161,6 @@
     if (dirtyTabs.has(name)) renderTabContent(name);
   }
 
-  function toggleSettingsMenu() {
-    $('settings-menu').classList.toggle('open');
-  }
-
   const THEME_KEY = 'kp_theme';
   const THEME_LABELS = { system: 'Tampilan: Sistem', light: 'Tampilan: Terang', dark: 'Tampilan: Gelap' };
 
@@ -192,43 +170,24 @@
     } else {
       document.documentElement.removeAttribute('data-theme');
     }
-    const label = THEME_LABELS[mode] || THEME_LABELS.system;
     const btn = $('theme-toggle-btn');
-    if (btn) btn.textContent = label;
-    // Tombol tema juga ada di tab Profil (selain menu gear) -- keduanya disamakan di sini.
-    const profilBtn = $('profil-theme-btn');
-    if (profilBtn) profilBtn.textContent = label;
-  }
-
-  function currentThemeMode() {
-    let saved = 'system';
-    try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
-    return saved;
+    if (btn) btn.textContent = THEME_LABELS[mode] || THEME_LABELS.system;
   }
 
   function cycleTheme() {
     const order = ['system', 'light', 'dark'];
-    const next = order[(order.indexOf(currentThemeMode()) + 1) % order.length];
+    let current = 'system';
+    try { current = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
+    const next = order[(order.indexOf(current) + 1) % order.length];
     try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
     applyTheme(next);
   }
 
   (function initTheme() {
-    applyTheme(currentThemeMode());
+    let saved = 'system';
+    try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
+    applyTheme(saved);
   })();
-
-  function goToSettingsTab(name) {
-    $('settings-menu').classList.remove('open');
-    setTab(name);
-  }
-
-  document.addEventListener('click', (e) => {
-    const wrap = document.querySelector('.settings-menu-wrap');
-    const menu = $('settings-menu');
-    if (menu && menu.classList.contains('open') && wrap && !wrap.contains(e.target)) {
-      menu.classList.remove('open');
-    }
-  });
 
   // Tombol + di navigasi mengikuti tab aktif: Akun -> tambah akun, Titipan -> catat titipan,
   // tab lain -> tambah transaksi.

@@ -58,12 +58,6 @@
       b.addEventListener('click', () => location.reload());
       el.appendChild(b);
     }
-    // Tab Profil punya ringkasan status yang sama (lihat renderProfilTab di 02-navigasi.js) --
-    // elemen ini selalu ada di DOM (tab-panel cuma disembunyikan lewat CSS, bukan dibongkar),
-    // jadi cukup diperbarui langsung di sini tiap kali status berubah, tanpa perlu tahu tab
-    // mana yang lagi aktif.
-    const pEl = document.getElementById('profil-sync-status');
-    if (pEl) pEl.textContent = SYNC_STATUS_TEXT[s] || '';
   }
 
   // ---------- Overlay: login & pilihan saat data bentrok ----------
@@ -158,7 +152,7 @@
     }
   }
 
-  // opts.fromMenu: dibuka dari menu gear (bukan saat app dibuka), jadi tombol bawah berarti "Batal".
+  // opts.fromMenu: dibuka dari tab Profil (bukan saat app dibuka), jadi tombol bawah berarti "Batal".
   function syncShowLogin(opts) {
     const fromMenu = !!(opts && opts.fromMenu);
     return new Promise((resolve) => {
@@ -538,8 +532,6 @@
     b.textContent = 'Keluar (' + sync.email + ')';
   }
   async function syncLogout() {
-    const menu = document.getElementById('settings-menu');
-    if (menu) menu.classList.remove('open');
     const m = syncReadMeta();
     if (m && m.dirty) {
       clearTimeout(sync.timer);
@@ -560,9 +552,6 @@
     const input = document.getElementById('profil-email-input');
     const email = input ? input.value.trim() : '';
     if (!email) { showIoMsg('Isi email baru dulu.', 'error', 'profil-sync-msg'); return; }
-    if (email.toLowerCase() === (sync.email || '').toLowerCase()) { showIoMsg('Email itu sama dengan email sekarang.', 'error', 'profil-sync-msg'); return; }
-    const ok = await showConfirm('Ubah email akun jadi ' + email + '?\nLink konfirmasi dikirim ke email lama & baru; email baru baru aktif setelah link itu dibuka.');
-    if (!ok) return;
     try {
       const { error } = await syncTimeout(sync.client.auth.updateUser({ email }), 15000);
       if (error) { showIoMsg('Gagal ubah email: ' + error.message, 'error', 'profil-sync-msg'); return; }
@@ -578,8 +567,6 @@
     const input = document.getElementById('profil-pass-input');
     const pass = input ? input.value : '';
     if (!pass || pass.length < 6) { showIoMsg('Password minimal 6 karakter.', 'error', 'profil-sync-msg'); return; }
-    const ok = await showConfirm('Ubah password akun sinkron sekarang?');
-    if (!ok) return;
     try {
       const { error } = await syncTimeout(sync.client.auth.updateUser({ password: pass }), 15000);
       if (error) { showIoMsg('Gagal ubah password: ' + error.message, 'error', 'profil-sync-msg'); return; }
@@ -590,31 +577,7 @@
     }
   }
 
-  // ---------- Zona bahaya (tab Profil): hapus seluruh data akun cloud ini ----------
-  // TIDAK menghapus akun Supabase Auth-nya sendiri (email/password tetap bisa dipakai login) --
-  // itu butuh Edge Function tersendiri dengan service_role key, sengaja tidak ditaruh di app
-  // client ini. Yang dihapus di sini cuma ISI datanya: baris di tabel app_data (cloud) dan
-  // salinan localStorage perangkat ini, supaya kalau nanti login lagi datanya benar-benar kosong.
-  async function syncDeleteCloudData() {
-    if (!sync.ready) return;
-    const ok = await showConfirm('Ini akan MENGHAPUS SEMUA akun & transaksi di akun cloud ini (perangkat manapun yang sinkron ke akun ini akan ikut kosong). Akun login-nya sendiri tidak terhapus -- kamu tetap bisa masuk lagi, tapi datanya sudah kosong.\n\nBackup otomatis akan dibuat dulu ke file JSON. Lanjutkan?');
-    if (!ok) return;
-    const ok2 = await showConfirm('Yakin? Ini tidak bisa dibatalkan kecuali dari file backup.');
-    if (!ok2) return;
-    await autoBackupBeforeReset(loadData());
-    try {
-      const { error } = await syncTimeout(sync.client.from(SYNC_TABLE).delete().eq('user_id', sync.uid), 15000);
-      if (error) { showIoMsg('Gagal menghapus data cloud: ' + error.message, 'error', 'profil-sync-msg'); return; }
-    } catch (e) {
-      showIoMsg('Tidak bisa terhubung. Coba lagi.', 'error', 'profil-sync-msg');
-      return;
-    }
-    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SEED_DEMO_KEY); localStorage.removeItem(SYNC_META_KEY); } catch (e) { /* tidak kritis */ }
-    try { await sync.client.auth.signOut(); } catch (e) { /* tetap lanjut */ }
-    location.reload();
-  }
-
-  // ---------- Menu gear: tampilkan "Masuk" kalau belum login, "Keluar" kalau sudah ----------
+  // ---------- Tab Profil: tampilkan "Masuk" kalau belum login, "Keluar" kalau sudah ----------
   function syncUpdateMenu() {
     const loginBtn = document.getElementById('sync-menu-login-btn');
     const logoutBtn = document.getElementById('sync-logout-btn');
@@ -663,7 +626,7 @@
     syncWriteMeta({ uid: newUid, version: 0, dirty: false });
   }
 
-  // Dipakai bersama oleh syncBoot() dan login dari menu gear: aktifkan sinkron untuk sesi ini,
+  // Dipakai bersama oleh syncBoot() dan login dari tab Profil: aktifkan sinkron untuk sesi ini,
   // lalu samakan data lokal dengan cloud. Mengembalikan true kalau data lokal diganti data cloud.
   async function syncStartSession(session) {
     await syncGuardAccountSwitch(session.user.id);
@@ -690,10 +653,8 @@
     return replaced;
   }
 
-  // Dipanggil dari menu gear saat belum login (misalnya tadi memilih "Pakai mode lokal dulu").
+  // Dipanggil dari tab Profil saat belum login (misalnya tadi memilih "Pakai mode lokal dulu").
   async function syncLoginFromMenu() {
-    const menu = document.getElementById('settings-menu');
-    if (menu) menu.classList.remove('open');
     if (sync.ready || sync.loginBusy || !syncConfigured()) return;
     if (!syncInitClient()) {
       await syncAsk('Belum bisa masuk', 'Pustaka sinkron belum termuat. Periksa koneksi internet, lalu muat ulang halaman.', ['Tutup']);

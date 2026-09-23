@@ -4,17 +4,12 @@ Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor vers
 
 ## v1.1.031 — 23 Sep 2026
 
-**Ditambah**
-- **Tab Profil dirombak jadi hub akun & preferensi pribadi** (`index.html`, `02-navigasi.js`, `13-import-export.js`, `14-sync.js`):
-  - **Tampilan (tema)** kini juga punya tombol di Profil (`profil-theme-btn`), selain di menu gear — `applyTheme()` menyamakan label keduanya
-  - **Kesehatan data**: bagian baru menampilkan status sinkron (`profil-sync-status`, disamakan `syncSetStatus()`) dan kapan terakhir export JSON (`profil-last-backup`, fungsi baru `lastExportSummary()`), plus tombol **Backup sekarang** (`profilBackupNow()` -> `exportJson()`) tanpa perlu pindah ke tab Data
-  - **Belum login**: kalau sinkron cloud tidak dikonfigurasi (`SUPABASE_URL`/`SUPABASE_ANON_KEY` kosong), Profil sekarang bilang begitu langsung (`profil-sync-unavailable`) bukannya tetap menyuruh login; kalau dikonfigurasi tapi belum login, ada tombol **Masuk untuk sinkron** langsung di Profil (`syncLoginFromMenu()`), tidak cuma di menu gear
-  - **Sudah login**: tombol **Keluar dari akun sinkron** kini juga ada di Profil (sebelumnya cuma di menu gear)
-  - **Zona bahaya**: tombol baru **Hapus semua data akun ini** (`syncDeleteCloudData()`, 2x konfirmasi) — menghapus baris data di cloud (tabel `app_data`) dan salinan localStorage perangkat ini, dengan backup otomatis ke JSON dulu. Akun login (email/password) sendiri **tidak** ikut terhapus (butuh Edge Function + `service_role` key yang sengaja tidak ditaruh di app client ini) — dicatat jelas di keterangan tombol
+**Diubah**
+- **Icon gear diganti icon user, langsung buka tab Profil (`index.html`, `02-navigasi.js`):** tombol di pojok kanan atas sebelumnya membuka dropdown menu (Profil / Tampilan / Sinkron) lewat `toggleSettingsMenu()`. Sekarang icon-nya jadi siluet orang dan klik langsung `setTab('profil')` — satu langkah, bukan dua. Dropdown `.settings-menu` beserta CSS-nya, `toggleSettingsMenu()`, `goToSettingsTab()`, dan listener klik-di-luar untuk menutup menu semuanya dihapus karena sudah tidak dipakai
+- **Toggle Tampilan (gelap/terang) dan tombol Masuk/Keluar sinkron dipindah ke tab Profil** (`index.html`) — sebelumnya ada di dropdown menu gear yang sekarang dihapus, jadi semua pengaturan "tentang saya & tampilan" sekarang ngumpul di satu tab. Elemen (`theme-toggle-btn`, `sync-menu-login-btn`, `sync-logout-btn`) tetap id yang sama, cuma pindah lokasi di halaman, jadi kode `02-navigasi.js`/`14-sync.js` yang menunjuknya tidak perlu berubah
 
 **Diperbaiki**
-- **Ganti email**: `syncChangeEmail()` sekarang menolak kalau email baru sama persis dengan email sekarang, dan minta konfirmasi (`showConfirm`) sebelum mengirim permintaan ke Supabase
-- **Ganti password**: `syncChangePassword()` juga minta konfirmasi sebelum submit — sebelumnya dua aksi sensitif ini langsung jalan begitu tombol diklik, tanpa dialog konfirmasi seperti pola yang sudah dipakai di form transaksi
+- **Duplikasi kode parsing akun & transaksi import dipangkas** (`13-import-export.js`): `importJson()` (gabung ke data yang ada) dan `resetAndImport()` (ganti semua data) sebelumnya masing-masing punya ~70 baris logic yang identik untuk menyalin field akun (limit, biaya admin, bunga pinjaman, cicilan PayLater, dst.) dan ~15 baris untuk membentuk objek transaksi. Sekarang dipusatkan jadi dua fungsi bersama, `buildAccountFromImport(a, newId)` dan `buildTxnFromImport(t, idMap, fallbackAccId)`, dipakai oleh keduanya — total baris berkurang ±150, dan field baru ke depannya cukup ditambah sekali, tidak berisiko lupa di salah satu jalur import
 
 ## v1.1.030 — 23 Sep 2026
 
