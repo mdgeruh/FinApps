@@ -2,6 +2,16 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.030 — 23 Sep 2026
+
+**Ditambah**
+- **Nama file export/backup sekarang berprefix identitas user** (`13-import-export.js`, fungsi baru `exportUserPrefix()`): dipakai di ekspor JSON, ekspor CSV, dan backup otomatis sebelum reset/timpa data (`autoBackupBeforeReset`). Prioritas sumber prefix: bagian sebelum `@` dari email akun cloud kalau sedang login, kalau tidak pakai nama pemilik dari tab Profil, terakhir `'user'` kalau keduanya kosong. Nama disaring jadi slug huruf kecil + angka (aksen dilepas, karakter lain jadi `-`), misal `keuangan-budi-2026-09-23.json`. Berguna terutama sejak device bisa dipakai gantian beberapa akun (lihat perbaikan `syncGuardAccountSwitch` di v1.1.029) — file-file backup dari akun berbeda jadi mudah dibedakan tanpa perlu buka isinya dulu
+
+## v1.1.029 — 23 Sep 2026
+
+**Diperbaiki**
+- **Data bisa "kebawa" antar akun cloud di device yang sama (bug penting):** localStorage (`STORAGE_KEY`) cuma satu untuk seluruh device, tidak dibedakan per akun. Kalau device ini pernah sinkron dengan akun cloud A lalu ada yang Keluar dan Masuk/Daftar dengan akun B (ganti user, pinjam HP, dst) tanpa localStorage sempat dibersihkan, `syncReconcile()` di `14-sync.js` mengira sisa data akun A itu "data di perangkat ini" milik akun B: ditawarkan sebagai pilihan yang bisa keliru dipilih, atau — kalau cloud akun B masih kosong — otomatis ikut terkirim jadi isi awal akun B. Sekarang ditambahkan `syncGuardAccountSwitch()`, dipanggil di awal `syncStartSession()` sebelum `syncReconcile()` menyentuh localStorage sama sekali: kalau `uid` di metadata sinkron device (`kp_sync_meta`) beda dari `uid` akun yang baru login, data lokal lama itu dibackup dulu ke file JSON (`autoBackupBeforeReset`), lalu `STORAGE_KEY` & `kp_seed_demo` dihapus dan metanya direset ke `{uid: akun-baru, version: 0}` sebelum lanjut — jadi device diperlakukan seolah baru pertama kali dipakai akun tersebut (tarik bersih dari cloud, atau mulai kosong kalau cloud-nya juga kosong). Alur migrasi normal "coba mode lokal dulu → baru Daftar" tidak berubah, karena di situ `meta.uid` memang masih kosong (belum pernah sync sama sekali)
+
 ## v1.1.028 — 23 Sep 2026
 
 **Diperbaiki**
