@@ -17,6 +17,11 @@
    */
   const STORAGE_KEY = 'keuangan-app-data-v2';
   const OLD_STORAGE_KEY = 'keuangan-harian-txns';
+  // '1' kalau isi STORAGE_KEY sekarang persis data contoh bawaan (defaultData()), belum pernah
+  // diubah sama sekali oleh user. Dipakai saat sinkron pertama ke akun cloud yang baru dibuat
+  // (lihat syncReconcile di 14-sync.js) supaya data contoh itu tidak ikut dikirim jadi "isi awal"
+  // akun baru tersebut. Dihapus otomatis oleh saveData() begitu ada perubahan sungguhan.
+  const SEED_DEMO_KEY = 'kp_seed_demo';
   // Virtualisasi ringan daftar transaksi: daripada bangun SEMUA baris transaksi yang lolos filter
   // (bisa ribuan kalau jurnal sudah lama jalan), render() hanya menggambar TXN_PAGE_SIZE transaksi
   // dulu lalu ada tombol "Muat lebih banyak" (lihat loadMoreTxns() di 12-render-utama.js).
@@ -132,6 +137,14 @@
     };
   }
 
+  // Data benar-benar kosong: satu akun Kas bawaan (supaya form transaksi tetap punya akun untuk
+  // dipilih), tanpa transaksi contoh. Dipakai untuk akun cloud yang baru pertama kali dipakai
+  // (lihat loadData() & syncReconcile di 14-sync.js) -- beda dengan defaultData() yang isinya
+  // transaksi contoh untuk pengalaman awal mode lokal (belum masuk akun sama sekali).
+  function emptyData() {
+    return { accounts: [{ id: 'kas-default', name: 'Kas / Dompet', type: 'kas', initialBalance: 0 }], txns: [] };
+  }
+
   const CORRUPT_BACKUP_KEY = 'keuangan-app-data-v2-corrupt';
   // Data di localStorage ada tapi tidak bisa dibaca (JSON rusak / bentuk salah): jangan ditimpa data contoh.
   // Salinan mentahnya disimpan di key terpisah dan pengguna diberi peringatan. Data contoh yang dikembalikan
@@ -184,13 +197,24 @@
       }
     } catch (e) { console.error('migration failed', e); }
 
-    const seed = defaultData();
-    saveData(seed);
+    // Belum ada data sama sekali di perangkat ini. Kalau saat ini sedang masuk ke akun cloud
+    // (sync.ready), akun cloud itu jelas baru pertama kali dipakai -> mulai dari benar-benar
+    // kosong, BUKAN data contoh (biar akun baru tidak muncul seolah sudah ada transaksi).
+    // Data contoh cuma untuk pengalaman awal mode lokal (belum pernah masuk akun sama sekali).
+    const startingFresh = (typeof sync !== 'undefined' && sync.ready);
+    const seed = startingFresh ? emptyData() : defaultData();
+    saveData(seed);                                    // saveData() menghapus SEED_DEMO_KEY, jadi ditandai lagi setelahnya
+    if (!startingFresh) { try { localStorage.setItem(SEED_DEMO_KEY, '1'); } catch (e) { /* tidak kritis */ } }
     return seed;
   }
 
   function saveData(data) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); if (typeof syncAfterSave === 'function') syncAfterSave(); return true; }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      try { localStorage.removeItem(SEED_DEMO_KEY); } catch (e) { /* tidak kritis */ }
+      if (typeof syncAfterSave === 'function') syncAfterSave();
+      return true;
+    }
     catch (e) {
       console.error('save failed', e);
       showSaveError();

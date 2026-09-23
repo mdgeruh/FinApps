@@ -2,6 +2,25 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.028 — 23 Sep 2026
+
+**Diperbaiki**
+- **Akun cloud baru tidak lagi ikut kebawa data contoh:** sebelumnya `loadData()` (`01-data.js`) selalu mengisi 7 transaksi contoh bawaan (`defaultData()`) begitu localStorage perangkat kosong. Kalau user sempat coba "Pakai mode lokal dulu" (jadi data contoh itu sudah tersimpan lokal) lalu belakangan Daftar/Masuk Google, data contoh itu ikut terkirim jadi "isi awal" akun cloud yang baru dibuat -- padahal seharusnya kosong. Sekarang:
+  - Kalau `loadData()` pertama kali mengisi data padahal saat itu sedang aktif sesi cloud (`sync.ready`), yang diisi adalah data benar-benar kosong (`emptyData()`, cuma 1 akun Kas saldo 0, tanpa transaksi), bukan data contoh
+  - Data contoh yang tersimpan lokal ditandai (`SEED_DEMO_KEY`, dihapus otomatis oleh `saveData()` begitu ada perubahan sungguhan dari user). Kalau saat sinkron pertama ke akun cloud baru (`syncReconcile` di `14-sync.js`) ternyata data lokalnya masih persis data contoh yang belum tersentuh itu, datanya diganti kosong dulu sebelum dikirim
+  - Data lokal **asli** yang sudah pernah diedit user (bukan data contoh) tetap terkirim apa adanya saat pertama kali disinkronkan ke akun cloud baru -- perilaku migrasi ini tidak berubah
+
+## v1.1.027 — 23 Sep 2026
+
+**Diubah**
+- **`signUp()` di form Daftar sekarang mengirim `emailRedirectTo: location.href`** (`14-sync.js`), sama seperti pola yang sudah dipakai di "Lupa kata sandi" — memastikan link konfirmasi di email pendaftaran mengarah balik ke domain app yang sedang dipakai user, bukan cuma andalkan "Site URL" tunggal di dashboard Supabase. Domain ini tetap harus didaftarkan di Supabase → Authentication → URL Configuration → Redirect URLs, kalau tidak Supabase menolak redirect-nya
+
+## v1.1.026 — 23 Sep 2026
+
+**Ditambah**
+- **Masuk/daftar dengan Google (OAuth)** (`14-sync.js`): tombol "Masuk dengan Google" / "Daftar dengan Google" di layar Masuk & Daftar, lewat `supabase.auth.signInWithOAuth({ provider: 'google' })`. Satu tombol ini otomatis berfungsi untuk keduanya — Google akan membuatkan akun baru kalau emailnya belum pernah dipakai, atau langsung login kalau sudah ada. Browser dialihkan penuh ke halaman Google lalu kembali ke app; Supabase-js membaca sesinya dari URL secara otomatis saat halaman dimuat ulang, jadi tidak ada logika baru di `syncBootInner()`. Tombol pakai gaya `.auth-oauth-btn` baru (border tipis, ikon "G" 4 warna) dipisahkan dari form email/password lewat divider "atau pakai email" (`.auth-divider`, CSS baru di `style.css`)
+- **Setup sekali di luar app (wajib sebelum tombol Google berfungsi):** aktifkan provider Google di dashboard Supabase (Authentication → Providers → Google, isi Client ID & Secret dari Google Cloud Console), lalu tambahkan URL tempat app ini di-hosting ke daftar Redirect URLs (Authentication → URL Configuration). Tanpa ini tombol akan menampilkan pesan error dari Supabase saat diklik
+
 ## v1.1.025 — 23 Sep 2026
 
 **Ditambah**

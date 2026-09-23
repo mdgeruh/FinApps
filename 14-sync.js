@@ -115,6 +115,43 @@
     return '<div class="auth-shell"><div class="auth-brand" aria-hidden="true">Rp</div>' + inner + '</div>';
   }
 
+  // Ikon "G" Google 4 warna, dipakai di tombol OAuth (bukan teks/gambar berhak cipta, cuma logo brand
+  // yang memang dimaksudkan dipakai di tombol "Sign in with Google").
+  const AUTH_GOOGLE_SVG = '<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>' +
+    '<path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>' +
+    '<path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.68 9c0-.593.102-1.17.284-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>' +
+    '<path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.581C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>' +
+  '</svg>';
+
+  function authGoogleBtnHtml(id, label) {
+    return '<button type="button" id="' + id + '" class="auth-oauth-btn">' + AUTH_GOOGLE_SVG + '<span>' + label + '</span></button>';
+  }
+
+  // Dipakai bareng oleh layar Masuk & Daftar: signInWithOAuth() mengalihkan browser penuh ke
+  // Google, lalu Google mengalihkan balik ke redirectTo (URL app ini sekarang). Supabase-js
+  // otomatis membaca kode/token dari URL saat halaman dimuat ulang dan menyiapkan sesinya --
+  // getSession() di syncBootInner() menunggu proses itu selesai sebelum mengembalikan hasil,
+  // jadi di sini cukup mulai redirect-nya saja, tidak perlu (dan tidak bisa) resolve promise
+  // login secara langsung seperti alur email/password. Google otomatis membuatkan akun baru
+  // kalau emailnya belum pernah dipakai, atau langsung login kalau sudah ada -> satu tombol
+  // ini berlaku untuk "Daftar" maupun "Masuk".
+  // CATATAN SETUP (sekali saja, di luar app): aktifkan provider Google di Supabase ->
+  // Authentication -> Providers -> Google (butuh Client ID & Secret dari Google Cloud Console),
+  // dan tambahkan URL app ini ke daftar Redirect URLs di Supabase -> Authentication -> URL Configuration.
+  async function syncStartGoogleAuth(msgId, btn) {
+    authMsg(msgId, '');
+    authBusy(btn, true);
+    try {
+      const { error } = await sync.client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
+      if (error) { authMsg(msgId, 'Gagal membuka Google: ' + error.message, 'error'); authBusy(btn, false); }
+      // kalau tidak error, browser sudah dalam proses dialihkan ke Google -- tidak ada lagi yang perlu dilakukan di sini
+    } catch (err) {
+      authMsg(msgId, 'Tidak bisa terhubung ke Google. Coba lagi.', 'error');
+      authBusy(btn, false);
+    }
+  }
+
   // opts.fromMenu: dibuka dari menu gear (bukan saat app dibuka), jadi tombol bawah berarti "Batal".
   function syncShowLogin(opts) {
     const fromMenu = !!(opts && opts.fromMenu);
@@ -126,6 +163,9 @@
           '<form class="auth" id="sync-form" novalidate>' +
             '<h2>Masuk</h2>' +
             '<p class="auth-sub">Data keuanganmu disimpan di akun ini dan tersinkron ke semua perangkat.</p>' +
+            authGoogleBtnHtml('sync-google-btn', 'Masuk dengan Google') +
+            '<div id="sync-google-msg" class="auth-msg" role="status" aria-live="polite"></div>' +
+            '<div class="auth-divider"><span>atau pakai email</span></div>' +
             '<div class="auth-field">' +
               '<div class="auth-label-row"><label for="sync-email">Email</label></div>' +
               '<input class="auth-input" id="sync-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="nama@email.com" value="' + escapeHtml(prefillEmail || '').replace(/"/g, '&quot;') + '">' +
@@ -151,6 +191,9 @@
         });
         document.getElementById('sync-goregister-btn').addEventListener('click', () => {
           renderRegisterView(document.getElementById('sync-email').value.trim());
+        });
+        document.getElementById('sync-google-btn').addEventListener('click', () => {
+          syncStartGoogleAuth('sync-google-msg', document.getElementById('sync-google-btn'));
         });
         document.getElementById('sync-form').addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -217,11 +260,18 @@
       // mewajibkan konfirmasi email (bawaan default), signUp() TIDAK langsung memberi sesi -> user
       // diminta cek email dulu, lalu kembali ke halaman masuk. Kalau konfirmasi email dimatikan di
       // proyeknya, sesi langsung didapat dan langsung dianggap "masuk" seperti alur login biasa.
+      // emailRedirectTo: location.href memastikan link di email konfirmasi mengarah balik ke domain
+      // app ini yang sedang dipakai user (bukan cuma andalkan "Site URL" bawaan di dashboard) -- URL
+      // ini juga harus terdaftar di Supabase -> Authentication -> URL Configuration -> Redirect URLs,
+      // kalau tidak Supabase menolak redirect-nya dan user mendarat di halaman error Supabase.
       function renderRegisterView(prefillEmail) {
         ov.innerHTML = authShell(
           '<form class="auth" id="sync-register-form" novalidate>' +
             '<h2>Daftar akun</h2>' +
             '<p class="auth-sub">Buat akun baru untuk menyimpan &amp; menyinkronkan data keuanganmu ke cloud.</p>' +
+            authGoogleBtnHtml('sync-register-google-btn', 'Daftar dengan Google') +
+            '<div id="sync-register-google-msg" class="auth-msg" role="status" aria-live="polite"></div>' +
+            '<div class="auth-divider"><span>atau pakai email</span></div>' +
             '<div class="auth-field">' +
               '<div class="auth-label-row"><label for="sync-register-email">Email</label></div>' +
               '<input class="auth-input" id="sync-register-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="nama@email.com" value="' + escapeHtml(prefillEmail || '').replace(/"/g, '&quot;') + '">' +
@@ -239,6 +289,9 @@
         document.getElementById('sync-register-back-btn').addEventListener('click', () => {
           renderLoginView(document.getElementById('sync-register-email').value.trim());
         });
+        document.getElementById('sync-register-google-btn').addEventListener('click', () => {
+          syncStartGoogleAuth('sync-register-google-msg', document.getElementById('sync-register-google-btn'));
+        });
         document.getElementById('sync-register-form').addEventListener('submit', async (e) => {
           e.preventDefault();
           const email = document.getElementById('sync-register-email').value.trim();
@@ -251,7 +304,7 @@
           authMsg('sync-register-msg', '');
           authBusy(regBtn, true);
           try {
-            const { data, error } = await syncTimeout(sync.client.auth.signUp({ email, password: pass }), 15000);
+            const { data, error } = await syncTimeout(sync.client.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } }), 15000);
             if (error) { authMsg('sync-register-msg', 'Gagal mendaftar: ' + error.message, 'error'); authBusy(regBtn, false); return; }
             if (data && data.session) {
               // Konfirmasi email tidak diwajibkan di proyek ini -> sesi langsung aktif, lanjut seperti login.
@@ -352,6 +405,18 @@
     const shared = !!(meta && meta.uid === sync.uid && meta.version > 0);   // perangkat ini pernah sinkron dengan baris cloud ini
 
     if (!row) {                                   // cloud masih kosong: kirim data lokal (kalau ada) sebagai isi awal
+      // Kecuali kalau data lokal itu cuma data contoh bawaan yang belum pernah diubah (SEED_DEMO_KEY) --
+      // misalnya user sempat coba mode lokal dulu sebelum akhirnya Daftar. Akun cloud yang baru pertama
+      // kali ini seharusnya mulai kosong, bukan ikut-ikutan berisi data contoh itu.
+      let isSeed = false;
+      try { isSeed = localStorage.getItem(SEED_DEMO_KEY) === '1'; } catch (e) { /* abaikan */ }
+      if (localRaw && isSeed) {
+        const empty = emptyData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(empty));
+        try { localStorage.removeItem(SEED_DEMO_KEY); } catch (e) { /* tidak kritis */ }
+        syncWriteMeta({ uid: sync.uid, version: 0, dirty: true });   // struktur akun kosong ini yang dikirim jadi isi awal
+        return true;
+      }
       syncWriteMeta({ uid: sync.uid, version: 0, dirty: !!localRaw });
       return false;
     }
