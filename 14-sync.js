@@ -602,9 +602,36 @@
     return true;
   }
 
+  // Deteksi localStorage perangkat ini masih berisi data akun cloud LAIN (login akun berbeda
+  // di device yang sama -- ganti user, pinjam HP, dst -- tanpa localStorage sempat dibersihkan).
+  // Kalau dibiarkan, syncReconcile() akan mengira data akun lama itu "data perangkat ini" milik
+  // akun yang baru login, lalu menawarkannya untuk dipakai (bisa tertukar) atau bahkan menimpa
+  // cloud akun baru dengan data akun lama. Dipanggil di awal syncStartSession(), SEBELUM
+  // syncReconcile() atau kode lain menyentuh localStorage. Tidak mengubah alur migrasi normal
+  // "mode lokal dulu -> baru Daftar" karena di situ meta.uid masih kosong (belum pernah sync).
+  async function syncGuardAccountSwitch(newUid) {
+    const meta = syncReadMeta();
+    if (!meta || !meta.uid || meta.uid === newUid) return;   // belum pernah sync, atau akun yang sama -> aman
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      let old = null;
+      try { old = JSON.parse(raw); } catch (e) { /* data rusak, tidak perlu dibackup */ }
+      if (old) await autoBackupBeforeReset(old);   // jaga-jaga: backup ke file JSON sebelum dihapus
+    }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SEED_DEMO_KEY);
+    } catch (e) { /* tidak kritis */ }
+    // Reset meta ke akun baru dengan version 0 supaya syncReconcile() memperlakukan device ini
+    // seolah baru pertama kali dipakai akun ini: tarik bersih dari cloud (atau mulai kosong
+    // kalau cloud akun ini juga masih kosong), bukan menawarkan sisa data akun sebelumnya.
+    syncWriteMeta({ uid: newUid, version: 0, dirty: false });
+  }
+
   // Dipakai bersama oleh syncBoot() dan login dari menu gear: aktifkan sinkron untuk sesi ini,
   // lalu samakan data lokal dengan cloud. Mengembalikan true kalau data lokal diganti data cloud.
   async function syncStartSession(session) {
+    await syncGuardAccountSwitch(session.user.id);
     sync.uid = session.user.id;
     sync.email = session.user.email || '';
     sync.ready = true;
