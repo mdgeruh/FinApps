@@ -1,6 +1,20 @@
   // ============================================================
   // IMPORT / EXPORT / RESET DATA
   // ============================================================
+  // Prefix nama file export/backup dengan identitas user: makin berguna sejak device bisa
+  // dipakai gantian oleh beberapa akun (lihat syncGuardAccountSwitch di 14-sync.js) -- tanpa
+  // prefix ini, file-file "keuangan-2026-09-23.json" dari akun berbeda jadi sulit dibedakan.
+  // Prioritas: email akun cloud (kalau sedang login) > nama pemilik dari tab Profil > 'user'.
+  function exportUserPrefix() {
+    let raw = '';
+    if (typeof sync !== 'undefined' && sync.ready && sync.email) raw = sync.email.split('@')[0];
+    else if (typeof getOwnerName === 'function') raw = getOwnerName();
+    const slug = raw.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // lepas aksen (é -> e, dst)
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return slug || 'user';
+  }
+
   // ---------- Pengingat cadangan ----------
   // Data hanya ada di localStorage browser ini. Kalau belum pernah ekspor (atau sudah >= 14 hari) dan
   // datanya sudah lumayan banyak, tampilkan pengingat di Ringkasan. "Nanti" menundanya 7 hari.
@@ -39,7 +53,7 @@
     const data = loadData();
     const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns };
     const json = JSON.stringify(payload, null, 2);
-    const filename = 'keuangan-' + todayStr() + '.json';
+    const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '.json';
 
     if (downloadsCap) {
       try { await downloadsCap.save({ filename, data: json }); markExported(); showIoMsg('File JSON siap disimpan.', 'ok'); return; }
@@ -80,7 +94,7 @@
       ]);
     // BOM di depan supaya Excel baca sebagai UTF-8 (biar "Rp" dan karakter lain tidak berantakan).
     const csv = '\ufeff' + [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
-    const filename = 'keuangan-' + todayStr() + '.csv';
+    const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '.csv';
 
     if (downloadsCap) {
       try { await downloadsCap.save({ filename, data: csv }); showIoMsg('File CSV siap disimpan.', 'ok'); return; }
@@ -383,7 +397,7 @@
   async function autoBackupBeforeReset(data) {
     const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns };
     const json = JSON.stringify(payload, null, 2);
-    const filename = 'keuangan-backup-sebelum-reset-' + todayStr() + '-' + Date.now() + '.json';
+    const filename = 'keuangan-backup-sebelum-reset-' + exportUserPrefix() + '-' + todayStr() + '-' + Date.now() + '.json';
     if (downloadsCap) {
       try { await downloadsCap.save({ filename, data: json }); return true; } catch (e) { /* fall through */ }
     }
