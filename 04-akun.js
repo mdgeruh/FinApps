@@ -1102,9 +1102,11 @@
     }
   }
 
-  // Bunga bulan ini yang MASIH harus dibayar = perkiraan bunga bulan ini dikurangi bunga yang
-  // sudah dibayar bulan ini (supaya bayar bunga dua kali di bulan yang sama tidak terhitung dobel).
-  function computeLoanInterestDue(data, acc, mode) {
+  // Bunga bulan (refDate) yang MASIH harus dibayar = perkiraan bunga bulanan dikurangi bunga yang
+  // sudah dibayar di bulan yang sama (supaya bayar bunga dua kali di bulan yang sama tidak terhitung dobel).
+  // refDate opsional (default hari ini) -- dipakai supaya pembayaran yang dicatat mundur (tanggal lalu)
+  // dicocokkan ke bulan tanggal itu, bukan selalu bulan berjalan.
+  function computeLoanInterestDue(data, acc, mode, refDate) {
     const monthly = computeLoanMonthlyInterest(data, acc);
     if (monthly <= 0) return 0;
     // Angsuran pinjaman bunga flat bertenor: TIAP angsuran memuat bunga sebulan penuh (bukan sekali per bulan
@@ -1114,7 +1116,7 @@
       const remF = computeLoanRemaining(data, acc);
       if (remF.flat) return Math.min(monthly, remF.sisaBunga);
     }
-    const ym = todayStr().slice(0, 7);
+    const ym = (refDate || todayStr()).slice(0, 7);
     const paid = data.txns
       .filter(t => t.loanId === acc.id && t.type === 'keluar' && t.category === 'Bunga & biaya bank' && (t.date || '').slice(0, 7) === ym)
       .reduce((sum, t) => sum + t.amount, 0);
@@ -1125,9 +1127,10 @@
   }
 
   // Pecah nominal pembayaran: bunga terutang dilunasi dulu, sisanya baru mengurangi pokok.
-  function splitLoanPayment(data, acc, nominal, mode) {
+  // refDate opsional (default hari ini) -- lihat catatan di computeLoanInterestDue().
+  function splitLoanPayment(data, acc, nominal, mode, refDate) {
     const sisaPokok = Math.max(0, -accountBalance(data, acc.id));
-    let bungaDue = computeLoanInterestDue(data, acc, mode);
+    let bungaDue = computeLoanInterestDue(data, acc, mode, refDate);
     // Pinjaman flat bertenor dibayar per angsuran: kalau nominalnya cukup untuk beberapa angsuran sekaligus,
     // tiap angsuran memuat bunga sebulan penuh (mis. 3 angsuran = 3x bunga), bukan bunga satu bulan saja.
     if (mode === 'pokok_bunga') {
@@ -1156,15 +1159,17 @@
     const mode = $('loan-pay-mode-input').value;
     const isOnline = acc.type === 'pinjaman_online';
     const noRate = isOnline && !acc.loanRatePercent; // pinjol lama tanpa bunga flat: semua angsuran mengurangi sisa pinjaman
+    const refDate = ($('loan-pay-date-input') || {}).value || todayStr();
     const monthly = computeLoanMonthlyInterest(data, acc);
-    const due = computeLoanInterestDue(data, acc, mode);
+    const due = computeLoanInterestDue(data, acc, mode, refDate);
     const hint = $('loan-interest-hint');
     const amountEl = $('loan-pay-amount-input');
     const rateInfo = acc.loanRatePercent
       ? ' (' + (acc.loanInterestType === 'menurun' ? 'dari sisa pokok' : 'dari pokok awal') + ', ' + (acc.loanRateUnit === 'bulan' ? acc.loanRatePercent + '%/bln' : acc.loanRatePercent + '%/thn') + ')'
       : (isOnline ? '' : ' (suku bunga belum diisi di akun ini, jadi seluruh nominal dihitung sebagai pokok)');
+    const bulanLabel = refDate.slice(0, 7) === todayStr().slice(0, 7) ? 'bulan ini' : 'bulan ' + fmtTgl(refDate).replace(/^\d+\s/, '');
     const bungaInfo = acc.loanRatePercent
-      ? 'Bunga bulan ini ' + formatRp(monthly) + (monthly > due ? ', sudah dibayar ' + formatRp(monthly - due) + ', belum dibayar ' + formatRp(due) : '') + rateInfo + '. '
+      ? 'Bunga ' + bulanLabel + ' ' + formatRp(monthly) + (monthly > due ? ', sudah dibayar ' + formatRp(monthly - due) + ', belum dibayar ' + formatRp(due) : '') + rateInfo + '. '
       : (isOnline ? '' : 'Bunga' + rateInfo + '. ');
 
     if (mode === 'bunga') {
@@ -1195,12 +1200,13 @@
     const mode = $('loan-pay-mode-input').value;
     const nominal = Math.round(parseFloat($('loan-pay-amount-input').value) || 0);
     if (nominal <= 0) { el.textContent = ''; return; }
+    const refDate = ($('loan-pay-date-input') || {}).value || todayStr();
     const rem = computeLoanRemaining(data, acc);
     if (mode === 'bunga') {
       el.textContent = 'Bunga ' + formatRp(nominal) + ' · Sisa hutang jadi ' + formatRp(Math.max(0, rem.total - (rem.flat ? Math.min(nominal, rem.sisaBunga) : 0)));
       return;
     }
-    const r = splitLoanPayment(data, acc, nominal, mode);
+    const r = splitLoanPayment(data, acc, nominal, mode, refDate);
     el.textContent = (r.bunga > 0 ? 'Bunga ' + formatRp(r.bunga) + ' + ' : '') + 'Pokok ' + formatRp(r.pokok) +
       ' → sisa hutang jadi ' + formatRp(Math.max(0, rem.total - r.pokok - (rem.flat ? r.bunga : 0))) +
       (r.kelebihan > 0 ? ' · Kelebihan ' + formatRp(r.kelebihan) + ' tidak dicatat' : '');
@@ -1229,7 +1235,7 @@
       confirmMsg = `Catat bayar bunga ${acc.name} sebesar ${formatRp(nominal)} dari ${sourceAcc.name}?\n(Sisa hutang jadi ${formatRp(Math.max(0, sisaPokok - (remP.flat ? Math.min(nominal, remP.sisaBunga) : 0)))})`;
     } else {
       // 'pokok_bunga' (angsuran) dan 'nominal' (bebas): bunga terutang dilunasi dulu, sisanya ke pokok.
-      const r = splitLoanPayment(data, acc, nominal, mode);
+      const r = splitLoanPayment(data, acc, nominal, mode, payDate);
       bunga = r.bunga; pokok = r.pokok;
       const total = bunga + pokok;
       confirmMsg = `Catat ${mode === 'pokok_bunga' ? 'angsuran' : 'pembayaran'} ${acc.name} ${formatRp(total)} dari ${sourceAcc.name}?\n(Bunga ${formatRp(bunga)} + Pokok ${formatRp(pokok)})\nSisa hutang jadi ${formatRp(Math.max(0, sisaPokok - pokok - (remP.flat ? bunga : 0)))}` +

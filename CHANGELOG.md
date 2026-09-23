@@ -2,6 +2,13 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.032 — 23 Sep 2026
+
+**Diperbaiki**
+- **Bunga terutang salah bulan saat mencatat pembayaran pinjaman bertanggal mundur** (`04-akun.js`): `computeLoanInterestDue()` selalu mengecek "bunga sudah dibayar" dari bulan **hari ini**, walau form "Catat pembayaran" mengizinkan pilih tanggal di masa lalu. Kalau user mencatat pembayaran untuk bulan lalu, hint & rincian bunga/pokok di layar bisa salah bulan (mis. dianggap bunga bulan ini sudah lunas padahal yang dibayar itu bunga bulan lalu). Sekarang `computeLoanInterestDue()` dan `splitLoanPayment()` menerima parameter `refDate` opsional (dari tanggal yang dipilih di form, bukan selalu hari ini), dipakai konsisten di hint (`onLoanPayModeChange`), preview rincian (`updateLoanPaySplit`), dan saat transaksi benar-benar dicatat (`submitLoanPayment`)
+- Field tanggal pembayaran (`loan-pay-date-input`, `index.html`) sebelumnya tidak memicu apa pun saat diubah — hint & preview di bawahnya tetap memakai perhitungan lama sampai field lain disentuh. Sekarang mengubah tanggal langsung menyegarkan keduanya
+- Teks hint "Bunga bulan ini ..." kini menyebut nama bulan yang sebenarnya (mis. "Bunga bulan Ags 2026 ...") kalau tanggal yang dipilih bukan bulan berjalan
+
 ## v1.1.031 — 23 Sep 2026
 
 **Diubah**
