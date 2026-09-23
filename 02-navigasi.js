@@ -112,16 +112,34 @@
     }
   }
 
-  // ---------- Tab Profil (gear -> Profil): nama pemilik untuk sapaan di Ringkasan ----------
+  // ---------- Tab Profil (gear -> Profil): nama pemilik, tema, kesehatan data, akun sinkron ----------
   function renderProfilTab() {
     const el = $('profil-name-input');
     if (el) el.value = getOwnerName();
 
+    const themeBtn = $('profil-theme-btn');
+    if (themeBtn) themeBtn.textContent = THEME_LABELS[currentThemeMode()] || THEME_LABELS.system;
+
+    const backupEl = $('profil-last-backup');
+    if (backupEl && typeof lastExportSummary === 'function') backupEl.textContent = lastExportSummary();
+
+    const configured = typeof syncConfigured === 'function' && syncConfigured();
     const active = !!(typeof sync !== 'undefined' && sync.ready);
+    const statusEl = $('profil-sync-status');
+    if (statusEl) {
+      statusEl.textContent = configured
+        ? (SYNC_STATUS_TEXT[sync.status] || '')
+        : 'Mode lokal (sinkron cloud tidak diaktifkan di app ini)';
+    }
+
+    const unavailEl = $('profil-sync-unavailable');
     const noneEl = $('profil-sync-none');
     const sectionEl = $('profil-sync-section');
-    if (noneEl) noneEl.style.display = active ? 'none' : 'block';
+    const dangerEl = $('profil-danger-block');
+    if (unavailEl) unavailEl.style.display = configured ? 'none' : 'block';
+    if (noneEl) noneEl.style.display = (configured && !active) ? 'block' : 'none';
     if (sectionEl) sectionEl.style.display = active ? 'block' : 'none';
+    if (dangerEl) dangerEl.style.display = active ? 'block' : 'none';
     if (active) {
       const emailEl = $('profil-current-email');
       if (emailEl) emailEl.textContent = sync.email || '-';
@@ -174,23 +192,29 @@
     } else {
       document.documentElement.removeAttribute('data-theme');
     }
+    const label = THEME_LABELS[mode] || THEME_LABELS.system;
     const btn = $('theme-toggle-btn');
-    if (btn) btn.textContent = THEME_LABELS[mode] || THEME_LABELS.system;
+    if (btn) btn.textContent = label;
+    // Tombol tema juga ada di tab Profil (selain menu gear) -- keduanya disamakan di sini.
+    const profilBtn = $('profil-theme-btn');
+    if (profilBtn) profilBtn.textContent = label;
+  }
+
+  function currentThemeMode() {
+    let saved = 'system';
+    try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
+    return saved;
   }
 
   function cycleTheme() {
     const order = ['system', 'light', 'dark'];
-    let current = 'system';
-    try { current = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
-    const next = order[(order.indexOf(current) + 1) % order.length];
+    const next = order[(order.indexOf(currentThemeMode()) + 1) % order.length];
     try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
     applyTheme(next);
   }
 
   (function initTheme() {
-    let saved = 'system';
-    try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
-    applyTheme(saved);
+    applyTheme(currentThemeMode());
   })();
 
   function goToSettingsTab(name) {

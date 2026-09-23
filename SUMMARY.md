@@ -150,3 +150,57 @@ Semua perubahan diuji di browser headless (Playwright, Chromium) dengan Supabase
 Timpa file di folder proyek dengan versi terbaru dari folder output. Urutan pemuatan skrip di `index.html` tidak boleh diubah. Sebelum memasang versi baru, **Export JSON** dulu sebagai cadangan.
 
 Sejak v1.1.019 ada **file baru** (bukan cuma timpa): `manifest.json`, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`. Taruh semuanya di folder yang sama dengan file JS lainnya.
+
+## 8. Lanjutan: v1.1.029 – v1.1.030 (23 Sep 2026, sesi terpisah)
+
+Dua perbaikan tambahan di luar cakupan tabel §4 di atas (yang berhenti di v1.1.020):
+
+### v1.1.029: proteksi ganti akun di device yang sama
+- **Bug:** `STORAGE_KEY` di localStorage cuma satu untuk seluruh device, tidak dibedakan per akun cloud. Kalau device pernah sync ke akun A lalu Keluar dan Masuk/Daftar akun B, `syncReconcile()` (`14-sync.js`) mengira sisa data akun A itu "data perangkat ini" milik akun B — bisa tertukar, atau otomatis terkirim jadi isi awal akun B kalau cloud-nya masih kosong.
+- **Perbaikan:** fungsi baru `syncGuardAccountSwitch()`, dipanggil di awal `syncStartSession()` sebelum `syncReconcile()` menyentuh localStorage. Kalau `uid` di `kp_sync_meta` beda dari akun yang baru login, data lama dibackup ke file JSON (`autoBackupBeforeReset`) lalu dihapus dan meta direset — device diperlakukan seolah baru pertama kali dipakai akun tersebut. Alur migrasi "mode lokal dulu → Daftar" tidak berubah (di situ `meta.uid` memang masih kosong).
+
+### v1.1.030: prefix identitas user di nama file export/backup
+- Fungsi baru `exportUserPrefix()` (`13-import-export.js`), dipakai di `exportJson`, `exportCsv`, dan `autoBackupBeforeReset`. Prioritas sumber: email akun cloud (bagian sebelum `@`) → nama pemilik di tab Profil → `'user'`. Contoh: `keuangan-budi-2026-09-23.json`.
+- Melengkapi v1.1.029: file backup dari akun berbeda di device yang sama jadi mudah dibedakan tanpa buka isinya dulu.
+
+**File yang berubah:** `14-sync.js`, `13-import-export.js`, `12-render-utama.js` (versi), `CHANGELOG.md`, `README.md`, `SUMMARY.md` (dokumen ini).
+
+**Belum diuji end-to-end** dengan Supabase sungguhan (sama seperti catatan di §5) — logika diverifikasi lewat pembacaan kode (alur `syncReconcile`/`syncStartSession` dan pemanggilan `exportUserPrefix` di tiap fungsi export).
+
+## 9. Saran: tab Profil — **sudah dikerjakan, lihat §10**
+
+Usulan perbaikan tab Profil (`02-navigasi.js` `renderProfilTab()`, markup di `index.html` `#tab-profil`):
+
+**Cepat / low effort**
+- Tombol **"Masuk untuk sinkron"** langsung di `#profil-sync-none` (panggil `syncLoginFromMenu()`), bukan cuma teks yang menyuruh buka menu gear.
+- Tombol **Keluar** di tab Profil sendiri (panggil `syncLogout()`), tidak cuma di menu gear.
+- Validasi **email baru ≠ email lama** sebelum memanggil `syncChangeEmail()`.
+
+**Menambah kegunaan**
+- Tampilkan **status sync & tanggal backup JSON terakhir** (`LAST_EXPORT_KEY`) di Profil sebagai ringkasan "kesehatan data", plus tombol pintas **Backup sekarang** (`exportJson()`) — tanpa pindah ke tab Data.
+- Pindahkan **toggle tema** (`cycleTheme()`, sekarang di menu gear) ke Profil, supaya Profil jadi hub preferensi pribadi (nama + tema), terpisah dari tab Data (manajemen data).
+
+**Lebih besar**
+- Opsi **"Hapus akun cloud"** — belum ada jalan bagi user menghapus akunnya sendiri. Hapus user Auth sungguhan butuh Supabase Edge Function (perlu `service_role` key, sengaja tidak ditaruh di client); langkah awal realistis: tombol yang mengosongkan baris `app_data` miliknya + logout, dengan peringatan jelas soal keterbatasannya.
+- **Konfirmasi (`showConfirm`)** sebelum submit ganti email/password — dua aksi sensitif ini sekarang langsung jalan begitu tombol diklik, tidak seperti pola konfirmasi yang sudah dipakai di form transaksi.
+
+## 10. Implementasi saran §9: v1.1.031 (23 Sep 2026)
+
+Semua 7 poin di §9 dikerjakan sekaligus:
+
+| Poin di §9 | Implementasi |
+|---|---|
+| Tombol "Masuk untuk sinkron" di Profil | `#profil-sync-none` di `index.html` sekarang punya tombol, bukan cuma teks |
+| Tombol Keluar di Profil | Ditambahkan di `#profil-sync-section`, memanggil `syncLogout()` yang sudah ada |
+| Validasi email baru ≠ lama | `syncChangeEmail()` (`14-sync.js`) menolak kalau sama persis (case-insensitive) |
+| Status sync & tanggal backup terakhir + tombol Backup sekarang | Bagian baru "Kesehatan data" di Profil; fungsi baru `lastExportSummary()` (`13-import-export.js`) dan `profilBackupNow()`; `syncSetStatus()` (`14-sync.js`) diperbarui supaya juga menulis ke `#profil-sync-status`, bukan cuma footer |
+| Pindahkan toggle tema ke Profil | **Deviasi kecil dari usulan:** tombol tema **ditambahkan** ke Profil (`#profil-theme-btn`), bukan dipindah/dihapus dari menu gear — supaya akses cepat dari tab manapun tetap ada. `applyTheme()` menyamakan label di kedua tombol |
+| Opsi hapus akun cloud | Fungsi baru `syncDeleteCloudData()` (`14-sync.js`, 2x konfirmasi + backup otomatis): hapus baris `app_data` di cloud + localStorage perangkat ini. **Tidak** menghapus akun Auth Supabase itu sendiri — dicatat jelas di UI (butuh Edge Function + `service_role` key, sengaja di luar cakupan app client) |
+| Konfirmasi sebelum ganti email/password | `syncChangeEmail()` dan `syncChangePassword()` (`14-sync.js`) sekarang `showConfirm()` dulu sebelum memanggil Supabase |
+
+**File yang berubah:** `index.html` (markup tab Profil dirombak), `02-navigasi.js` (`renderProfilTab`, `applyTheme`, `cycleTheme`, `currentThemeMode` baru), `13-import-export.js` (`lastExportSummary`, `profilBackupNow` baru; `markExported` memanggil `renderProfilTab`), `14-sync.js` (`syncSetStatus`, `syncChangeEmail`, `syncChangePassword` diubah; `syncDeleteCloudData` baru), `12-render-utama.js` (versi), `CHANGELOG.md`, `README.md`, `SUMMARY.md` (dokumen ini). Tidak ada perubahan CSS — tombol "danger" pakai class `.io-btn.danger` yang sudah ada (dipakai juga di "Reset semua data" tab Data).
+
+**Belum diuji end-to-end** dengan Supabase sungguhan (sama seperti catatan di §5/§8) — termasuk `syncDeleteCloudData()` yang memanggil `.delete()` ke tabel `app_data`.
+
+
+

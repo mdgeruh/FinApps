@@ -23,7 +23,23 @@
   function markExported() {
     try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); localStorage.removeItem(BACKUP_SNOOZE_KEY); } catch (e) { /* tidak kritis */ }
     if (typeof renderBackupReminder === 'function') renderBackupReminder(loadData());
+    if (typeof renderProfilTab === 'function') renderProfilTab();   // segarkan "terakhir backup" di tab Profil
   }
+  // Teks "kapan terakhir backup", dipakai bareng oleh renderBackupReminder (kartu di Ringkasan)
+  // dan renderProfilTab (ringkasan kesehatan data di tab Profil) supaya hitungannya konsisten.
+  function lastExportSummary() {
+    let last = null;
+    try { last = localStorage.getItem(LAST_EXPORT_KEY); } catch (e) { /* abaikan */ }
+    if (!last) return 'Belum pernah export.';
+    const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+    if (isNaN(days)) return 'Belum pernah export.';
+    if (days <= 0) return 'Terakhir export: hari ini.';
+    if (days === 1) return 'Terakhir export: kemarin.';
+    return 'Terakhir export: ' + days + ' hari lalu.';
+  }
+  // Tombol "Backup sekarang" di tab Profil -- sama persis dengan Export JSON di tab Data,
+  // cuma dipanggil dari tempat lain supaya tidak perlu pindah tab.
+  async function profilBackupNow() { await exportJson(); }
   function renderBackupReminder(data) {
     const el = $('backup-reminder-card');
     if (!el) return;
