@@ -617,6 +617,9 @@
   @keyframes auth-spin { to { transform: rotate(360deg); } }
   .auth-alt { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; }
   .auth-alt .auth-link { color: var(--ink); font-size: 14px; }
+  /* Dipakai saat dua .auth-alt bertumpuk (mis. link "mode lokal" + link "Daftar" di layar masuk):
+     blok kedua tidak perlu border/jarak atas lagi, cukup nempel di bawah blok pertama. */
+  .auth-alt.auth-alt-tight { margin-top: 10px; padding-top: 0; border-top: none; }
   .auth-note { margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }
   .auth-btn:focus-visible, .auth-link:focus-visible, .auth-eye:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) {

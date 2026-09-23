@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.025 — 23 Sep 2026
+
+**Ditambah**
+- **Pendaftaran akun baru langsung dari layar masuk** (`14-sync.js`): tautan "Belum punya akun? Daftar" di bawah layar Masuk membuka form Daftar (email, kata sandi, ulangi kata sandi) yang memanggil `supabase.auth.signUp()`. Kalau proyek Supabase mewajibkan konfirmasi email (bawaan default Supabase), user diberi tahu untuk cek email lalu diarahkan balik ke layar Masuk; kalau konfirmasi email dimatikan di pengaturan proyeknya, sesi langsung aktif setelah daftar (perilaku sama seperti login sukses). Validasi dasar (kata sandi minimal 6 karakter, kata sandi & ulangannya harus sama) dilakukan di sisi app sebelum memanggil Supabase. Tidak ada tabel/skema baru — akun tetap dikelola sepenuhnya oleh Supabase Auth, baris `app_data` untuk user baru baru dibuat saat data pertama kali tersinkron (lihat `syncReconcile`)
+
 ## v1.1.024 — 23 Sep 2026
 
 **Diubah**
