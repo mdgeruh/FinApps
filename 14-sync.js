@@ -138,6 +138,9 @@
               '<button type="button" id="sync-local-btn" class="auth-link">' + (fromMenu ? 'Batal' : 'Pakai mode lokal dulu') + '</button>' +
               (fromMenu ? '' : '<p class="auth-note">Data hanya tersimpan di perangkat ini sampai kamu masuk.</p>') +
             '</div>' +
+            '<div class="auth-alt auth-alt-tight">' +
+              '<button type="button" id="sync-goregister-btn" class="auth-link">Belum punya akun? Daftar</button>' +
+            '</div>' +
           '</form>');
         ov.classList.add('open');
         authWireEyes(ov);
@@ -145,6 +148,9 @@
         document.getElementById('sync-local-btn').addEventListener('click', () => { syncCloseOverlay(); resolve(null); });
         document.getElementById('sync-forgot-btn').addEventListener('click', () => {
           renderForgotView(document.getElementById('sync-email').value.trim());
+        });
+        document.getElementById('sync-goregister-btn').addEventListener('click', () => {
+          renderRegisterView(document.getElementById('sync-email').value.trim());
         });
         document.getElementById('sync-form').addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -205,6 +211,64 @@
           }
         });
         setTimeout(() => { const el = document.getElementById('sync-forgot-email'); if (el) el.focus(); }, 50);
+      }
+
+      // Sub-view "daftar": buat akun baru via Supabase Auth (signUp). Kalau proyek Supabase
+      // mewajibkan konfirmasi email (bawaan default), signUp() TIDAK langsung memberi sesi -> user
+      // diminta cek email dulu, lalu kembali ke halaman masuk. Kalau konfirmasi email dimatikan di
+      // proyeknya, sesi langsung didapat dan langsung dianggap "masuk" seperti alur login biasa.
+      function renderRegisterView(prefillEmail) {
+        ov.innerHTML = authShell(
+          '<form class="auth" id="sync-register-form" novalidate>' +
+            '<h2>Daftar akun</h2>' +
+            '<p class="auth-sub">Buat akun baru untuk menyimpan &amp; menyinkronkan data keuanganmu ke cloud.</p>' +
+            '<div class="auth-field">' +
+              '<div class="auth-label-row"><label for="sync-register-email">Email</label></div>' +
+              '<input class="auth-input" id="sync-register-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="nama@email.com" value="' + escapeHtml(prefillEmail || '').replace(/"/g, '&quot;') + '">' +
+            '</div>' +
+            authPasswordField('sync-register-pass', 'Kata sandi', 'new-password', 'Minimal 6 karakter') +
+            authPasswordField('sync-register-pass2', 'Ulangi kata sandi', 'new-password', 'Ulangi kata sandi') +
+            '<div id="sync-register-msg" class="auth-msg" role="status" aria-live="polite"></div>' +
+            '<button type="submit" id="sync-register-btn" class="auth-btn">Daftar</button>' +
+            '<div class="auth-alt">' +
+              '<button type="button" id="sync-register-back-btn" class="auth-link">Sudah punya akun? Masuk</button>' +
+            '</div>' +
+          '</form>');
+        ov.classList.add('open');
+        authWireEyes(ov);
+        document.getElementById('sync-register-back-btn').addEventListener('click', () => {
+          renderLoginView(document.getElementById('sync-register-email').value.trim());
+        });
+        document.getElementById('sync-register-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('sync-register-email').value.trim();
+          const pass = document.getElementById('sync-register-pass').value;
+          const pass2 = document.getElementById('sync-register-pass2').value;
+          if (!email || !pass) { authMsg('sync-register-msg', 'Isi email dan kata sandi.', 'error'); return; }
+          if (pass.length < 6) { authMsg('sync-register-msg', 'Kata sandi minimal 6 karakter.', 'error'); return; }
+          if (pass !== pass2) { authMsg('sync-register-msg', 'Kata sandi dan ulangannya tidak sama.', 'error'); return; }
+          const regBtn = document.getElementById('sync-register-btn');
+          authMsg('sync-register-msg', '');
+          authBusy(regBtn, true);
+          try {
+            const { data, error } = await syncTimeout(sync.client.auth.signUp({ email, password: pass }), 15000);
+            if (error) { authMsg('sync-register-msg', 'Gagal mendaftar: ' + error.message, 'error'); authBusy(regBtn, false); return; }
+            if (data && data.session) {
+              // Konfirmasi email tidak diwajibkan di proyek ini -> sesi langsung aktif, lanjut seperti login.
+              syncCloseOverlay();
+              resolve(data.session);
+              return;
+            }
+            // signUp berhasil tapi belum ada sesi -> proyeknya mewajibkan konfirmasi via email.
+            authMsg('sync-register-msg', 'Pendaftaran berhasil! Cek email kamu untuk konfirmasi, lalu masuk.', 'ok');
+            authBusy(regBtn, false);
+            setTimeout(() => { renderLoginView(email); }, 2500);
+          } catch (err) {
+            authMsg('sync-register-msg', 'Tidak bisa terhubung. Coba lagi.', 'error');
+            authBusy(regBtn, false);
+          }
+        });
+        setTimeout(() => { const el = document.getElementById('sync-register-email'); if (el) el.focus(); }, 50);
       }
 
       renderLoginView();
