@@ -703,17 +703,36 @@
 
   <div class="tab-panel" id="tab-profil">
     <div class="set-block">
-    <div class="section-title">Profil pemilik</div>
+    <div class="section-title">Profil &amp; preferensi</div>
     <div class="acc-sub" id="profil-name-hint" style="margin-bottom:6px;">Nama ini dipakai untuk sapaan di tab Ringkasan. Tersimpan di browser ini saja (tidak ikut ekspor JSON).</div>
     <div class="io-row">
       <input type="text" id="profil-name-input" placeholder="Nama kamu" aria-label="Nama pemilik" maxlength="40" style="flex:1; min-width:0;">
       <button type="button" class="io-btn" onclick="saveOwnerNameFromInput()">Simpan</button>
     </div>
     <div id="profil-msg" class="io-msg"></div>
+    <div class="io-row" style="margin-top:12px;">
+      <button type="button" class="io-btn" id="profil-theme-btn" onclick="cycleTheme()">Tampilan: Sistem</button>
     </div>
+    </div>
+
+    <div class="set-block">
+    <div class="section-title" style="margin-top:22px;">Kesehatan data</div>
+    <div class="acc-sub" style="margin-bottom:4px;">Status sinkron: <b id="profil-sync-status">-</b></div>
+    <div class="acc-sub" style="margin-bottom:10px;" id="profil-last-backup">Belum pernah export.</div>
+    <div class="io-row">
+      <button type="button" class="io-btn" id="profil-backup-btn" onclick="profilBackupNow()">Backup sekarang (Export JSON)</button>
+    </div>
+    </div>
+
     <div class="set-block">
     <div class="section-title" style="margin-top:22px;">Akun sinkron (login cloud)</div>
-    <div id="profil-sync-none" class="acc-sub">Belum masuk ke akun sinkron cloud. Pilih "Masuk untuk sinkron" di menu gear untuk mengaktifkannya.</div>
+    <div id="profil-sync-unavailable" class="acc-sub" style="display:none;">Sinkron cloud tidak diaktifkan di app ini — data 100% lokal di perangkat ini.</div>
+    <div id="profil-sync-none" class="acc-sub" style="display:none;">
+      Belum masuk ke akun sinkron cloud.
+      <div class="io-row" style="margin-top:8px;">
+        <button type="button" class="io-btn" onclick="syncLoginFromMenu()">Masuk untuk sinkron</button>
+      </div>
+    </div>
     <div id="profil-sync-section" style="display:none;">
       <div class="acc-sub" style="margin-bottom:10px;">Email saat ini: <b id="profil-current-email"></b></div>
 
@@ -729,11 +748,23 @@
         <input type="password" id="profil-pass-input" placeholder="Password baru (min 6 karakter)" aria-label="Password baru" autocomplete="new-password" style="flex:1; min-width:0;">
         <button type="button" class="io-btn" onclick="syncChangePassword()">Ubah password</button>
       </div>
+
+      <div class="io-row" style="margin-top:18px;">
+        <button type="button" class="io-btn" onclick="syncLogout()">Keluar dari akun sinkron</button>
+      </div>
     </div>
     <div id="profil-sync-msg" class="io-msg"></div>
-  
+    </div>
+
+    <div class="set-block" id="profil-danger-block" style="display:none;">
+    <div class="section-title" style="margin-top:22px;">Zona bahaya</div>
+    <div class="io-row">
+      <button type="button" class="io-btn danger" onclick="syncDeleteCloudData()">Hapus semua data akun ini</button>
+    </div>
+    <div class="acc-sub" style="margin-top:8px;">Menghapus semua akun &amp; transaksi di cloud (semua perangkat yang sinkron ke akun ini ikut kosong) dan salinan lokal perangkat ini. Backup otomatis dibuat dulu. Akun login-nya sendiri (email/password) <b>tidak</b> ikut terhapus — kamu tetap bisa masuk lagi, tapi datanya kosong.</div>
     </div>
 </div>
+
   <div class="app-footer no-print" id="app-footer"></div>
 </div>
 
