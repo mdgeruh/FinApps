@@ -2,6 +2,12 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.034 — 23 Sep 2026
+
+**Diperbaiki**
+- **Proyeksi "Tagihan per bulan ke depan" di detail akun PayLater tidak menghitung transaksi "Bayar Nanti"** (`01-data.js`, `paylaterMonthlyBreakdown()`): fungsi ini sebelumnya cuma menjumlahkan cicilan bertenor (`acc.plans`) per bulan jatuh tempo. Transaksi "Bayar Nanti" (dibayar tanpa cicilan, method `nanti`) ikut menambah sisa hutang akun tapi tidak pernah dianggap "jatuh tempo bulan X" di manapun — jadi tidak muncul di breakdown bulanan sama sekali, walau tetap kelihatan di angka "Terpakai" kartu akun. Ketahuan dari bandingkan rincian tagihan Shopee PayLater asli vs breakdown di app: bulan pertama beda ratusan ribu rupiah, padahal bulan-bulan berikutnya (murni cicilan) sudah cocok sampai selisih pembulatan saja. Sekarang bagian saldo yang tidak tercakup jadwal cicilan manapun (Bayar Nanti, atau cicilan yang telat dari jadwalnya) dihitung sebagai `extra` lalu dimasukkan ke siklus tagihan **terdekat** — pakai cara hitung yang sama seperti `computeUpcomingDues()` sudah menghitung kartu "Tagihan PayLater" di Ringkasan, supaya keduanya konsisten
+- Render breakdown bulanan di detail akun (`04-akun.js`) disesuaikan: item tanpa nomor cicilan (yaitu item "Bayar Nanti" yang baru ditambahkan ke breakdown) tidak lagi menampilkan `(ke-null/null)`, dan label jumlah item diganti dari "N cicilan" jadi "N item" karena sekarang bisa campuran cicilan + Bayar Nanti
+
 ## v1.1.033 — 23 Sep 2026
 
 **Ditambah**

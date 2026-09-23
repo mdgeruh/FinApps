@@ -734,6 +734,7 @@
     if ((bal || 0) >= 0) return [];
     const plans = Array.isArray(acc.plans) ? acc.plans : [];
     const groups = {};
+    let remainingPlanTotal = 0;
     plans.forEach(pl => {
       const sc = paylaterPlanSchedule(data, acc, pl);
       if (!sc) return;
@@ -744,7 +745,28 @@
         groups[key].total += pl.monthly;
         groups[key].items.push({ planId: pl.id, desc: pl.desc, no: i, tenor: pl.tenor, amount: pl.monthly });
       }
+      remainingPlanTotal += Math.max(0, (pl.total || 0) - sc.k * pl.monthly);
     });
+    // Bagian saldo yang TIDAK tercakup jadwal cicilan manapun (transaksi "Bayar Nanti", atau
+    // cicilan yang sudah telat dari jadwalnya) sebelumnya hilang begitu saja dari breakdown ini —
+    // cuma ikut "Terpakai" di kartu akun, tidak pernah nongol di "Tagihan per bulan ke depan"
+    // manapun, padahal nyatanya tetap jatuh tempo di tanggal tagih terdekat (persis kartu kredit).
+    // Sekarang dimasukkan ke siklus tagihan TERDEKAT, pakai cara hitung yang sama seperti
+    // computeUpcomingDues() di atas menghitung kartu "Tagihan PayLater" di Ringkasan — supaya
+    // total tagihan bulan berjalan di sini konsisten dengan yang ditampilkan di Ringkasan/aplikasi
+    // PayLater aslinya (bukan cuma total cicilan terjadwal saja).
+    const extra = Math.max(0, Math.abs(bal || 0) - remainingPlanTotal);
+    if (extra > 0.5 && acc.feeDay) {
+      const today = todayStr();
+      const now = new Date(today + 'T00:00:00');
+      const mk = (yy, mm) => { const dim = new Date(yy, mm + 1, 0).getDate(); return yy + '-' + padMonth(mm + 1) + '-' + padMonth(Math.min(acc.feeDay, dim)); };
+      let ds = mk(now.getFullYear(), now.getMonth());
+      if (ds < today) ds = mk(now.getFullYear(), now.getMonth() + 1);
+      const key = ds.slice(0, 7);
+      if (!groups[key]) groups[key] = { due: ds, total: 0, items: [] };
+      groups[key].total += extra;
+      groups[key].items.push({ planId: null, desc: 'Bayar Nanti / belum terjadwal', no: null, tenor: null, amount: extra });
+    }
     return Object.keys(groups).sort().map(k => groups[k]);
   }
 
