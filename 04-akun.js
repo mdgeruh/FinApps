@@ -639,8 +639,12 @@
         const icon = { lunas: '✓', telat: '!', belum: '○' };
         const colr = { lunas: 'var(--green)', telat: 'var(--red)', belum: 'var(--ink-soft)' };
         const nextNo = sch.next ? sch.next.no : 0;
+        // Total nominal yang harus dibayar sepanjang tenor (pokok + bunga & biaya semua angsuran) --
+        // sama seperti field "Jumlah Pembayaran" yang biasa ditampilkan aplikasi pinjol.
+        const totalPembayaran = sch.rows.reduce((sum, r) => sum + r.total, 0);
         schedEl.style.display = 'block';
         schedEl.innerHTML = '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
+          '<div class="acc-sub" style="margin-bottom:8px;">Total jumlah pembayaran (pokok + bunga &amp; biaya, ' + sch.tenor + ' angsuran): <strong>' + formatRp(totalPembayaran) + '</strong></div>' +
           sch.rows.map(r => `
             <div class="txn-row" style="${r.no === nextNo ? 'background:var(--teal-soft); border-radius:10px;' : ''}">
               <div class="txn-left">

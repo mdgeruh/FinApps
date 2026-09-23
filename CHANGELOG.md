@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.033 — 23 Sep 2026
+
+**Ditambah**
+- **"Total jumlah pembayaran" di jadwal angsuran pinjaman** (`04-akun.js`, detail akun → Jadwal angsuran): baris baru di atas daftar per-angsuran, menjumlahkan pokok + bunga & biaya seluruh angsuran sepanjang tenor — setara field "Jumlah Pembayaran" yang biasa ditampilkan aplikasi pinjol (dipakai untuk mencocokkan angka dengan rincian resmi dari penyedia pinjaman)
+
 ## v1.1.032 — 23 Sep 2026
 
 **Diperbaiki**
