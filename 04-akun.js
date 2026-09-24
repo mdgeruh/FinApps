@@ -791,7 +791,7 @@
     if (monthlyGroups.length > 0) {
       monthlyWrap.style.display = 'block';
       $('acc-detail-monthly-list').innerHTML = monthlyGroups.map((g, idx) => `
-        <div class="txn-row">
+        <div class="txn-row clickable" onclick="openPaylaterMonthDetail('${acc.id}', ${idx})">
           <div class="txn-left"><div class="txn-text">
             <div class="txn-desc">${escapeHtml(fmtBulanTahun(g.due))}</div>
             <div class="txn-meta">Jatuh tempo ${formatDayLabel(g.due)} · ${g.items.length} item</div>
@@ -799,7 +799,7 @@
           </div></div>
           <div class="txn-right" style="text-align:right;">
             <div class="txn-amount" style="display:block; margin-bottom:6px;">${formatRp(g.total)}</div>
-            <button type="button" class="mini-btn-like" style="border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:11px; font-weight:700; padding:5px 9px; border-radius:8px; cursor:pointer;" onclick="payMonthFromDetail('${acc.id}', ${idx})">Bayar bulan ini</button>
+            <button type="button" class="mini-btn-like" style="border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:11px; font-weight:700; padding:5px 9px; border-radius:8px; cursor:pointer;" onclick="event.stopPropagation(); payMonthFromDetail('${acc.id}', ${idx})">Bayar bulan ini</button>
           </div>
         </div>`).join('');
     } else {
@@ -1100,6 +1100,40 @@
       catSel.value = 'Bayar tagihan/utang';
       onCategoryChange();
     }
+  }
+
+  // Klik salah satu baris "Tagihan per bulan ke depan" di detail akun PayLater: buka sheet detail
+  // berisi rincian item PER CICILAN (tidak dipotong seperti tampilan ringkas di daftar), supaya bisa
+  // dicocokkan satu-satu dengan rincian tagihan di aplikasi PayLater aslinya kalau ada selisih angka.
+  function openPaylaterMonthDetail(accId, groupIdx) {
+    const data = loadData();
+    const acc = data.accounts.find(a => a.id === accId);
+    if (!acc) return;
+    const balances = computeAllBalances(data);
+    const bal = balances[accId] || 0;
+    const groups = paylaterMonthlyBreakdown(data, acc, bal);
+    const g = groups[groupIdx];
+    if (!g) return;
+
+    $('paylater-month-detail-title').textContent = fmtBulanTahun(g.due) + ' · ' + acc.name;
+    $('paylater-month-detail-total').textContent = formatRp(g.total);
+    $('paylater-month-detail-meta').textContent = 'Jatuh tempo ' + formatDayLabel(g.due) + ' · ' + g.items.length + (g.items.length === 1 ? ' item' : ' item');
+
+    const itemsSorted = g.items.slice().sort((a, b) => b.amount - a.amount);
+    $('paylater-month-detail-items').innerHTML = itemsSorted.map(it => `
+      <div class="txn-row">
+        <div class="txn-left"><div class="txn-text">
+          <div class="txn-desc">${escapeHtml(it.desc)}</div>
+          ${it.no != null ? `<div class="txn-meta">Cicilan ke-${it.no} dari ${it.tenor}</div>` : `<div class="txn-meta" style="color:var(--rust); font-weight:600;">⚠ Belum terjadwal (Bayar Nanti / cicilan telat) — cek ulang di aplikasi PayLater asli, ini yang paling sering jadi selisih</div>`}
+        </div></div>
+        <div class="txn-right"><span class="txn-amount"${it.no == null ? ' style="color:var(--rust);"' : ''}>${formatRp(it.amount)}</span></div>
+      </div>`).join('');
+
+    $('paylater-month-detail').classList.add('open');
+  }
+
+  function closePaylaterMonthDetail() {
+    $('paylater-month-detail').classList.remove('open');
   }
 
   // Bunga bulan (refDate) yang MASIH harus dibayar = perkiraan bunga bulanan dikurangi bunga yang

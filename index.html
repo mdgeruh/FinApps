@@ -862,6 +862,20 @@
   </div>
 </div>
 
+<div class="sheet-overlay" id="paylater-month-detail" onclick="if(event.target===this) closePaylaterMonthDetail()">
+  <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title" id="paylater-month-detail-title">Tagihan bulan</div>
+      <button class="sheet-close" onclick="closePaylaterMonthDetail()" aria-label="Tutup">×</button>
+    </div>
+    <div class="txn-detail-amount-row">
+      <span class="txn-detail-amount" id="paylater-month-detail-total"></span>
+    </div>
+    <div class="txn-detail-desc" id="paylater-month-detail-meta" style="margin-bottom:16px;"></div>
+    <div class="list-section" id="paylater-month-detail-items"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal-box">
     <div class="modal-msg" id="modal-msg"></div>
