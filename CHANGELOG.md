@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.036 — 24 Sep 2026
+
+**Diubah**
+- **Tombol "Bayar bulan ini" di baris "Tagihan per bulan ke depan" dipindah ke dalam modal detail** (`04-akun.js`): baris di daftar sekarang cuma menampilkan ringkasan (klik untuk buka detail), tombol bayarnya cuma ada di dalam sheet `openPaylaterMonthDetail()` di bagian bawah daftar item. `event.stopPropagation()` di baris jadi tidak perlu lagi dan sudah dihapus
+
 ## v1.1.035 — 24 Sep 2026
 
 **Ditambah**

@@ -797,10 +797,7 @@
             <div class="txn-meta">Jatuh tempo ${formatDayLabel(g.due)} · ${g.items.length} item</div>
             <div class="txn-meta" style="color:var(--ink-soft);">${g.items.map(it => escapeHtml(it.desc) + (it.no != null ? ' (ke-' + it.no + '/' + it.tenor + ')' : '')).join(', ')}</div>
           </div></div>
-          <div class="txn-right" style="text-align:right;">
-            <div class="txn-amount" style="display:block; margin-bottom:6px;">${formatRp(g.total)}</div>
-            <button type="button" class="mini-btn-like" style="border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:11px; font-weight:700; padding:5px 9px; border-radius:8px; cursor:pointer;" onclick="event.stopPropagation(); payMonthFromDetail('${acc.id}', ${idx})">Bayar bulan ini</button>
-          </div>
+          <div class="txn-right"><span class="txn-amount">${formatRp(g.total)}</span></div>
         </div>`).join('');
     } else {
       monthlyWrap.style.display = 'none';
@@ -1127,7 +1124,8 @@
           ${it.no != null ? `<div class="txn-meta">Cicilan ke-${it.no} dari ${it.tenor}</div>` : `<div class="txn-meta" style="color:var(--rust); font-weight:600;">⚠ Belum terjadwal (Bayar Nanti / cicilan telat) — cek ulang di aplikasi PayLater asli, ini yang paling sering jadi selisih</div>`}
         </div></div>
         <div class="txn-right"><span class="txn-amount"${it.no == null ? ' style="color:var(--rust);"' : ''}>${formatRp(it.amount)}</span></div>
-      </div>`).join('');
+      </div>`).join('')
+      + `<button type="button" class="submit-btn" style="margin-top:14px;" onclick="closePaylaterMonthDetail(); payMonthFromDetail('${accId}', ${groupIdx})">Bayar bulan ini</button>`;
 
     $('paylater-month-detail').classList.add('open');
   }
