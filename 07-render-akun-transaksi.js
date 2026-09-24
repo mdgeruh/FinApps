@@ -49,6 +49,50 @@
     })();
   }
 
+  // ---------- Tab Tagihan: kalender bulanan gabungan (semua akun berutang) ----------
+  function renderTagihanCalendar(data, balances) {
+    const wrap = $('tagihan-calendar-list');
+    if (!wrap) return;
+    const months = computeBillCalendar(data, balances, 12);
+    if (!months.length) { wrap.innerHTML = '<div class="empty" style="padding:14px;">Tidak ada tagihan yang perlu dibayar ke depan.</div>'; return; }
+    wrap.innerHTML = months.map((mo, idx) => {
+      const accCount = new Set(mo.items.map(it => it.accId)).size;
+      return `
+        <div class="txn-row clickable" onclick="openTagihanBulanDetail(${idx})">
+          <div class="txn-left"><div class="txn-text">
+            <div class="txn-desc">${escapeHtml(fmtBulanTahun(mo.items[0].due))}</div>
+            <div class="txn-meta">${accCount} akun · ${mo.items.length} item</div>
+          </div></div>
+          <div class="txn-right"><span class="txn-amount keluar">${formatRp(mo.total)}</span></div>
+        </div>`;
+    }).join('');
+  }
+
+  function openTagihanBulanDetail(idx) {
+    const data = loadData();
+    const balances = computeAllBalances(data);
+    const months = computeBillCalendar(data, balances, 12);
+    const mo = months[idx];
+    if (!mo) return;
+    $('tagihan-bulan-detail-title').textContent = fmtBulanTahun(mo.items[0].due);
+    $('tagihan-bulan-detail-total').textContent = formatRp(mo.total);
+    const accCount = new Set(mo.items.map(it => it.accId)).size;
+    $('tagihan-bulan-detail-meta').textContent = accCount + ' akun · ' + mo.items.length + ' item';
+    $('tagihan-bulan-detail-items').innerHTML = mo.items.map(it => `
+      <div class="txn-row clickable" onclick="closeTagihanBulanDetail(); openAccountDetail('${it.accId}')">
+        <div class="txn-left"><div class="txn-text">
+          <div class="txn-desc">${escapeHtml(it.accName)}</div>
+          <div class="txn-meta">${escapeHtml(it.label)} · jatuh tempo ${escapeHtml(fmtTgl(it.due))}</div>
+        </div></div>
+        <div class="txn-right"><span class="txn-amount keluar">${formatRp(it.amount)}</span></div>
+      </div>`).join('');
+    $('tagihan-bulan-detail').classList.add('open');
+  }
+
+  function closeTagihanBulanDetail() {
+    $('tagihan-bulan-detail').classList.remove('open');
+  }
+
   function renderAccountsSummary(data, balances) {
     if (!balances) balances = computeAllBalances(data);
     const asetEl = $('akun-total-aset');

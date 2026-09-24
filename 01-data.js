@@ -685,7 +685,43 @@
     return out.filter(x => x.days <= withinDays).sort((a, b) => a.days - b.days);
   }
 
-  // ---------- PAYLATER: cicilan bertenor (bunga flat + admin) ----------
+  // Kalender tagihan bulanan gabungan (semua akun berutang: pinjaman/pinjol, kartu kredit, PayLater),
+  // dikelompokkan per bulan jatuh tempo — dasar untuk tab Tagihan (beda dengan computeUpcomingDues
+  // yang cuma mengambil SATU tagihan terdekat per akun). Kartu kredit cuma diproyeksikan 1 siklus ke
+  // depan (siklus berikutnya tergantung belanja yang belum terjadi, tidak bisa diramal jauh).
+  function computeBillCalendar(data, balances, monthsAhead) {
+    const bal = balances || computeAllBalances(data);
+    const today = todayStr();
+    const map = {};
+    const addItem = (monthKey, item) => {
+      if (!map[monthKey]) map[monthKey] = { monthKey, total: 0, items: [] };
+      map[monthKey].total += item.amount;
+      map[monthKey].items.push(item);
+    };
+    data.accounts.forEach(acc => {
+      const b = bal[acc.id] || 0;
+      if (TYPE_LOAN[acc.type]) {
+        const sc = computeLoanSchedule(data, acc, b);
+        if (sc) sc.rows.filter(r => r.status !== 'lunas').forEach(r => {
+          addItem(monthKeyFromDate(r.due), { accId: acc.id, accName: acc.name, label: 'Angsuran ke-' + r.no + '/' + sc.tenor, amount: r.total, due: r.due });
+        });
+      } else if (acc.type === 'kartu_kredit' && acc.feeDay && b < 0) {
+        const ci = cardStatementInfo(data, acc, today);
+        if (ci && ci.remaining > 0) {
+          addItem(monthKeyFromDate(ci.dueDate), { accId: acc.id, accName: acc.name, label: 'Tagihan kartu' + (ci.minRemaining > 0 ? ' · min ' + formatRp(ci.minRemaining) : ''), amount: ci.remaining, due: ci.dueDate });
+        }
+      } else if (acc.type === 'paylater' && acc.feeDay) {
+        paylaterMonthlyBreakdown(data, acc, b).forEach(g => {
+          addItem(monthKeyFromDate(g.due), { accId: acc.id, accName: acc.name, label: 'PayLater · ' + g.items.length + (g.items.length === 1 ? ' item' : ' item'), amount: g.total, due: g.due });
+        });
+      }
+    });
+    const months = Object.keys(map).sort().map(k => map[k]);
+    months.forEach(mo => mo.items.sort((a, b) => a.due < b.due ? -1 : (a.due > b.due ? 1 : b.amount - a.amount)));
+    return monthsAhead ? months.slice(0, monthsAhead) : months;
+  }
+
+
   // Bayar Nanti = 0% (transaksi biasa, ditandai method 'nanti'). Cicilan = pokok + bunga flat (pokok x %/bln x tenor)
   // + admin sekali bayar. Semuanya dicatat sebagai pengeluaran di akun PayLater (menambah sisa hutang) dan
   // rencananya disimpan di akun (acc.plans), terhubung ke transaksi lewat planId.

@@ -2,6 +2,16 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.037 — 24 Sep 2026
+
+**Ditambah**
+- **Tab baru "Tagihan"** di nav bawah (antara Titipan dan Laporan), menggantikan slot tab "Data" (isinya dipindah ke Profil, lihat di bawah) — supaya total tetap 6 tab, tidak menambah. Berisi dua bagian:
+  - **Jatuh tempo** (kartu pengingat yang sebelumnya nempel di atas tab Ringkasan, sekarang pindah ke sini — fungsi `renderDueReminders` tidak berubah, cuma elemen `#due-reminder-card`-nya dipindah)
+  - **Kalender tagihan bulanan** (baru): total tagihan tiap bulan ke depan digabung dari SEMUA akun berutang (pinjaman/pinjol, kartu kredit siklus berjalan, PayLater), lewat fungsi baru `computeBillCalendar()` (`01-data.js`) yang menggabungkan `computeLoanSchedule`, `cardStatementInfo`, dan `paylaterMonthlyBreakdown` per akun jadi satu, dikelompokkan per bulan jatuh tempo. Klik satu bulan buka sheet detail (`openTagihanBulanDetail`/`closeTagihanBulanDetail`, `07-render-akun-transaksi.js`) berisi rincian tiap akun & nominalnya bulan itu; klik satu akun di situ langsung buka detail akunnya
+
+**Diubah**
+- **Tab "Data" dihapus, isinya (Data contoh, Tampilan Ringkasan, Export & import, Reset & ganti data) dipindah jadi bagian bawah tab Profil** (`index.html`) — jadi Profil sekarang berisi semua pengaturan: nama pemilik, tampilan, sinkron cloud, dan pengaturan data. `TAB_NAMES`/`TAB_TITLES`/`renderTabContent()` di `02-navigasi.js` disesuaikan (`renderRingkasanConfig()` sekarang dipanggil dari case `'profil'`, bukan `'data'`)
+
 ## v1.1.036 — 24 Sep 2026
 
 **Diubah**
