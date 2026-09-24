@@ -50,7 +50,7 @@
     titipan: 'Titipan & piutang',
     laporan: 'Laporan',
     akun: 'Akun',
-    data: 'Data & export',
+    tagihan: 'Tagihan',
     profil: 'Profil'
   };
 
@@ -58,7 +58,7 @@
   // jadi daripada gambar ulang KE-6 tab tiap kali ada perubahan data (padahal cuma satu yang
   // kelihatan), tab yang lagi tidak aktif cukup ditandai "dirty" - baru benar-benar digambar
   // saat tab itu dibuka (lihat renderTabContent() & pemanggilannya di setTab()/render()).
-  const TAB_NAMES = ['ringkasan', 'akun', 'transaksi', 'titipan', 'laporan', 'data', 'profil'];
+  const TAB_NAMES = ['ringkasan', 'akun', 'transaksi', 'titipan', 'tagihan', 'laporan', 'profil'];
   const dirtyTabs = new Set(TAB_NAMES);
 
   function currentTabName() {
@@ -74,7 +74,6 @@
     if (!balances) balances = computeAllBalances(data);
     switch (name) {
       case 'ringkasan':
-        renderDueReminders(data, balances);
         renderBackupReminder(data);
         renderAccountsSummary(data, balances);
         renderAccountValues(data, balances);
@@ -100,14 +99,16 @@
         renderTitipanSummary(data, balances);
         renderTitipanFilters();
         break;
+      case 'tagihan':
+        renderDueReminders(data, balances);
+        renderTagihanCalendar(data, balances);
+        break;
       case 'laporan':
         renderLaporan(data);
         break;
-      case 'data':
-        renderRingkasanConfig();
-        break;
       case 'profil':
         renderProfilTab();
+        renderRingkasanConfig();
         break;
     }
   }
