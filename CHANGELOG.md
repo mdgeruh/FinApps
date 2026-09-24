@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.035 — 24 Sep 2026
+
+**Ditambah**
+- **Modal detail per-item saat baris "Tagihan per bulan ke depan" (detail akun PayLater) diklik** (`index.html`, `04-akun.js`, fungsi baru `openPaylaterMonthDetail`/`closePaylaterMonthDetail`): sebelumnya daftar item per bulan cuma tampil ringkas terpotong (`...`) di baris itu sendiri. Sekarang klik baris membuka sheet berisi semua item bulan itu tanpa terpotong, diurutkan dari nominal terbesar, tiap item menampilkan cicilan ke berapa dari berapa tenor — memudahkan cocokkan satu-satu dengan rincian tagihan di aplikasi PayLater aslinya kalau ada selisih angka. Item "Bayar Nanti / belum terjadwal" (bagian saldo di luar jadwal cicilan manapun, ditambahkan sejak v1.1.034) ditandai warna beda + catatan bahwa ini yang paling sering jadi sumber selisih. Tombol "Bayar bulan ini" di baris tetap berfungsi seperti biasa (pakai `event.stopPropagation()` supaya tidak ikut membuka modal)
+
 ## v1.1.034 — 23 Sep 2026
 
 **Diperbaiki**
