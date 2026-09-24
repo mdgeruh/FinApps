@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.038 — 24 Sep 2026
+
+**Diubah**
+- **Tab Profil dirapikan jadi 2 tingkat** (`index.html`, tidak ada perubahan JS): sejak tab Data digabung ke Profil (v1.1.037), tab ini jadi 7 blok pengaturan ditumpuk vertikal — kepanjangan untuk di-scroll. Sekarang cuma **Profil pemilik**, **Tampilan**, dan **Akun sinkron** yang selalu tampil (paling sering disentuh). Sisanya — Export & import, Tampilan Ringkasan, Data contoh, Reset & ganti data — dikumpulkan ke bagian **"Pengaturan data lanjutan"** yang collapsed by default (elemen `<details>` bawaan HTML, pola yang sama seperti kartu Saran di Laporan, tidak perlu JS baru). Di dalam bagian lanjutan itu juga diurutkan ulang sesuai frekuensi pakai (Export & import duluan, Reset paling akhir & judulnya dikasih warna beda) supaya tombol paling berisiko ("Reset semua data") tidak nempel dekat tombol yang sering dipakai
+
 ## v1.1.037 — 24 Sep 2026
 
 **Ditambah**
