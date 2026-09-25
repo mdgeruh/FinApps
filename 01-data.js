@@ -107,9 +107,12 @@
     laporanCatKeluarFilter: 'all'
   };
 
-  // Header: sapaan sesuai jam + nama pemilik, tanggal singkat dengan hari.
-  // Nama pemilik diedit lewat tab Profil (gear -> Profil) dan disimpan di localStorage
-  // (seperti tema), bukan bagian dari data.accounts/txns -> tidak ikut ekspor JSON. Saat login, nama juga disimpan di metadata akun Supabase (lihat syncSaveOwnerName di 14-sync.js), dan localStorage jadi salinan lokalnya.
+  // Nama pemilik: SEKARANG cuma dipakai sebagai prefix nama file export/backup saat belum login
+  // akun sinkron (lihat exportUserPrefix() di 13-import-export.js — kalau sudah login, prefix
+  // file pakai email akun, bukan nama ini). Diedit lewat tab Profil (bagian Export & import) dan
+  // disimpan di localStorage (seperti tema), bukan bagian dari data.accounts/txns -> tidak ikut
+  // ekspor JSON. TIDAK dipakai di sapaan tab Ringkasan (sapaan cuma "Selamat pagi/siang/..." saja,
+  // lihat updateGreeting() di 02-navigasi.js) dan TIDAK disinkronkan ke akun cloud.
   const OWNER_NAME_KEY = 'kp_owner_name';
   const OWNER_NAME_DEFAULT = 'Made Ceplor';
   function getOwnerName() {
