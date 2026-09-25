@@ -73,6 +73,12 @@
     const [y, m, d] = todayStr().split('-').map(Number);
     return new Date(y, m - 1, d);
   }
+  // Jam:menit GMT+8 sekarang, format "HHmm" (mis. "2127"). Dipakai buat nama file export JSON
+  // supaya beberapa kali export di hari yang sama tidak saling timpa/susah dibedakan.
+  function nowTimeStr() {
+    const d = nowGmt8();
+    return String(d.getUTCHours()).padStart(2, '0') + String(d.getUTCMinutes()).padStart(2, '0');
+  }
 
   // Semua state UI terpusat di satu objek (sebelumnya ~20 variabel let terpisah).
   // Memudahkan debug (console.log(state)), reset, dan nanti sinkronisasi ke backend.
@@ -114,7 +120,7 @@
   // ekspor JSON. TIDAK dipakai di sapaan tab Ringkasan (sapaan cuma "Selamat pagi/siang/..." saja,
   // lihat updateGreeting() di 02-navigasi.js) dan TIDAK disinkronkan ke akun cloud.
   const OWNER_NAME_KEY = 'kp_owner_name';
-  const OWNER_NAME_DEFAULT = 'Made Ceplor';
+  const OWNER_NAME_DEFAULT = 'User';
   function getOwnerName() {
     try { return localStorage.getItem(OWNER_NAME_KEY) || OWNER_NAME_DEFAULT; } catch (e) { return OWNER_NAME_DEFAULT; }
   }
