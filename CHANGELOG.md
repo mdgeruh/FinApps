@@ -2,6 +2,16 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.043 — 25 Sep 2026
+
+**Diubah**
+- **Tombol tampilan (sistem/terang/gelap) dipindah ke header**, jadi ikon di sebelah ikon Profil (`index.html`, `02-navigasi.js`): sebelumnya berupa tombol teks penuh-lebar ("Tampilan: Sistem") di dalam tab Profil, sekarang jadi ikon (monitor = ikut sistem, matahari = terang, bulan = gelap) yang selalu terlihat dari tab mana pun, tanpa perlu buka tab Profil dulu. `applyTheme()` sekarang ganti ikon SVG di tombol (bukan teks), label mode tetap ada lewat `aria-label`/`title` untuk aksesibilitas. Blok "Tampilan" lama di tab Profil dihapus
+
+## v1.1.042 — 25 Sep 2026
+
+**Diubah**
+- **Rapikan & optimasi tab Profil** (`index.html`, `01-data.js`): blok "Profil pemilik" (nama) dipindah dari posisi teratas ke dalam "Export & import" (di bawah "Pengaturan data lanjutan") karena satu-satunya fungsi nama itu sekarang cuma jadi prefix nama file export/backup (`exportUserPrefix()` di `13-import-export.js`) — sudah tidak dipakai untuk sapaan (dicabut di v1.1.041) maupun sinkron akun. Teks keterangannya ditulis ulang supaya sesuai fungsi aslinya, komentar basi di `01-data.js` yang masih menyebut sapaan/sinkron akun juga diperbarui. Dibersihkan juga beberapa `style="margin-top:22px"` di judul-judul section dalam tab Profil yang sebenarnya tidak berpengaruh sama sekali (sudah ditimpa `.set-block .section-title { margin-top: 0 !important; }` di CSS) — murni beres-beres, tidak mengubah tampilan
+
 ## v1.1.041 — 25 Sep 2026
 
 **Diubah**
