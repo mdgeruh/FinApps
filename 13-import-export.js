@@ -53,7 +53,7 @@
     const data = loadData();
     const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns };
     const json = JSON.stringify(payload, null, 2);
-    const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '.json';
+    const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '-' + nowTimeStr() + '.json';
 
     if (downloadsCap) {
       try { await downloadsCap.save({ filename, data: json }); markExported(); showIoMsg('File JSON siap disimpan.', 'ok'); return; }

@@ -2,6 +2,12 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.044 — 25 Sep 2026
+
+**Diubah**
+- **Nama default diganti jadi "User"** (`01-data.js`, `OWNER_NAME_DEFAULT`) — sebelumnya "Made Ceplor". Cuma jadi prefix nama file export kalau kolom nama pemilik belum diisi
+- **Nama file export JSON sekarang ikut jam:menit** (`13-import-export.js`): `keuangan-user-2026-09-25.json` -> `keuangan-user-2026-09-25-2127.json` (fungsi baru `nowTimeStr()` di `01-data.js`, GMT+8) — supaya beberapa kali export di hari yang sama tidak saling timpa/susah dibedakan. Export CSV & backup-sebelum-reset belum diubah (masih tanggal saja)
+
 ## v1.1.043 — 25 Sep 2026
 
 **Diubah**
