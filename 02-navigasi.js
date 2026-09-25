@@ -145,6 +145,10 @@
     const v = setOwnerName(el ? el.value : '');
     if (el) el.value = v;
     updateGreeting();
+    // Kalau sedang login, kirim juga ke metadata akun supaya nama ikut akun di device lain.
+    if (typeof sync !== 'undefined' && sync.ready && typeof syncSaveOwnerName === 'function') {
+      syncSaveOwnerName(v);
+    }
     showIoMsg('Nama tersimpan.', 'ok', 'profil-msg');
   }
 

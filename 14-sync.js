@@ -633,6 +633,7 @@
     sync.uid = session.user.id;
     sync.email = session.user.email || '';
     sync.ready = true;
+    syncApplyOwnerNameFromSession(session);
     syncShowLogout();
     if (!sync.listening) {
       sync.listening = true;
@@ -651,6 +652,33 @@
       sync.timer = setTimeout(syncPush, 30000);
     }
     return replaced;
+  }
+
+  // Nama pemilik yang "ikut akun", bukan ikut perangkat: dipanggil tiap kali sesi login didapat
+  // (syncStartSession). Kalau akun ini SUDAH punya nama di metadata Supabase (diisi dari device
+  // lain, atau dari profil Google), pakai itu -> localStorage cuma jadi salinan lokal.
+  // Kalau metadata masih kosong (akun baru / belum pernah simpan nama), kirim nama lokal yang
+  // sedang dipakai (default atau hasil isian sebelumnya) supaya tersimpan untuk device lain.
+  function syncApplyOwnerNameFromSession(session) {
+    const meta = (session.user && session.user.user_metadata) || {};
+    const cloudName = String(meta.full_name || meta.name || '').trim();
+    if (cloudName) {
+      if (typeof setOwnerName === 'function') setOwnerName(cloudName);
+    } else if (typeof getOwnerName === 'function') {
+      syncSaveOwnerName(getOwnerName());
+    }
+    if (typeof updateGreeting === 'function') updateGreeting();
+  }
+
+  // Simpan nama pemilik ke metadata akun Supabase supaya ikut akun (bukan cuma perangkat ini).
+  // Dipanggil dari saveOwnerNameFromInput() (02-navigasi.js) tiap nama diedit di tab Profil,
+  // dan dari syncApplyOwnerNameFromSession() untuk akun yang belum pernah menyimpan nama.
+  // Gagal kirim tidak masalah -> nama tetap tersimpan di localStorage device ini seperti biasa.
+  async function syncSaveOwnerName(name) {
+    if (!sync.ready || !sync.client) return;
+    try {
+      await sync.client.auth.updateUser({ data: { full_name: name } });
+    } catch (e) { /* tidak kritis, nama tetap tersimpan lokal */ }
   }
 
   // Dipanggil dari tab Profil saat belum login (misalnya tadi memilih "Pakai mode lokal dulu").

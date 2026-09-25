@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.039 — 25 Sep 2026
+
+**Ditambah**
+- **Nama pemilik di sapaan sekarang ikut akun sinkron, bukan cuma perangkat** (`14-sync.js`, fungsi baru `syncApplyOwnerNameFromSession` & `syncSaveOwnerName`): sebelumnya nama pemilik (dipakai di sapaan tab Ringkasan) cuma tersimpan di `localStorage` device itu sendiri, jadi login akun yang sama di HP lain menampilkan nama default/berbeda. Sekarang saat login, nama diambil dari metadata akun Supabase (`user_metadata.full_name`/`.name` — otomatis terisi kalau masuk pakai Google) kalau sudah ada; kalau akun belum pernah menyimpan nama, nama lokal yang sedang dipakai dikirim ke metadata supaya tersimpan untuk device lain. `saveOwnerNameFromInput()` (`02-navigasi.js`) juga disesuaikan: tiap nama diedit lewat tab Profil saat sedang login, otomatis ikut dikirim ke metadata akun
+
 ## v1.1.038 — 24 Sep 2026
 
 **Diubah**
