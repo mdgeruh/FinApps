@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.041 — 25 Sep 2026
+
+**Diubah**
+- **Nama pemilik dicabut sementara dari sapaan** (`02-navigasi.js`, `14-sync.js`, `index.html`): fitur sinkron nama-ke-akun dari v1.1.039/v1.1.040 masih bermasalah (nama tidak update dengan andal, sempat "nyangkut" di nama default). Daripada menampilkan nama yang salah/basi, sapaan di tab Ringkasan disederhanakan jadi cuma "Selamat pagi/siang/sore/malam" tanpa nama. `syncApplyOwnerNameFromSession`, `syncSaveOwnerName`, `syncPrettifyEmailPrefix` dihapus dari `14-sync.js`; `saveOwnerNameFromInput` tidak lagi push ke metadata akun. Kolom nama pemilik di tab Profil tetap ada (tersimpan lokal) untuk sementara belum dipakai di mana pun, siap dipakai lagi kalau fitur sapaan-per-akun ini dirapikan ulang nanti
+
 ## v1.1.040 — 25 Sep 2026
 
 **Diperbaiki**

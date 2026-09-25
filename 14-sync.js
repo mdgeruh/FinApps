@@ -633,7 +633,6 @@
     sync.uid = session.user.id;
     sync.email = session.user.email || '';
     sync.ready = true;
-    syncApplyOwnerNameFromSession(session);
     syncShowLogout();
     if (!sync.listening) {
       sync.listening = true;
@@ -652,54 +651,6 @@
       sync.timer = setTimeout(syncPush, 30000);
     }
     return replaced;
-  }
-
-  // Nama pemilik yang "ikut akun", bukan ikut perangkat: dipanggil tiap kali sesi login didapat
-  // (syncStartSession). Urutan sumber nama:
-  //  1. Metadata akun Supabase (`user_metadata.full_name`/`.name`) -> sudah pernah diisi dari
-  //     device lain, atau otomatis dari profil Google saat login pakai Google.
-  //  2. Kalau metadata kosong TAPI nama lokal sudah pernah diisi manual (bukan default bawaan
-  //     app) -> anggap itu nama yang benar, kirim ke metadata supaya ikut ke device lain.
-  //  3. Kalau metadata kosong DAN nama lokal masih default bawaan app (belum pernah diisi) ->
-  //     akun ini belum punya nama sama sekali, jadi turunkan dari bagian sebelum "@" di email
-  //     login (satu-satunya info yang pasti ikut akun), lalu simpan ke metadata.
-  function syncApplyOwnerNameFromSession(session) {
-    const meta = (session.user && session.user.user_metadata) || {};
-    const cloudName = String(meta.full_name || meta.name || '').trim();
-    if (cloudName) {
-      if (typeof setOwnerName === 'function') setOwnerName(cloudName);
-    } else {
-      const localName = (typeof getOwnerName === 'function') ? getOwnerName() : '';
-      const localIsDefault = !localName || (typeof OWNER_NAME_DEFAULT !== 'undefined' && localName === OWNER_NAME_DEFAULT);
-      let nameToUse = localName;
-      if (localIsDefault) {
-        const emailPrefix = (sync.email || (session.user && session.user.email) || '').split('@')[0];
-        nameToUse = syncPrettifyEmailPrefix(emailPrefix) || localName;
-        if (nameToUse && typeof setOwnerName === 'function') setOwnerName(nameToUse);
-      }
-      syncSaveOwnerName(nameToUse);
-    }
-    if (typeof updateGreeting === 'function') updateGreeting();
-  }
-
-  // Ubah bagian sebelum "@" di email ("imdgeruh", "budi.santoso") jadi nama yang lebih layak
-  // tampil ("Imdgeruh", "Budi Santoso"). Cuma fallback kasar saat akun tidak punya nama asli
-  // (login email/password yang form daftarnya tidak minta nama).
-  function syncPrettifyEmailPrefix(prefix) {
-    const cleaned = String(prefix || '').replace(/[._-]+/g, ' ').replace(/\d+/g, ' ').trim();
-    if (!cleaned) return '';
-    return cleaned.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
-  }
-
-  // Simpan nama pemilik ke metadata akun Supabase supaya ikut akun (bukan cuma perangkat ini).
-  // Dipanggil dari saveOwnerNameFromInput() (02-navigasi.js) tiap nama diedit di tab Profil,
-  // dan dari syncApplyOwnerNameFromSession() untuk akun yang belum pernah menyimpan nama.
-  // Gagal kirim tidak masalah -> nama tetap tersimpan di localStorage device ini seperti biasa.
-  async function syncSaveOwnerName(name) {
-    if (!sync.ready || !sync.client || !name) return;
-    try {
-      await sync.client.auth.updateUser({ data: { full_name: name } });
-    } catch (e) { /* tidak kritis, nama tetap tersimpan lokal */ }
   }
 
   // Dipanggil dari tab Profil saat belum login (misalnya tadi memilih "Pakai mode lokal dulu").

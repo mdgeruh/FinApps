@@ -137,18 +137,13 @@
     const h = new Date().getHours();
     const sapa = h >= 4 && h < 11 ? 'Selamat pagi' : (h >= 11 && h < 15 ? 'Selamat siang' : (h >= 15 && h < 18 ? 'Selamat sore' : 'Selamat malam'));
     const g = $('greeting');
-    if (g) g.innerHTML = escapeHtml(sapa) + ', <b>' + escapeHtml(getOwnerName()) + '</b>';
+    if (g) g.innerHTML = escapeHtml(sapa);
   }
 
   function saveOwnerNameFromInput() {
     const el = $('profil-name-input');
     const v = setOwnerName(el ? el.value : '');
     if (el) el.value = v;
-    updateGreeting();
-    // Kalau sedang login, kirim juga ke metadata akun supaya nama ikut akun di device lain.
-    if (typeof sync !== 'undefined' && sync.ready && typeof syncSaveOwnerName === 'function') {
-      syncSaveOwnerName(v);
-    }
     showIoMsg('Nama tersimpan.', 'ok', 'profil-msg');
   }
 
