@@ -2,6 +2,12 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.040 — 25 Sep 2026
+
+**Diperbaiki**
+- **Sapaan masih menampilkan nama default ("Made Ceplor") walau sudah login** (`14-sync.js`): v1.1.039 kirim nama pemilik ke metadata akun cuma kalau metadata masih kosong, tapi tidak mengecek dulu apakah nama lokal itu sendiri masih nama bawaan app yang belum pernah diisi — jadi nama default ikut terkirim dan dianggap "nama akun". Sekarang `syncApplyOwnerNameFromSession` mengecek itu: kalau nama lokal masih default, nama diturunkan dari bagian sebelum "@" di email akun yang login (fungsi baru `syncPrettifyEmailPrefix`, mis. `imdgeruh@gmail.com` -> "Imdgeruh") baru dikirim ke metadata. Teks keterangan di tab Profil (`index.html`, `profil-name-hint`) juga diperbarui supaya sesuai kondisi sekarang
+- **Kalau akun sudah sempat kepenuhi nama default dari v1.1.039**: buka tab Profil, ganti nama ke nama asli, tap Simpan — ini akan menimpa metadata akun dengan nama yang benar
+
 ## v1.1.039 — 25 Sep 2026
 
 **Ditambah**
