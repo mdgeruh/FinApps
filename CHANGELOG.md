@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.046 — 27 Sep 2026
+
+**Diubah**
+- **Posisi footer versi: sekarang di atas baris tombol navigasi** (`index.html`, `style.css`), bukan di bawahnya — tetap sama-sama menjadi bagian dari `.bottom-nav-wrap` yang `position: fixed`, jadi tetap tidak butuh scroll untuk terlihat, di tab mana pun. Garis pemisah ikut pindah ke bawah teks footer (`border-bottom` menggantikan `border-top`). Di desktop (sidebar), footer sekarang di atas daftar menu (bukan di dasar sidebar seperti v1.1.045)
+
 ## v1.1.045 — 27 Sep 2026
 
 **Diubah**
