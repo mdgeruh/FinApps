@@ -47,7 +47,7 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 100px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 128px; }
 
   header { margin-bottom: 8px; }
   .eyebrow-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
@@ -376,11 +376,15 @@
   }
 
   /* Bottom nav */
-  .wrap { padding-bottom: 118px; }
+  .wrap { padding-bottom: 146px; }
   .adv-item > summary, .adv-more > summary { list-style: none; cursor: pointer; }
   .adv-item > summary::-webkit-details-marker, .adv-more > summary::-webkit-details-marker { display: none; }
   .adv-item[open] .adv-chev { transform: rotate(180deg); }
-  .app-footer { text-align: center; font-size: 11px; color: var(--ink-soft); margin: 28px 0 4px; letter-spacing: .02em; }
+  .app-footer {
+    text-align: center; font-size: 10px; color: var(--ink-soft); letter-spacing: .02em;
+    padding: 3px 8px 6px; border-top: 1px solid var(--line);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .settings-btn {
     background: none; border: none; color: var(--ink-soft); cursor: pointer;
     padding: 4px; line-height: 1; display: flex; align-items: center; border-radius: 8px;
@@ -437,11 +441,16 @@
     .wrap { max-width: 1120px; padding: 32px 40px 56px; }
 
     .bottom-nav-wrap {
-      top: 0; right: auto; width: 232px; z-index: 800;
+      top: 0; right: auto; width: 232px; height: 100vh; z-index: 800;
       border-top: none; border-right: 1px solid var(--line);
       padding: 28px 14px 24px;
+      display: flex; flex-direction: column;
     }
     .bottom-nav { max-width: none; margin: 0; padding: 0; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 4px; }
+    .app-footer {
+      margin-top: auto; padding: 16px 4px 0; border-top: 1px solid var(--line);
+      white-space: normal;
+    }
     .nav-btn {
       flex: none; flex-direction: row; justify-content: flex-start; gap: 12px;
       padding: 11px 14px; border-radius: 10px; font-size: 14.5px; text-align: left;

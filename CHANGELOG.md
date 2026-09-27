@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.045 — 27 Sep 2026
+
+**Diubah**
+- **Footer versi sekarang sticky di bawah** (`index.html`, `style.css`): sebelumnya `#app-footer` (dan `#sync-status` yang disisipkan setelahnya oleh `14-sync.js`) berada di akhir alur konten tab Profil, jadi harus scroll ke bawah dulu untuk melihatnya — walau posisinya di luar `.tab-panel` sehingga sebenarnya tetap tampil di semua tab. Sekarang elemen ini dipindah ke dalam `.bottom-nav-wrap` (bar navigasi bawah yang sudah `position: fixed`), jadi selalu terlihat tanpa scroll dari tab mana pun. Di mobile jadi baris tipis di bawah tombol navigasi (dengan garis pemisah); di desktop (sidebar kiri ≥1024px) `.bottom-nav-wrap` dijadikan `flex column` setinggi layar (`height: 100vh`) supaya footer nempel di dasar sidebar (`margin-top: auto`). Padding bawah `.wrap` dinaikkan (100px→128px umum, 118px→146px di layar <380px) untuk mengimbangi bar bawah yang jadi sedikit lebih tinggi
+
 ## v1.1.044 — 25 Sep 2026
 
 **Diubah**
