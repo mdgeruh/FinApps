@@ -47,7 +47,7 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 128px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 100px; }
 
   header { margin-bottom: 8px; }
   .eyebrow-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
@@ -376,15 +376,11 @@
   }
 
   /* Bottom nav */
-  .wrap { padding-bottom: 146px; }
+  .wrap { padding-bottom: 118px; }
   .adv-item > summary, .adv-more > summary { list-style: none; cursor: pointer; }
   .adv-item > summary::-webkit-details-marker, .adv-more > summary::-webkit-details-marker { display: none; }
   .adv-item[open] .adv-chev { transform: rotate(180deg); }
-  .app-footer {
-    text-align: center; font-size: 10px; color: var(--ink-soft); letter-spacing: .02em;
-    padding: 6px 8px 3px; border-bottom: 1px solid var(--line);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .app-footer { text-align: center; font-size: 11px; color: var(--ink-soft); margin: 28px 0 4px; letter-spacing: .02em; }
   .settings-btn {
     background: none; border: none; color: var(--ink-soft); cursor: pointer;
     padding: 4px; line-height: 1; display: flex; align-items: center; border-radius: 8px;
@@ -446,10 +442,6 @@
       padding: 28px 14px 24px;
     }
     .bottom-nav { max-width: none; margin: 0; padding: 0; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 4px; }
-    .app-footer {
-      margin-bottom: 12px; padding: 0 4px 12px;
-      white-space: normal;
-    }
     .nav-btn {
       flex: none; flex-direction: row; justify-content: flex-start; gap: 12px;
       padding: 11px 14px; border-radius: 10px; font-size: 14.5px; text-align: left;
