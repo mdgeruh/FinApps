@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.047 — 27 Sep 2026
+
+**Dibatalkan**
+- **Footer & status sinkron dikembalikan ke posisi semula**: cukup tampil di tab Profil saja (di dalam alur konten `.tab-panel#tab-profil`), tidak lagi jadi bagian dari `.bottom-nav-wrap` yang fixed. `index.html` dan `style.css` kembali identik dengan sebelum v1.1.045 untuk bagian ini (percobaan footer sticky di v1.1.045–v1.1.046 dibatalkan)
+
 ## v1.1.046 — 27 Sep 2026
 
 **Diubah**
