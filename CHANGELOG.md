@@ -2,6 +2,11 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.048 — 27 Sep 2026
+
+**Diubah**
+- **Footer & status sinkron sekarang cuma tampil di tab Profil** (`index.html`): sebelumnya elemen ini ditaruh di luar `.tab-panel#tab-profil` (tapi masih di dalam `.wrap`), jadi tetap tampil di tab mana pun karena tidak ikut ketoggle `display:none`/`display:block` milik `.tab-panel`. Sekarang dipindah ke dalam `tab-panel#tab-profil` (sebelum `</div>` penutupnya), jadi otomatis ikut mekanisme show/hide tab yang sudah ada — hanya render saat tab Profil aktif
+
 ## v1.1.047 — 27 Sep 2026
 
 **Dibatalkan**
