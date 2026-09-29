@@ -352,6 +352,7 @@
     { id: 'month-insight-card', label: 'Bulan ini' },
     { id: 'account-values-card', label: 'Nilai akun' },
     { id: 'recent-txn-card', label: 'Transaksi terbaru' },
+    { id: 'emergency-card', label: 'Dana darurat' },
     { id: 'debt-burden-card', label: 'Beban cicilan & bunga' },
     { id: 'more-insight-card', label: 'Insight lain' },
     { id: 'networth-chart-card', label: 'Kurva kekayaan bersih' },

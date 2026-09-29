@@ -51,7 +51,7 @@
 
   async function exportJson() {
     const data = loadData();
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '-' + nowTimeStr() + '.json';
 
@@ -234,6 +234,7 @@
           if (!ok) { event.target.value = ''; return; }
           mergeImportedBudgets(data, parsed);
           mergeImportedSubscriptions(data, parsed, idMap);
+          mergeImportedEmergency(data, parsed);
           saveData(data);
           render();
           showIoMsg(`${newAccountsCount} akun baru ditambahkan.`, 'ok');
@@ -277,6 +278,7 @@
         data.txns = data.txns.concat(deduped);
         mergeImportedBudgets(data, parsed);
         mergeImportedSubscriptions(data, parsed, idMap);
+        mergeImportedEmergency(data, parsed);
         saveData(data);
         runRecurringFees();
         render();
@@ -429,7 +431,7 @@
   }
 
   async function autoBackupBeforeReset(data) {
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-backup-sebelum-reset-' + exportUserPrefix() + '-' + todayStr() + '-' + Date.now() + '.json';
     if (downloadsCap) {
@@ -482,7 +484,7 @@
 
         const backupOk = await autoBackupBeforeReset(loadData());
 
-        saveData({ accounts: cleanAccounts, txns: cleanTxns, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)) });
+        saveData({ accounts: cleanAccounts, txns: cleanTxns, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)), emergencyMonths: sanitizeEmergencyMonths(parsed && !Array.isArray(parsed) ? parsed.emergencyMonths : 0) });
         state.activeFilter = 'all';
         state.activeTypeFilter = 'all';
         state.sortMode = 'date-desc';

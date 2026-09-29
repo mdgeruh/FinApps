@@ -381,6 +381,7 @@
   .adv-item > summary, .adv-more > summary { list-style: none; cursor: pointer; }
   .adv-item > summary::-webkit-details-marker, .adv-more > summary::-webkit-details-marker { display: none; }
   .adv-item[open] .adv-chev { transform: rotate(180deg); }
+  .app-footer:empty { margin: 8px 0 0; }
   .app-footer { text-align: center; font-size: 11px; color: var(--ink-soft); margin: 28px 0 4px; letter-spacing: .02em; }
   .settings-btn {
     background: none; border: none; color: var(--ink-soft); cursor: pointer;
@@ -388,6 +389,8 @@
   }
   .settings-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .settings-btn:active { background: var(--line); }
+  .theme-btn svg { display: none; }
+  .theme-btn:not([data-mode]) .ico-system, .theme-btn[data-mode="system"] .ico-system, .theme-btn[data-mode="light"] .ico-light, .theme-btn[data-mode="dark"] .ico-dark { display: block; }
   .bottom-nav-wrap {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 800;
     background: var(--paper); border-top: 1px solid var(--line);

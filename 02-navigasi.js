@@ -81,6 +81,7 @@
         renderMonthInsights(data);
         renderBudgetCard(data);
         renderSubscriptionCard(data);
+        renderEmergencyCard(data, balances);
         renderCategoryChart(data);
         renderTrendChart(data);
         renderCashflowChart(data);
@@ -176,8 +177,14 @@
     } else {
       document.documentElement.removeAttribute('data-theme');
     }
+    // Tombol di header (sebelah ikon Profil): ikon mengikuti mode lewat data-mode (lihat CSS .theme-btn)
     const btn = $('theme-toggle-btn');
-    if (btn) btn.textContent = THEME_LABELS[mode] || THEME_LABELS.system;
+    if (btn) {
+      const m = THEME_LABELS[mode] ? mode : 'system';
+      btn.dataset.mode = m;
+      btn.setAttribute('aria-label', THEME_LABELS[m]);
+      btn.title = THEME_LABELS[m];
+    }
   }
 
   function cycleTheme() {
