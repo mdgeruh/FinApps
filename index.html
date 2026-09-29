@@ -194,6 +194,13 @@
         <span><i style="background: var(--red)"></i>Pengeluaran</span>
       </div>
     </div>
+
+    <div class="chart-card" id="debt-trend-card">
+      <div class="section-title" style="margin-bottom:6px;">Tren total utang (6 bulan terakhir)</div>
+      <div class="acc-sub u-mb6" id="debt-trend-summary"></div>
+      <svg id="debt-trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="acc-sub u-mt4">Jumlah utang kartu kredit, PayLater, dan pinjaman di akhir tiap bulan, sesuai saldo yang tercatat.</div>
+    </div>
   </div>
 
   <div class="tab-panel" id="tab-akun">
@@ -382,6 +389,13 @@
             </div>
           </div>
           <div class="acc-sub" style="margin-top:-2px;">Opsional: dipakai untuk jadwal angsuran & pengingat jatuh tempo. Kalau tgl jatuh tempo kosong, dipakai tanggal pencairan.</div>
+          <div class="u-flex-gap8">
+            <div class="u-flex1-min0"><span class="field-label">Denda telat (%/hari)</span>
+              <input class="u-w100" type="number" id="acc-loan-latefee-input" placeholder="mis. 0,5" inputmode="decimal" step="any" min="0" aria-label="Denda keterlambatan, persen per hari dari angsuran, opsional"></div>
+            <div class="u-flex1-min0"><span class="field-label">Maks denda (% angsuran)</span>
+              <input class="u-w100" type="number" id="acc-loan-latefee-cap-input" placeholder="kosong = tanpa batas" inputmode="decimal" step="any" min="0" aria-label="Batas total denda per angsuran dalam persen, opsional"></div>
+          </div>
+          <div class="acc-sub" style="margin-top:-2px;">Opsional: perkiraan denda = angsuran yang telat × persen × jumlah hari telat. Hanya perkiraan, tidak mengubah saldo.</div>
           <div>
             <span class="field-label" id="acc-loan-installment-label">Angsuran per bulan (pokok + bunga)</span>
             <input class="u-w100" type="number" id="acc-loan-installment-input" placeholder="Rp, opsional, terisi otomatis saat catat angsuran" inputmode="numeric" data-input-act="onInstallmentManualInput" aria-label="Angsuran per bulan, pokok ditambah bunga, Rupiah">
@@ -490,6 +504,14 @@
         <div id="asset-val-history"></div>
       </div>
       <div id="acc-detail-pay" style="display:none; margin-bottom:18px;"></div>
+      <div id="acc-detail-recon" style="display:none; margin-bottom:18px;">
+        <div class="section-title">Cocokkan saldo</div>
+        <div class="acc-sub u-mb8">Isi saldo asli (mis. dari mutasi bank atau isi dompet). Selisihnya bisa dicatat sebagai penyesuaian yang tidak dihitung sebagai pemasukan/pengeluaran.</div>
+        <div class="field-row"><input class="u-w100" type="number" id="recon-actual-input" inputmode="decimal" placeholder="Saldo asli sekarang (Rp)" aria-label="Saldo asli sekarang"></div>
+        <div id="recon-result" class="acc-sub"></div>
+        <div class="acc-form-actions"><button type="button" class="io-btn" data-act="reconcileCheck">Cek selisih</button><button type="button" class="submit-btn" id="recon-apply-btn" style="display:none;" data-act="reconcileApply">Catat penyesuaian</button></div>
+        <div id="recon-msg" class="io-msg"></div>
+      </div>
       <div class="acc-form-actions" style="margin-bottom:18px;">
         <button class="io-btn" data-act="editAccountFromDetail">Edit akun</button>
         <button class="io-btn danger" data-act="deleteAccountFromDetail">Hapus akun</button>
@@ -662,6 +684,8 @@
       <div class="section-title-row" style="margin-bottom:6px;"><div class="section-title">Kalender tagihan bulanan</div></div>
       <div class="acc-sub u-mb10">Total tagihan tiap bulan ke depan dari semua akun (pinjaman, kartu kredit, PayLater). Ketuk satu bulan untuk lihat rinciannya per akun.</div>
       <div id="tagihan-calendar-list"></div>
+      <div class="io-row u-mt8"><button type="button" class="io-btn" data-act="exportBillsIcs">Ekspor ke kalender (.ics)</button></div>
+      <div id="tagihan-ics-msg" class="io-msg"></div>
     </div>
   </div>
 
@@ -1012,6 +1036,10 @@
 <script src="10c-langganan.js"></script>
 <script src="10d-changelog.js"></script>
 <script src="10e-dana-darurat.js"></script>
+<script src="10f-tren-utang.js"></script>
+<script src="10g-denda-telat.js"></script>
+<script src="10h-ics-tagihan.js"></script>
+<script src="10i-rekonsiliasi.js"></script>
 <script src="11-laporan.js"></script>
 <script src="11b-laporan-utang.js"></script>
 <script src="11c-laporan-proyeksi.js"></script>

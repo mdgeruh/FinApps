@@ -2,9 +2,9 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.063** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.067** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
-Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
+Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
 ---
 
@@ -24,7 +24,7 @@ Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 - [Keterbatasan yang Perlu Diketahui](#keterbatasan-yang-perlu-diketahui)
 - [Ide yang Belum Dibuat](#ide-yang-belum-dibuat)
 - [Struktur Kode (untuk yang mau modifikasi)](#struktur-kode-untuk-yang-mau-modifikasi)
-- [Penomoran Versi](#penomoran-versi)
+- [Penomoran Versi & Cara Rilis](#penomoran-versi--cara-rilis)
 
 ---
 
@@ -64,13 +64,13 @@ Header menampilkan sapaan sesuai jam (GMT+8), tanggal singkat, ikon tampilan (si
 
 | Tab | Isi |
 |---|---|
-| **Ringkasan** | Kartu total kekayaan bersih, saldo per kategori, pengingat jatuh tempo (7/30/90 hari/1 tahun), transaksi terbaru, insight bulanan, grafik tren, kurva kekayaan bersih, cashflow, dan breakdown kategori pemasukan/pengeluaran (pie chart). Kartu yang ditampilkan bisa diatur lewat tab Data. |
-| **Akun** | Daftar semua akun dikelompokkan per tipe, dengan progress bar untuk akun berlimit (kartu kredit/pinjaman). Tambah/edit/hapus akun, buka detail akun (saldo, riwayat, jadwal cicilan, dll). |
+| **Ringkasan** | Kekayaan bersih, saldo per kategori, nilai akun, transaksi terbaru, insight bulanan, grafik (tren, kekayaan bersih, cashflow, kategori), serta kartu **Anggaran per kategori** (batas bulanan, peringatan 80%/100%), **Langganan berulang** (dicatat otomatis tiap bulan), **Dana darurat** (target dalam bulan pengeluaran), dan **Tren total utang** (6 bulan). Tiap kartu bisa disembunyikan lewat Profil > Tampilan Ringkasan; kartu yang belum ada datanya tersembunyi sendiri. |
+| **Akun** | Daftar semua akun dikelompokkan per tipe, dengan progress bar untuk akun berlimit (kartu kredit/pinjaman). Tambah/edit/hapus akun, buka detail akun (saldo, riwayat, jadwal cicilan, dll). Akun kas/bank/e-wallet punya bagian **Cocokkan saldo** (rekonsiliasi): isi saldo asli, lihat selisihnya, dan catat sebagai transaksi kategori *Penyesuaian saldo* yang tidak dihitung sebagai pemasukan/pengeluaran. |
 | **Transaksi** | Catat pemasukan/pengeluaran/transfer. Filter per akun, tipe, bulan, dan pencarian teks. Edit & hapus transaksi individual. Daftar dimuat bertahap (80 per halaman, tombol "Muat lebih banyak") supaya tetap ringan walau jurnalnya sudah panjang. |
 | **Titipan** | Catat uang yang dititipkan/dibelanjakan untuk orang lain, atau uang yang diterima dari orang lain — tanggalnya bisa diubah untuk catat titipan bulan yang sudah lewat. Ringkasan siapa berutang & siapa dititipi lebih. Tombol **Lunasi sekarang** untuk melunasi penuh dalam satu klik. |
 | **Laporan** | Ringkasan per periode (harian s.d. alltime/custom): total masuk-keluar, breakdown kategori, tren, perbandingan periode lalu, plus kartu utang: **Rincian utang, Proyeksi kas, Total biaya utang, Simulasi pelunasan, dan Saran**. Kartu utang berbentuk baris ringkas yang bisa diketuk untuk detail. Export ke PDF (print) otomatis membuka semua baris. Lihat [Tab Laporan](#tab-laporan-utang-proyeksi--simulasi). |
-| **Tagihan** | Pengingat jatuh tempo (kartu kredit, PayLater, pinjaman) dan kalender tagihan bulanan ke depan yang menggabungkan semua akun berutang. Ketuk satu bulan untuk rincian per akun. |
-| **Profil** *(ikon orang di header)* | Nama pemilik (awalan nama file export), akun sinkron (email, ubah email/kata sandi, masuk/keluar), dan **Pengaturan data lanjutan**: tampilan Ringkasan, data contoh, export/import JSON & CSV, reset (semua dengan backup otomatis sebelum aksi yang merusak data). |
+| **Tagihan** | Pengingat jatuh tempo 7/30/90 hari/1 tahun (kartu kredit, PayLater, pinjaman) dan kalender tagihan bulanan ke depan yang menggabungkan semua akun berutang. Ketuk satu bulan untuk rincian per akun. Tombol **Ekspor ke kalender (.ics)** membuat file kalender berisi semua tagihan 12 bulan ke depan (satu event sehari penuh per tagihan, pengingat H-1) untuk diimpor ke Google Calendar/Apple Kalender. |
+| **Profil** *(ikon orang di header)* | Nama pemilik (awalan nama file export), akun sinkron (email, ubah email/kata sandi, masuk/keluar), dan **Pengaturan data lanjutan**: tampilan Ringkasan, data contoh, export/import JSON & CSV, reset (semua dengan backup otomatis sebelum aksi yang merusak data). Tombol **?** membuka riwayat perubahan ringkas untuk pengguna. |
 
 ---
 
@@ -82,8 +82,8 @@ Header menampilkan sapaan sesuai jam (GMT+8), tanggal singkat, ikon tampilan (si
 | **Aset** *(emas, kendaraan, properti, investasi, forex, kripto, dll.)* | **Tidak** dicatat lewat masuk/keluar harian — nilainya berdasarkan **valuasi periodik** yang kamu update manual. Beli/jual tambahan dicatat lewat Transfer. Lihat detail di bagian [Akun Aset](#akun-aset--termasuk-forex--crypto-futures). |
 | **Kartu Kredit** | Pengeluaran otomatis nambah tagihan; ada limit, tanggal cetak tagihan, bunga, dan skema pembayaran minimum. |
 | **PayLater** | Mirip kartu kredit, mendukung cicilan flat dengan tenor & bunga per rencana. |
-| **Pinjaman Bank** | Melacak sisa pokok, bunga (flat/menurun), jadwal jatuh tempo, biaya admin & materai. Panel "Catat pembayaran" di detail akun punya field tanggal sendiri — bisa dipakai untuk mencatat angsuran bulan-bulan yang sudah lewat, bukan cuma hari ini. |
-| **Pinjaman Online** | Bunga selalu flat, angsuran dihitung otomatis dari pokok, tenor, dan bunga. Mendukung biaya admin (dipotong saat cair atau dicicil) dan asuransi/proteksi opsional. Lihat [Pinjaman Online](#pinjaman-online-pinjol). |
+| **Pinjaman Bank** | Melacak sisa pokok, bunga (flat/menurun), jadwal jatuh tempo, biaya admin & materai, dan (opsional) denda telat. Panel "Catat pembayaran" di detail akun punya field tanggal sendiri — bisa dipakai untuk mencatat angsuran bulan-bulan yang sudah lewat, bukan cuma hari ini. |
+| **Pinjaman Online** | Bunga selalu flat, angsuran dihitung otomatis dari pokok, tenor, dan bunga. Mendukung biaya admin (dipotong saat cair atau dicicil), asuransi/proteksi opsional, dan denda telat opsional. Lihat [Pinjaman Online](#pinjaman-online-pinjol). |
 | **Titipan / Piutang** | Satu akun per orang. Saldo positif = orang itu berutang ke kamu; saldo negatif = kamu yang "berutang" (memegang titipan lebih dari mereka). Lihat [Titipan / Piutang](#titipan--piutang). |
 
 Total **kekayaan bersih** otomatis menjumlahkan semua tipe di atas dengan tanda yang benar (piutang dihitung sebagai aset, sisa hutang & titipan lebih dihitung sebagai kewajiban).
@@ -231,48 +231,46 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config
 
 - **Satu mata uang (Rupiah)** — tidak ada dukungan multi-currency asli; forex/kripto ditangani lewat trik "harga per satuan = kurs", bukan konversi otomatis
 - **Tidak ada kurs/harga live** — semua update valuasi aset dilakukan manual
-- **Tanpa sinkron cloud, data lokal per-browser** — tidak sinkron antar perangkat; kalau ganti HP/laptop, export dari yang lama lalu import di yang baru
-- **Mode privat/incognito** bisa menghapus data begitu jendela ditutup — hindari untuk pemakaian jangka panjang
 - **Asuransi pinjol** dihitung sebagai persen per bulan dari pokok awal. Kalau aplikasi pinjolmu memakai skema lain (misalnya sekali di awal), pakai kolom angsuran manual
-- **Denda keterlambatan** pinjol belum dihitung otomatis
+- **Denda keterlambatan** (persen per hari + batas maksimal, diisi per akun pinjaman) hanya **perkiraan**: tidak mengubah saldo dan tidak membuat transaksi. Kalau denda benar-benar ditagih, catat sendiri sebagai pengeluaran
+- **Ekspor kalender (.ics)** berupa snapshot, bukan langganan: kalau tagihan berubah, ekspor ulang
+- **Rekonsiliasi saldo** hanya untuk akun kas/bank/e-wallet; aset memakai valuasi, akun utang memakai jadwal
 - **Proyeksi kas** hanya menghitung tagihan & angsuran yang sudah terjadwal. Pemasukan (gaji dll.), belanja harian, dan tagihan kartu yang belum dicetak belum ikut
 - **Simulasi pelunasan** memakai bunga bulanan sederhana dan tidak memasukkan belanja baru di kartu/PayLater
-- Fitur unduh file (`downloadsCap`) memakai capability opsional (`claude.use('downloads')`) kalau tersedia di lingkungan tempat file ini dijalankan; kalau tidak tersedia, otomatis jatuh ke unduhan file browser biasa — tidak ada langkah tambahan yang perlu dilakukan
 
 ---
 
 ## Ide yang Belum Dibuat
 
-- Tren total utang per bulan (grafik naik/turun)
-- Dana darurat: saldo likuid setara berapa bulan pengeluaran
-- Pencatatan denda keterlambatan terpisah
-- Anggaran per kategori dengan target bulanan dan daftar langganan berulang
-- Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal, serta rekonsiliasi saldo
-- Akun forex dalam USD/cent dengan kurs
+- Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
+- Layout desktop tahap 3 dan akun forex USD/cent dengan kurs
+
+Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](SUMMARY.md).
 
 ---
 
 ## Struktur Kode (untuk yang mau modifikasi)
 
-JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua berbagi scope global, jadi urutannya penting). Penanda komentar `====` ada di tiap bagian:
+JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua berbagi scope global, jadi **urutan `<script>` penting**). File baru harus didaftarkan di `index.html`, `APP_SHELL` di `sw.js`, dan daftar file di `tests/run.js` kalau fungsinya dites.
 
-1. Konfigurasi & state terpusat
-2. Lapisan data (load/save, kalkulasi saldo)
-3. Navigasi, header & aksi cepat
-4. Form transaksi
-5. Akun (rekening/kas/kartu)
-6. Titipan / piutang
-7. Util UI (modal, toast, format tanggal)
-8. Render: ringkasan akun & daftar transaksi
-9. Render: titipan/piutang
-10. Grafik (SVG): tren, net worth, cashflow, kategori
-11. Render: beranda
-12. Tab laporan
-13. Render utama (entry point: `render()`)
-14. Import / export / reset data
-15. Sinkron cloud (`14-sync.js`) dan startup (`15-startup.js`, dijalankan terakhir)
-
-Nomor di atas mengikuti komentar `STRUKTUR FILE INI` di `01-data.js`; file JS di folder memakai awalan `00`–`15`. Dua modul besar dipecah dengan akhiran huruf, dimuat berurutan tepat sesudah file induknya: Akun = `04-akun.js` (form, simpan, hapus) → `04b-akun-detail.js` (modal detail akun) → `04c-akun-aset-tagihan.js` (nilai aset, bayar kartu/PayLater, pembayaran pinjaman, `addTxn`); Laporan = `11-laporan.js` (filter periode, breakdown) → `11b-laporan-utang.js` (rincian utang, saran) → `11c-laporan-proyeksi.js` (proyeksi kas, biaya utang, simulasi pelunasan). Urutan `<script>` di `index.html` dan daftar `APP_SHELL` di `sw.js` harus ikut. Kode yang memanggil fungsi dari file lain harus ada di `15-startup.js`.
+| File | Isi |
+|---|---|
+| `00-config` | Konfigurasi dan state terpusat (`SUPABASE_URL`/key di sini) |
+| `01-data` | Lapisan data: load/save, saldo, pinjaman/anuitas, jadwal, kalender tagihan, arus utang |
+| `02-navigasi` | Navigasi, header, sapaan, aksi cepat, pengingat jatuh tempo |
+| `03-form-transaksi`, `05-form-titipan` | Form transaksi dan form titipan |
+| `04-akun`, `04b-akun-detail`, `04c-akun-aset-tagihan` | Akun: form dan simpan, modal detail, nilai aset + bayar kartu/PayLater/pinjaman + `addTxn` |
+| `06-util-ui` | Util UI (modal, toast, format, custom select) dan `dispatchDelegated()` |
+| `07-render-akun-transaksi`, `08-render-titipan` | Render tab Akun/Transaksi/Tagihan dan tab Titipan |
+| `09-grafik` | Grafik SVG dan pengaturan kartu Ringkasan |
+| `10-render-beranda` | Tab Ringkasan |
+| `10b-anggaran`, `10c-langganan`, `10e-dana-darurat`, `10f-tren-utang` | Kartu Ringkasan: anggaran, langganan berulang, dana darurat, tren utang |
+| `10d-changelog` | Riwayat perubahan di tombol `?` (`CHANGELOG_ENTRIES`) |
+| `10g-denda-telat`, `10h-ics-tagihan`, `10i-rekonsiliasi` | Perkiraan denda telat, ekspor `.ics`, rekonsiliasi saldo |
+| `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
+| `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
+| `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
+| `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 58 test unit |
 
 Titik masuk yang sering dipakai saat memodifikasi:
 
@@ -280,28 +278,31 @@ Titik masuk yang sering dipakai saat memodifikasi:
 |---|---|
 | Rumus bunga/angsuran pinjaman | `computeLoanMonthlyInterest`, `computeOnlineInstallment`, `loanMonthlyFees`, `computeLoanSchedule`, `computeLoanRemaining` |
 | Form akun pinjol | `updateAccFormFields`, `updateOnlineLoanEstimate`, `saveAccount` |
-| Kartu-kartu di Laporan | `renderLaporanExtra` (`11-laporan.js`), `laporanDebtDetailHtml`, `laporanAdviceHtml` (`11b-laporan-utang.js`), `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate` (`11c-laporan-proyeksi.js`) |
+| Kartu-kartu di Laporan | `renderLaporanExtra` (`11c-laporan-proyeksi.js`), `laporanDebtDetailHtml`, `laporanAdviceHtml` (`11b-laporan-utang.js`), `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate` (`11c-laporan-proyeksi.js`) |
 | Nomor versi di footer | konstanta `APP_VERSION`, `APP_BUILD` (`12-render-utama.js`) |
 | Nama pemilik (awalan file export) & sapaan | `getOwnerName`, `setOwnerName` (`01-data.js`), `updateGreeting` (`02-navigasi.js`), `saveOwnerNameFromInput` (`02-navigasi.js`) |
+| Denda telat, `.ics`, rekonsiliasi | `computeLateFees` (`10g-`), `buildBillsIcs` (`10h-`), `computeReconcileDiff` (`01-data.js`) dan `reconcileCheck`/`reconcileApply` (`10i-`) |
 | Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush` (`14-sync.js`), konfigurasi di `00-config.js` |
 | Penanganan data rusak | `loadData`, `handleCorruptData` (`01-data.js`) |
-| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment` (`04c-akun-aset-tagihan.js`), `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11-laporan.js`) |
+| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment` (`04c-akun-aset-tagihan.js`), `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11c-laporan-proyeksi.js`) |
 
 ---
 
-## Penomoran Versi
+## Penomoran Versi & Cara Rilis
 
-Nomor versi ada di konstanta `APP_VERSION` dan tampil di footer (`v1.1.NNN`). Nomor `NNN` naik tiap ada revisi. Detail per versi ada di [CHANGELOG.md](CHANGELOG.md).
+Nomor versi ada di `APP_VERSION` (`v1.1.NNN`) dan tampil di kartu atas tab Profil. `NNN` naik tiap batch perubahan. Detail per versi: [CHANGELOG.md](CHANGELOG.md).
 
-### Cara rilis
+**Checklist rilis** (semua dokumen ikut diperbarui tiap ada perubahan kode):
 
 1. Naikkan `APP_VERSION` dan `APP_BUILD` (`12-render-utama.js`) **dan** `CACHE_VERSION` (`sw.js`) ke nomor yang sama.
-2. Tambah entri di [CHANGELOG.md](CHANGELOG.md) dan centang item di [SUMMARY.md](SUMMARY.md).
-3. Jalankan `node tests/run.js` (semua test harus lulus) dan buka semua tab di browser.
-4. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
+2. File JS baru: daftarkan di `index.html`, `APP_SHELL` (`sw.js`), dan `tests/run.js` (kalau dites).
+3. Dokumen: entri di [CHANGELOG.md](CHANGELOG.md) (teknis) dan `CHANGELOG_ENTRIES` di `10d-changelog.js` (bahasa awam, hanya entri terbaru per tanggal yang tampil); tandai [SUMMARY.md](SUMMARY.md) (todolist + hasil uji); perbarui README kalau fitur, struktur file, atau batasan berubah.
+4. Jalankan `node tests/run.js` (semua harus lulus), cek sintaks tiap file (`node --check`), lalu buka semua tab di browser.
+5. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
 
-Sejak v1.1.053 handler klik/input/change yang berupa satu panggilan fungsi sederhana memakai event delegation (`dispatchDelegated()` di `06-util-ui.js`): tulis `data-act="namaFungsi" data-a0="teks" data-n1="123"` (klik) atau `data-input-act` / `data-change-act` (argumen `data-input-a0`, `data-change-n0`, dst.), bukan `onclick="..."`. `data-a<i>` berarti argumen teks, `data-n<i>` argumen angka. Atribut tambahan: `data-stop="1"` (berhenti setelah handler elemen ini, pengganti `event.stopPropagation()`), `data-<event>-with-event="1"` (event asli jadi argumen terakhir), `data-keydown-keys="Enter| "` (tombol yang diterima), `data-keydown-stop="1"` (menahan keydown), dan `data-backdrop="namaFungsi"` (klik tepat di latar modal). Handler yang butuh beberapa perintah dibungkus fungsi kecil di bagian akhir `06-util-ui.js`. Satu-satunya handler inline yang tersisa: tombol hapus di daftar transaksi tab Transaksi (`12-render-utama.js`), karena baris induknya memakai `row.onclick`.
+**Konvensi kode**
+- **Event delegation:** tulis `data-act="namaFungsi" data-a0="teks" data-n1="123"` (klik) atau `data-input-act` / `data-change-act` (argumen `data-input-a0`, `data-change-n0`, dst.), bukan `onclick="..."`. `data-a<i>` argumen teks, `data-n<i>` argumen angka. Atribut tambahan: `data-stop="1"` (berhenti setelah handler elemen ini) dan `data-backdrop` untuk menutup sheet. Ditangani `dispatchDelegated()` di `06-util-ui.js`.
+- **Kelas utilitas:** `style.css` punya `u-*` (mis. `u-mb8`, `u-w100`) di bagian bawah untuk margin/lebar sederhana; pakai itu alih-alih inline style baru. Kelas utilitas kalah oleh aturan yang lebih spesifik (mis. `#tab-laporan .section-title`).
+- **Transaksi non-operasional:** pembayaran utang, pencairan pinjaman, dan Penyesuaian saldo dikecualikan dari pemasukan/pengeluaran lewat `isNonOperatingTxn` (`01-data.js`); pakai helper itu untuk filter baru.
 
-Sejak v1.1.052 `style.css` punya kelas utilitas `u-*` (mis. `u-mb8`, `u-w100`, `u-flex1-min0`) di bagian paling bawah, dipakai menggantikan `style=""` inline yang berulang; pakai kelas ini untuk margin/lebar sederhana alih-alih menambah inline style baru. Kelas utilitas kalah oleh aturan yang lebih spesifik (mis. `#tab-laporan .section-title`), jadi jangan dipasang di elemen yang margin-nya diatur aturan seperti itu.
-
-File baru sejak v1.1.049: `sw.js`, `supabase/setup.sql`, `tests/run.js`. Sejak v1.1.050 paket juga menyertakan `manifest.json` dan ikon (`icon-192/512.png`, `icon-maskable-192/512.png`). Sejak v1.1.051 ada empat file JS baru hasil pemecahan (`04b-`, `04c-`, `11b-`, `11c-`); saat menimpa versi lama, salin semua file zip termasuk keempat file baru itu (`04-akun.js` dan `11-laporan.js` namanya tetap, isinya kini lebih pendek).
+**Memasang paket zip:** timpa file lama dengan isi zip. Zip parsial hanya berisi file yang berubah; paket lengkap juga berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan empat ikon. Salin semua file JS baru (mis. `04b-`, `04c-`, `11b-`, `11c-`, `10b-` s.d. `10i-`).

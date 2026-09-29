@@ -5,7 +5,7 @@
   // Ambang peringatan: 80% (kuning), 100% (merah).
   // ============================================================
   const BUDGET_WARN_PCT = 80;
-  const BUDGET_EXCLUDED = ['Cicilan/utang']; // sudah tercatat sebagai arus utang, bukan pengeluaran
+  const BUDGET_EXCLUDED = ['Cicilan/utang', 'Penyesuaian saldo']; // sudah tercatat sebagai arus utang, bukan pengeluaran
 
   function budgetCategories() { return CATEGORIES.keluar.filter(c => BUDGET_EXCLUDED.indexOf(c) < 0); }
 
@@ -25,7 +25,7 @@
     const budgets = sanitizeBudgets(data && data.budgets);
     const spent = {};
     ((data && data.txns) || []).forEach(t => {
-      if (t.type !== 'keluar' || isDebtFlowTxn(t) || monthKeyFromDate(t.date) !== monthKey) return;
+      if (t.type !== 'keluar' || isNonOperatingTxn(t) || monthKeyFromDate(t.date) !== monthKey) return;
       if (budgets[t.category] === undefined) return;
       spent[t.category] = (spent[t.category] || 0) + t.amount;
     });

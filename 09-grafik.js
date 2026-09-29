@@ -26,7 +26,7 @@
       let inSum = 0, outSum = 0;
       data.txns.forEach(t => {
         if (monthKeyFromDate(t.date) !== key) return;
-        if (isDebtFlowTxn(t)) return;
+        if (isNonOperatingTxn(t)) return;
         if (t.type === 'masuk') inSum += t.amount;
         else if (t.type === 'keluar') outSum += t.amount;
       });
@@ -358,7 +358,8 @@
     { id: 'networth-chart-card', label: 'Kurva kekayaan bersih' },
     { id: 'cashflow-chart-card', label: 'Kurva cashflow' },
     { id: 'category-chart-card', label: 'Kategori bulan ini' },
-    { id: 'trend-chart-card', label: 'Pemasukan vs pengeluaran (6 bulan)' }
+    { id: 'trend-chart-card', label: 'Pemasukan vs pengeluaran (6 bulan)' },
+    { id: 'debt-trend-card', label: 'Tren total utang' }
   ];
   const RINGKASAN_HIDDEN_KEY = 'keuangan-ringkasan-hidden-v1';
   function loadHiddenCards() {
@@ -375,13 +376,14 @@
     const hidden = new Set(loadHiddenCards());
     const now = todayGmt8();
     const curKey = now.getFullYear() + '-' + padMonth(now.getMonth() + 1);
-    const monthReal = data.txns.filter(t => monthKeyFromDate(t.date || '') === curKey && !isDebtFlowTxn(t));
+    const monthReal = data.txns.filter(t => monthKeyFromDate(t.date || '') === curKey && !isNonOperatingTxn(t));
     const sixKeys = new Set();
     for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); sixKeys.add(d.getFullYear() + '-' + padMonth(d.getMonth() + 1)); }
     const empty = {
       'more-insight-card': !monthReal.some(t => t.type === 'keluar'),
       'category-chart-card': monthReal.length === 0,
-      'trend-chart-card': !data.txns.some(t => sixKeys.has(monthKeyFromDate(t.date || '')) && !isDebtFlowTxn(t) && (t.type === 'masuk' || t.type === 'keluar')),
+      'trend-chart-card': !data.txns.some(t => sixKeys.has(monthKeyFromDate(t.date || '')) && !isNonOperatingTxn(t) && (t.type === 'masuk' || t.type === 'keluar')),
+      'debt-trend-card': !data.accounts.some(a => TYPE_DEBT[a.type]),
       'networth-chart-card': data.txns.length === 0,
       'cashflow-chart-card': data.txns.length === 0
     };
@@ -732,7 +734,7 @@
 
     const now = todayGmt8();
     const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    const monthTxns = data.txns.filter(t => t.type === state.categoryChartType && monthKeyFromDate(t.date) === curMonthKey && (t.type === 'transfer' || !isDebtFlowTxn(t)));
+    const monthTxns = data.txns.filter(t => t.type === state.categoryChartType && monthKeyFromDate(t.date) === curMonthKey && (t.type === 'transfer' || !isNonOperatingTxn(t)));
 
     const sums = {};
     monthTxns.forEach(t => {

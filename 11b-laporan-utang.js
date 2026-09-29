@@ -69,7 +69,7 @@
     const today = todayStr();
     const d0 = new Date(today + 'T00:00:00'); d0.setDate(d0.getDate() - 90);
     const from = d0.getFullYear() + '-' + padMonth(d0.getMonth() + 1) + '-' + padMonth(d0.getDate());
-    const inc = data.txns.filter(t => t.type === 'masuk' && !isDebtFlowTxn(t) && t.date >= from && t.date <= today);
+    const inc = data.txns.filter(t => t.type === 'masuk' && !isNonOperatingTxn(t) && t.date >= from && t.date <= today);
     if (!inc.length) return 0;
     const firstAny = data.txns.reduce((m, t) => (t.date && t.date < m) ? t.date : m, today);
     const startD = firstAny > from ? firstAny : from;
@@ -209,6 +209,13 @@
       add('red', late.length + ' tagihan lewat jatuh tempo',
         late.map(d => escapeHtml(d.name) + ' ' + formatRp(d.amount) + ' (lewat ' + (-d.days) + ' hari)').join('<br>') + '<br>Bayar ini paling dulu supaya denda dan catatan kredit (SLIK) tidak makin buruk.');
     }
+    // Perkiraan denda keterlambatan pinjaman (hanya kalau persen denda diisi di akun)
+    an.online.concat(an.bank).forEach(c => {
+      const lf = computeLateFees(c.acc, c.sch);
+      if (!lf || !(lf.total > 0)) return;
+      add('red', 'Perkiraan denda ' + escapeHtml(c.acc.name) + ' ' + formatRp(lf.total),
+        lf.items.length + ' angsuran telat (' + escapeHtml(lateFeeRuleText(lf)) + '). Ini hanya perkiraan; nominal sebenarnya mengikuti aturan pemberi pinjaman. Bayar angsuran yang telat paling dulu supaya denda tidak terus bertambah.');
+    });
     // Dana likuid vs tagihan 30 hari
     if (an.due30 > 0 && an.liquid < an.due30) {
       add('red', 'Dana 30 hari kurang ' + formatRp(an.due30 - an.liquid),

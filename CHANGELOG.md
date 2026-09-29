@@ -1,6 +1,61 @@
 # Changelog
 
-Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
+Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` (footer app di tab Profil).
+
+- **v1.1.059 ke atas:** dicatat lengkap di bawah.
+- **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
+- Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
+
+## v1.1.067 — 29 Sep 2026
+
+**Ditambah**
+- **Rekonsiliasi saldo** (`10i-rekonsiliasi.js` baru, `01-data.js`, `04b-akun-detail.js`, `index.html`): bagian "Cocokkan saldo" di detail akun bertipe kas, bank, dan e-wallet (`RECONCILE_TYPES`; aset punya penilaian sendiri, akun utang punya jadwal). Isi saldo asli, "Cek selisih" menampilkan saldo app, saldo asli, dan selisih (`computeReconcileDiff` = asli − app, 2 desimal, fungsi murni). Kalau berbeda, tombol "Catat penyesuaian" membuat satu transaksi hari ini (masuk kalau selisih positif, keluar kalau negatif) berkategori **Penyesuaian saldo** (`RECONCILE_CATEGORY`, ditambahkan ke kategori masuk dan keluar). Tidak ada yang tercatat tanpa ketukan tombol; selisih dihitung ulang dari data terbaru saat tombol ditekan
+- **Penyesuaian bukan pemasukan/pengeluaran**: helper baru `isNonOperatingTxn` = `isDebtFlowTxn` atau kategori penyesuaian. 17 pemanggil filter "pemasukan/pengeluaran sungguhan" (Ringkasan, grafik, Laporan, anggaran) kini memakainya. `isDebtFlowTxn` sengaja tidak diubah supaya `debtFlowsOf` tidak menghitung penyesuaian sebagai bayar/pencairan utang. Kategori ini masuk `BUDGET_EXCLUDED` (tidak bisa dianggarkan)
+- **4 test baru** (total 58)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.067, sudah memuat ekspor `.ics` dari v1.1.066 karena hanya entri terbaru per tanggal yang tampil); `sw.js`: `10i-rekonsiliasi.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.067`
+- README: versi, deskripsi detail akun, dan "Ide yang Belum Dibuat"
+- **Dokumen dirapikan (tanpa perubahan kode)**: `CHANGELOG.md` dipadatkan (v1.1.058 ke bawah jadi ringkasan satu baris; teks lengkap dipindah tanpa diubah ke `CHANGELOG-ARSIP.md`, 68 KB → 29 KB); `SUMMARY.md` dipadatkan (hasil uji per versi jadi satu tabel, todolist dikelompokkan: perlu kamu jalankan / butuh keputusan / ditunda / selesai); README: kartu Ringkasan baru, batasan denda/`.ics`/rekonsiliasi diperbarui, daftar modul bernomor diganti tabel per file, rujukan fungsi dikoreksi (`renderLaporanExtra` ada di `11c-`), dan bagian rilis jadi checklist + konvensi kode
+- **Dokumen: usulan perbaikan tab Ringkasan (R1–R9) masuk `SUMMARY.md` sebagai prioritas** (belum dikerjakan); README dikoreksi: pengingat jatuh tempo ada di tab Tagihan, bukan Ringkasan
+
+**Pengujian**: 58 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** bagian "Cocokkan saldo" di browser/HP, dan tampilan transaksi penyesuaian di daftar Transaksi serta Laporan dengan data nyata
+
+## v1.1.066 — 29 Sep 2026
+
+**Ditambah**
+- **Ekspor kalender tagihan ke `.ics`** (`10h-ics-tagihan.js` baru, `index.html`, `sw.js`): tombol "Ekspor ke kalender (.ics)" di kartu Kalender tagihan (tab Tagihan) mengunduh file iCalendar berisi semua item `computeBillCalendar` 12 bulan ke depan. Satu `VEVENT` sehari penuh per item (`DTSTART;VALUE=DATE`, `DTEND` = hari berikutnya), judul "Tagihan {akun} · {jumlah}", deskripsi berisi label dan jumlah, `TRANSP:TRANSPARENT` (tidak menandai waktu sibuk), dan `VALARM` `-P1D` (pengingat H-1). `UID` deterministik (`tagihan-{akunId}-{tanggal}-{urutan}@keuangan-pribadi`) supaya impor ulang ke kalender yang sama tidak menggandakan event di kebanyakan aplikasi kalender. Teks di-escape (`\\`, `;`, `,`, baris baru) dan baris dilipat maks 75 karakter sesuai RFC 5545. `buildBillsIcs(months, stamp)` fungsi murni; `exportBillsIcs()` memakai pola unduh yang sama dengan `exportCsv` (`downloadsCap` dulu, lalu `Blob`). Pesan hasil tampil di `#tagihan-ics-msg`. Snapshot: file tidak berlangganan, jadi kalau tagihan berubah, ekspor ulang
+- **4 test baru** (total 54)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.066); `sw.js`: `10h-ics-tagihan.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.066`
+- README: versi, deskripsi tab Tagihan, dan daftar "Ide yang Belum Dibuat" dibersihkan (tren utang, dana darurat, denda, anggaran, langganan sudah dibuat)
+
+**Pengujian**: 54 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tombol dan unduhan di browser/HP, serta impor file `.ics` ke Google Calendar/Apple Kalender
+
+## v1.1.065 — 29 Sep 2026
+
+**Ditambah**
+- **Perkiraan denda keterlambatan pinjaman** (`10g-denda-telat.js` baru, `index.html`, `04-akun.js`, `04b-akun-detail.js`, `11b-laporan-utang.js`, `13-import-export.js`): dua field opsional di form akun pinjaman (bank dan online): **Denda telat (%/hari)** = `loanLateFeePercent` dan **Maks denda (% angsuran)** = `loanLateFeeCapPercent` (kosong = tanpa batas). Denda per angsuran berstatus `telat` = angsuran × persen × hari telat, dibatasi cap (`computeLateFees`, fungsi murni). Tampil di detail akun (catatan merah di atas jadwal, jumlah hari telat dan perkiraan denda per baris) dan sebagai peringatan merah di Laporan
+- **Hanya perkiraan**: tidak mengubah saldo dan tidak membuat transaksi; kalau denda benar-benar ditagih, catat sendiri sebagai pengeluaran. Nilai dirapikan lewat `sanitizeLateFeePct` (0–100) dan `sanitizeLateFeeCap` (0–1000). Ikut ekspor/import (import gabung hanya mengisi akun yang belum punya persen denda), sinkron cloud, dan cadangan otomatis karena melekat pada objek akun
+- **4 test baru** (total 50)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.065); `sw.js`: `10g-denda-telat.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.065`
+
+**Pengujian**: 50 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** form akun, detail akun, dan Laporan di browser/HP dengan data pinjaman nyata
+
+## v1.1.064 — 29 Sep 2026
+
+**Ditambah**
+- **Tren total utang** (`10f-tren-utang.js` baru, `index.html`, `02-navigasi.js`, `09-grafik.js`): kartu grafik batang di tab Ringkasan (di bawah "Pemasukan vs pengeluaran") berisi total utang di akhir tiap bulan selama 6 bulan terakhir (bulan berjalan sampai hari ini), dengan ringkasan naik/turun dibanding akhir bulan lalu dan tooltip per batang (memakai `bindChartInteraction` seperti grafik lain). Total = jumlah saldo negatif semua akun utang (kartu kredit, PayLater, pinjaman bank, pinjaman online) lewat `accountBalanceAsOf`; saldo positif dihitung 0. Angka mengikuti saldo yang tercatat, dan saldo awal akun dianggap ada sejak bulan pertama
+- Kartu otomatis tersembunyi kalau belum ada akun utang (`applyRingkasanVisibility`) dan bisa disembunyikan lewat Profil > Tampilan Ringkasan (`RINGKASAN_CARDS`)
+- **3 test baru** (total 46)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.064); `sw.js`: `10f-tren-utang.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.064`
+
+**Pengujian**: 46 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan grafik di browser/HP dan tooltip sentuh
 
 ## v1.1.063 — 29 Sep 2026
 
@@ -49,465 +104,328 @@ Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor vers
 
 **Pengujian**: 41 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP, dan sinkron `emergencyMonths` antar perangkat
 
+---
+
+# Ringkasan versi lama (v1.1.058 ke bawah)
+
 ## v1.1.058 — 29 Sep 2026
 
-**Ditambah**
-- **Tombol `?` riwayat perubahan** (`10d-changelog.js` baru, `index.html`, `style.css`): di bagian atas tab Profil ada kartu "Keuangan Pribadi" berisi versi + tanggal build dan tombol `?` yang membuka sheet "Riwayat perubahan" (8 rilis terakhir, yang terbaru diberi lencana). Datanya `CHANGELOG_ENTRIES` di `10d-changelog.js`, tanpa fetch, jadi jalan offline dan di `file://`. Riwayat lengkap tetap di `CHANGELOG.md`. Tiap rilis baru: tambah entri paling atas
-
-**Diubah (optimalisasi tab Profil)**
-- Jarak antarbagian seragam: margin-top inline yang tidak konsisten (hanya sebagian judul yang punya) diganti `margin-bottom` pada `.set-block`; judul di dalam "Pengaturan data lanjutan" mengikuti aturan yang sama
-- Gaya inline di tab Profil diganti kelas (`profil-adv`, `adv-summary`, `title-danger`, `io-btn-full`, `u-m0`, `u-mt4`, `u-mb14`); yang tersisa hanya `display:none` yang diubah JS
-- Tombol Enter: menyimpan nama pemilik, mengubah email, dan mengubah password (`data-keydown-act`, `enterkeyhint`)
-- `sw.js`: `10d-changelog.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.058`
+- Tombol `?` riwayat perubahan — di bagian atas tab Profil ada kartu "Keuangan Pribadi" berisi versi + tanggal build dan tombol `?` yang membuka sheet "…
+- Jarak antarbagian seragam
+- Gaya inline di tab Profil diganti kelas; yang tersisa hanya `display:none` yang diubah JS
+- Tombol Enter
 
 ## v1.1.057 — 29 Sep 2026
 
-**Ditambah**
-- **Langganan berulang** (`10c-langganan.js` baru, `index.html`, `01-data.js`, `02-navigasi.js`, `13-import-export.js`, `style.css`): kartu "Langganan berulang" di tab Ringkasan (di bawah kartu Anggaran) menampilkan daftar langganan dan totalnya per bulan. Tombol **Kelola** membuka sheet untuk menambah (nama, nominal, tanggal tagih 1–31, akun kas/bank/e-wallet/kartu kredit), menjeda/mengaktifkan, dan menghapus. Tiap bulan pada tanggalnya, app mencatat 1 pengeluaran berkategori "Tagihan & langganan" (ikut terhitung di Anggaran). Tanggal 31 di bulan yang lebih pendek dipatok ke hari terakhir bulan itu
-- **Aman antar perangkat**: transaksi berID deterministik `sub-<id>-<YYYY-MM>` dan dijalankan dari `runRecurringFees()` (bukan dari `render()`), sama seperti biaya bulanan pinjaman/kartu, jadi dua perangkat tidak membuat transaksi ganda. Bulan yang terlewat (app lama tidak dibuka) dikejar maksimal 12 bulan
-- **Tidak mencatat mundur**: langganan baru atau yang diaktifkan lagi mulai dicatat dari bulan ini hanya kalau tanggal tagihnya belum lewat (atau tepat hari ini); kalau sudah lewat, bulan ini dilewati, supaya tidak menggandakan transaksi yang sudah Anda catat manual. Bulan selama dijeda tidak dikejar
-- **Data**: `data.subscriptions` (opsional; data lama tetap valid), selalu dirapikan lewat `sanitizeSubscriptions` (maks 100, nama/nominal/tanggal divalidasi). Ikut sinkron cloud, ekspor JSON, dan cadangan otomatis. Import gabung memetakan akun lewat `idMap`, melewati yang sama (nama + akun + tanggal), dan membuang langganan yang akunnya tidak ada; import ganti-semua memakai langganan dari file. Hapus langganan tidak menghapus transaksi yang sudah tercatat
-- **11 test baru** (total 35)
-
-**Diubah**
-- `sw.js`: `10c-langganan.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.057`
-
-**Pengujian**: 35 test unit lulus; semua file lolos cek sintaks; Chromium 390 px dengan klik nyata: buka sheet, validasi form, tambah (tanggal tagih = hari ini, langsung tercatat 1 transaksi), dijalankan ulang tetap 1, bertahan setelah reload, jeda, hapus dengan konfirmasi (transaksi tetap ada), tanpa scroll horizontal di 5 tab, tanpa error JavaScript. **Belum teruji:** HP nyata, sinkron `subscriptions` antar perangkat, dan pergantian bulan sungguhan (hanya diuji lewat tanggal palsu di test unit)
+- Langganan berulang — kartu "Langganan berulang" di tab Ringkasan (di bawah kartu Anggaran) menampilkan daftar langganan dan totalnya per bul…
+- Aman antar perangkat — transaksi berID deterministik `sub-<id>-<YYYY-MM>` dan dijalankan dari `runRecurringFees()` (bukan dari `render()`), sa…
+- Tidak mencatat mundur — langganan baru atau yang diaktifkan lagi mulai dicatat dari bulan ini hanya kalau tanggal tagihnya belum lewat (atau te…
+- Data — `data.subscriptions` (opsional; data lama tetap valid), selalu dirapikan lewat `sanitizeSubscriptions` (maks 100, nama/…
 
 ## v1.1.056 — 29 Sep 2026
 
-**Ditambah**
-- **Anggaran per kategori** (`10b-anggaran.js` baru, `index.html`, `02-navigasi.js`, `13-import-export.js`, `style.css`): kartu "Anggaran bulan ini" di tab Ringkasan (di bawah kartu "Bulan ini") menampilkan realisasi vs batas per kategori pengeluaran, dengan bar dan sisa/lebih. Tombol **Atur** membuka sheet berisi semua kategori pengeluaran; kosong = tanpa batas. Batas berlaku per bulan kalender (GMT+8). Warna: hijau di bawah 80%, kuning 80–100%, merah di atas 100%. Realisasi memakai aturan yang sama dengan kartu "Bulan ini" (arus utang tidak dihitung), dan kategori `Cicilan/utang` tidak bisa dianggarkan karena sudah tercatat sebagai arus utang
-- **Data**: `data.budgets` = `{ kategori: nominal }`, opsional (data lama tanpa `budgets` tetap valid). Ikut terkirim dalam sinkron cloud karena sinkron mengirim seluruh data. Ekspor JSON dan cadangan otomatis menyertakan `budgets`; import gabung hanya mengisi kategori yang belum punya anggaran (tidak menimpa), import ganti-semua memakai anggaran dari file. Isi `budgets` selalu dirapikan (`sanitizeBudgets`): kategori tidak dikenal, nominal ≤ 0, atau bukan angka dibuang
-- **7 test baru** (`tests/run.js`, total 24)
-
-**Diubah**
-- `sw.js`: `10b-anggaran.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.056`
-
-**Pengujian**: 24 test unit lulus; semua file lolos cek sintaks; Chromium 390 px: sheet terbuka dari Ringkasan, isi batas lalu **Simpan** (klik nyata), kartu terisi, data bertahan setelah reload, tersimpan di localStorage dan ikut ekspor, tanpa scroll horizontal di 5 tab, tanpa error JavaScript. Catatan: sheet awalnya diletakkan di dalam panel tab Akun sehingga tidak tampil dari Ringkasan; sudah dipindah ke level atas sebelum rilis. **Belum teruji:** sentuhan nyata di HP, dan sinkron `budgets` antar perangkat
+- Anggaran per kategori — kartu "Anggaran bulan ini" di tab Ringkasan (di bawah kartu "Bulan ini") menampilkan realisasi vs batas per kategori pe…
+- Data — `data.budgets` = `{ kategori
 
 ## v1.1.055 — 29 Sep 2026
 
-**Diubah**
-- **Handler inline terakhir dipindah ke event delegation** (`12-render-utama.js`): tombol hapus di daftar tab Transaksi kini `data-act="deleteTxn"` dengan ID dari `data-a0` (sudah di-escape). Klik baris ditangani `row.onclick`, yang sekarang mengabaikan klik dari dalam `.del-btn` supaya tidak membuka detail. Tidak ada lagi `onclick=`/`oninput=`/`onchange=`/`onkeydown=` inline di kode
-- **`!important` dikurangi 2** (`style.css`): `.acc-tile` (`min-width`, `padding`) dan `.acc-accent` (`padding-left`, diganti selektor `.txn-row.acc-accent` yang lebih spesifik). Sisa `!important` sengaja dibiarkan: blok `@media print`, `[data-user-hidden]`/`[data-empty]` (harus menang atas `display` lain), dan aturan desktop yang menimpa `style=""` inline
-- **`render()` parse localStorage 1x, bukan 4x** (`03-form-transaksi.js`): `updateTypeAvailability`, `updatePaylaterUI`, dan `updateAssetHint` menerima `data` opsional dari `populateAccountSelects(data)` (hanya dibaca). Dipanggil tanpa argumen (dari handler lain) tetap memuat sendiri. Ini versi aman dari E2: tanpa cache global, jadi tidak ada risiko data basi/tercemar
-
-**Pengujian**: 17 test unit lulus; semua file lolos cek sintaks; Chromium 390 px v1.1.054 vs v1.1.055: nilai CSS terhitung (padding, min-width, margin, display, border) ±900–1.100 elemen per tab (Ringkasan, Transaksi, Laporan) identik, 0 selisih, tanpa error JavaScript; klik tombol hapus hanya memanggil `deleteTxn('<id>')` dan klik baris hanya `openTxnDetail('<id>')`; parse JSON besar saat `render()` turun dari 4 ke 1. `CACHE_VERSION` naik ke `kp-v1.1.055`
+- Handler inline terakhir dipindah ke event delegation — tombol hapus di daftar tab Transaksi kini `data-act="deleteTxn"` dengan ID dari `data-a0` (sudah di-escape).
+- `!important` dikurangi 2 — `.acc-tile` (`min-width`, `padding`) dan `.acc-accent` (`padding-left`, diganti selektor `.txn-row.acc-accent` yang leb…
+- `render()` parse localStorage 1x, bukan 4x — `updateTypeAvailability`, `updatePaylaterUI`, dan `updateAssetHint` menerima `data` opsional dari `populateAccountSelec…
 
 ## v1.1.054 — 29 Sep 2026
 
-**Diubah**
-- **Sisa handler inline dipindah ke event delegation** (`06-util-ui.js`, `index.html`, `04b-`, `04c-`, `07-`, `09-`, `10-`, `12-`): klik latar modal (`data-backdrop`, 9 tempat), `event.stopPropagation()` (`data-stop`), `onkeydown` (Enter/Spasi pada kartu akun, `data-keydown-*`), input file (`data-change-with-event`), tombol bayar tagihan kartu di detail akun, `this.checked` pada centang kartu Ringkasan, dan beberapa handler multi-perintah yang kini dibungkus fungsi kecil (`quickAddTitipanFromDetail`, `lunasiTitipanFromDetail`, `clickById`, `onTransferTargetChange`, `onAmountInput`, `payMonthAndClose`, `openAccountFromTagihanBulan`, `toggleRingkasanCardFromEl`). Dispatcher kini juga mendengar `keydown`. Tinggal 1 handler inline: tombol hapus di daftar tab Transaksi, karena baris induknya memakai `row.onclick` (kalau dipindah, ID numerik lama bisa tidak cocok)
-
-**Diperbaiki**
-- **ID transaksi data contoh sekarang teks** (`01-data.js`: `contoh-1` … `contoh-7`, sebelumnya angka 1–7): baris transaksi di tab Ringkasan tidak membuka detail pada data contoh karena ID angka dibandingkan dengan `===` terhadap teks dari atribut HTML. Data asli dan hasil import tidak terpengaruh (selalu ID teks)
-
-**Pengujian**: 17 test unit lulus. Perbandingan otomatis Chromium 390 px v1.1.053 vs v1.1.054 dengan data dummy (26 akun): 182 elemen (7 tab, nav, modal statis, dan modal yang dibuat saat dibuka: detail kartu kredit / PayLater / pinjaman, titipan, tagihan bulan, cicilan PayLater), tiap elemen diberi click, klik anak, input, change, keydown Enter/Spasi/a, klik tombol dalam: urutan dan argumen panggilan fungsi identik (0 selisih), tanpa error JavaScript. `CACHE_VERSION` naik ke `kp-v1.1.054`
+- Sisa handler inline dipindah ke event delegation — klik latar modal (`data-backdrop`, 9 tempat), `event.stopPropagation()` (`data-stop`), `onkeydown` (Enter/Spasi pada ka…
+- ID transaksi data contoh sekarang teks — baris transaksi di tab Ringkasan tidak membuka detail pada data contoh karena ID angka dibandingkan dengan `===` terhad…
 
 ## v1.1.053 — 29 Sep 2026
 
-**Diubah**
-- **Event delegation menggantikan 131 handler inline** (`06-util-ui.js` `dispatchDelegated()`, plus `index.html`, `02-`, `04b-`, `04c-`, `07-`, `08-`, `09-`, `10-`, `11c-`, `12-`, `13-`): `onclick` (99), `oninput` (15), dan `onchange` (17) yang isinya satu panggilan fungsi sederhana diganti atribut `data-act` (klik), `data-input-act`, `data-change-act` dengan argumen `data-a<i>` (teks) / `data-n<i>` (angka). Tiga listener di `document` (click, input, change) memanggil fungsi global bernama itu; elemen bersarang dipanggil dari yang terdalam ke luar seperti bubbling biasa. Tidak ada `eval`/`new Function`. Sisa 29 handler inline sengaja dibiarkan karena butuh `event`/`this` (mis. `if(event.target===this)` untuk klik latar modal, `event.stopPropagation()`, `this.checked`) atau lebih dari satu perintah, atau berupa `${q(...)}` dinamis
-- **Perilaku tidak berubah**: dibandingkan otomatis di Chromium 390 px (data contoh; 131 elemen di 7 tab, nav bawah, dan modal statis; fungsi di-stub lalu tiap elemen diklik / diberi event input+change): urutan dan argumen panggilan fungsi identik antara v1.1.052 dan v1.1.053 (0 selisih), tanpa error JavaScript. Buka lalu tutup detail akun lewat klik nyata juga bekerja. `CACHE_VERSION` naik ke `kp-v1.1.053`
+- Event delegation menggantikan 131 handler inline — `, plus `index.html`, `02-`, `04b-`, `04c-`, `07-`, `08-`, `09-`, `10-`, `11c-`, `12-`, `13-`)
+- Perilaku tidak berubah — dibandingkan otomatis di Chromium 390 px (data contoh; 131 elemen di 7 tab, nav bawah, dan modal statis; fungsi di-stub…
 
 ## v1.1.052 — 29 Sep 2026
 
-**Diubah**
-- **119 `style=""` inline diganti kelas utilitas** (`style.css` bagian akhir, `index.html`, `04b-`, `04c-`, `07-`, `09-`, `11b-`, `11c-`, `13-`): gaya yang paling sering berulang (`width:100%`, `flex:1; min-width:0`, `flex:1`, `display:flex; gap:8px`, dan margin atas/bawah sederhana) kini kelas `u-w100`, `u-flex1-min0`, `u-flex1`, `u-flex-gap8`, `u-mt*`, `u-mb*`, `u-m0-0-4`. Jumlah `style="` di seluruh kode turun dari 393 ke 274 (di `index.html` dari 235 ke 132). Elemen `.section-title` sengaja tidak diubah karena margin-nya diatur aturan CSS yang lebih spesifik daripada kelas utilitas. `display:none` inline juga tidak disentuh karena JS mengubahnya lewat `element.style.display`. Tanpa `!important` baru
-- **Tampilan tidak berubah**: dibandingkan otomatis di Chromium 390 px (7 tab + 3 modal detail akun, data contoh): nilai CSS terhitung (lebar, margin, flex, display, gap) semua elemen identik antara v1.1.051 dan v1.1.052. `CACHE_VERSION` naik ke `kp-v1.1.052`
+- 119 `style=""` inline diganti kelas utilitas — gaya yang paling sering berulang (`width:100%`, `flex:1; min-width:0`, `flex:1`, `display:flex; gap:8px`, dan margin at…
+- Tampilan tidak berubah — dibandingkan otomatis di Chromium 390 px (7 tab + 3 modal detail akun, data contoh)
 
 ## v1.1.051 — 29 Sep 2026
 
-**Diubah**
-- **`04-akun.js` (1.423 baris) dipecah jadi tiga file** dan **`11-laporan.js` (1.010 baris) jadi tiga file**, tanpa mengubah satu baris kode pun (isi gabungan diverifikasi identik dengan aslinya; hanya ditambah komentar judul di file lanjutan): `04-akun.js` (form, simpan, hapus akun), `04b-akun-detail.js` (modal detail akun), `04c-akun-aset-tagihan.js` (nilai aset, bayar kartu/PayLater, pembayaran pinjaman, `addTxn`); `11-laporan.js` (filter periode, breakdown), `11b-laporan-utang.js` (rincian utang, saran), `11c-laporan-proyeksi.js` (proyeksi kas, biaya utang, simulasi pelunasan). Tiap file kini 280–570 baris. Semua tetap skrip biasa yang berbagi scope global, jadi tidak ada perubahan cara kerja; urutan `<script>` di `index.html` dan `APP_SHELL` di `sw.js` diperbarui, `CACHE_VERSION` naik ke `kp-v1.1.051`. README (Struktur Kode, titik masuk, Cara rilis) disesuaikan
+- `04-akun.js` (1.423 baris) dipecah jadi tiga file — dan `11-laporan.js` (1.010 baris) jadi tiga file, tanpa mengubah satu baris kode pun (isi gabungan diverifikasi ide…
 
 ## v1.1.050 — 29 Sep 2026
 
-**Ditambah**
-- **`manifest.json` dan ikon app masuk ke paket** (`manifest.json`, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`): sebelumnya tidak ikut di zip, jadi rujukan di `index.html` dan `sw.js` menunjuk file yang tidak ada di paket. Ikon `maskable` (192 dan 512 px) dipakai Android untuk bentuk ikon adaptif; ikon `any` untuk favicon/tab dan install biasa
-
-**Diubah**
-- **Service worker menyimpan ikon maskable di cache app shell** (`sw.js`), `CACHE_VERSION` naik ke `kp-v1.1.050`
+- `manifest.json` dan ikon app masuk ke paket — sebelumnya tidak ikut di zip, jadi rujukan di `index.html` dan `sw.js` menunjuk file yang tidak ada di paket.
 
 ## v1.1.049 — 29 Sep 2026
 
-**Diperbaiki**
-- **Bunga/biaya bulanan otomatis tidak lagi ditulis dari dalam `render()`** (`01-data.js`, `12-render-utama.js`, `07-`/`08-`): `applyRecurringFees()` sebelumnya jalan di setiap render dan menulis transaksi baru. Kalau dua perangkat terbuka di awal bulan, keduanya bisa membuat transaksi biaya yang sama dengan ID acak berbeda. Sekarang transaksinya berID deterministik (`fee-<akun>-<bulan>-bunga|admin`) dan tidak dibuat ulang kalau ID-nya sudah ada, jadi dua perangkat menghasilkan transaksi yang sama persis. Fungsi baru `runRecurringFees()` dipanggil dari: startup (setelah sinkron), login dari tab Profil, saat tanggal berganti (tab dibiarkan terbuka lintas hari), dan setelah simpan akun / import / reset / data contoh
-- **CHANGELOG v1.1.041 dan kode kembali cocok** (`14-sync.js`, `02-navigasi.js`, `index.html`): `syncApplyOwnerNameFromSession` dan `syncSaveOwnerName` ternyata masih ada dan dipanggil walau v1.1.041 mencatat sudah dihapus. Keduanya dihapus sekarang; sapaan tab Ringkasan hanya "Selamat pagi/siang/sore/malam" tanpa nama, nama pemilik tidak lagi dikirim ke akun, dan teks keterangan di tab Profil sesuai fungsi aslinya (awalan nama file export/backup)
-- **`escapeHtml` sekarang meng-escape tanda kutip** (`06-util-ui.js`) sehingga aman dipakai di nilai atribut, dan memakai penggantian string alih-alih membuat elemen `<div>` tiap panggilan
-- **Sapaan memakai jam GMT+8** seperti semua tanggal lain di app (sebelumnya jam perangkat)
-
-**Diubah**
-- **Pustaka Supabase dimuat saat dibutuhkan** (`14-sync.js`, `syncLoadLib()`; `<script>` statis di `index.html` dihapus): CDN yang lambat atau offline tidak lagi menahan pemuatan app. Timeout 8 detik, dan kalau gagal app jalan dalam mode lokal seperti biasa
-- **Render pertama tidak menunggu sinkron kalau perangkat sudah punya data** (`15-startup.js`): app langsung menggambar dari data lokal, lalu menggambar ulang setelah sinkron selesai. Kalau belum ada data sama sekali, render pertama tetap menunggu sinkron supaya akun cloud tidak tertimpa data contoh
-- **Tab Laporan memakai saldo yang sudah dihitung `render()`** (`11-laporan.js`) alih-alih menghitung `computeAllBalances()` sekali lagi
-- **Import lebih ketat** (`13-import-export.js`): file maksimal 5 MB dan 100.000 transaksi, tanggal harus valid (`YYYY-MM-DD`, kalau tidak dipakai tanggal hari ini), nominal harus angka hingga dan dirapikan ke 2 desimal. `saveData()` juga merapikan nominal transaksi ke 2 desimal supaya tidak ada sisa floating point; nominal pecahan yang sah (mis. bunga bank Rp9.363,98) tetap utuh
-
-**Ditambah**
-- **Service worker** (`sw.js`, didaftarkan di `15-startup.js`): app shell tersimpan sehingga bisa dibuka tanpa internet. Strategi network-first (online selalu ambil versi terbaru, offline pakai salinan terakhir), hanya file app + jsdelivr + font Google; tidak pernah menyentuh `*.supabase.co`. Naikkan `CACHE_VERSION` di `sw.js` bersamaan dengan `APP_VERSION`. Tidak aktif kalau dibuka lewat `file://`
-- **`supabase/setup.sql`**: definisi tabel `app_data` + RLS (4 kebijakan `user_id = auth.uid()`, `anon` dicabut) beserta query verifikasinya
-- **`tests/run.js`**: 17 test unit tanpa dependensi (`node tests/run.js`) untuk `escapeHtml`, saldo akun, nominal, biaya bulanan (idempoten + tidak ganda antar perangkat), anuitas, cicilan flat, saldo aset, kalender tagihan
+- Bunga/biaya bulanan otomatis tidak lagi ditulis dari dalam `render()` — `applyRecurringFees()` sebelumnya jalan di setiap render dan menulis transaksi baru.
+- `escapeHtml` sekarang meng-escape tanda kutip — sehingga aman dipakai di nilai atribut, dan memakai penggantian string alih-alih membuat elemen `<div>` tiap panggilan
+- Sapaan memakai jam GMT+8 — seperti semua tanggal lain di app (sebelumnya jam perangkat)
+- Pustaka Supabase dimuat saat dibutuhkan — `; `<script>` statis di `index.html` dihapus)
+- Render pertama tidak menunggu sinkron kalau perangkat sudah punya data — app langsung menggambar dari data lokal, lalu menggambar ulang setelah sinkron selesai.
+- Tab Laporan memakai saldo yang sudah dihitung `render()` — alih-alih menghitung `computeAllBalances()` sekali lagi
+- Import lebih ketat — file maksimal 5 MB dan 100.000 transaksi, tanggal harus valid (`YYYY-MM-DD`, kalau tidak dipakai tanggal hari ini), nom…
+- Service worker — app shell tersimpan sehingga bisa dibuka tanpa internet.
+- `supabase/setup.sql` — definisi tabel `app_data` + RLS (4 kebijakan `user_id = auth.uid()`, `anon` dicabut) beserta query verifikasinya
+- `tests/run.js` — 17 test unit tanpa dependensi untuk `escapeHtml`, saldo akun, nominal, biaya bulanan (idempoten + tidak ganda antar per…
 
 ## v1.1.048 — 27 Sep 2026
 
-**Diubah**
-- **Footer & status sinkron sekarang cuma tampil di tab Profil** (`index.html`): sebelumnya elemen ini ditaruh di luar `.tab-panel#tab-profil` (tapi masih di dalam `.wrap`), jadi tetap tampil di tab mana pun karena tidak ikut ketoggle `display:none`/`display:block` milik `.tab-panel`. Sekarang dipindah ke dalam `tab-panel#tab-profil` (sebelum `</div>` penutupnya), jadi otomatis ikut mekanisme show/hide tab yang sudah ada — hanya render saat tab Profil aktif
+- Footer & status sinkron sekarang cuma tampil di tab Profil — sebelumnya elemen ini ditaruh di luar `.tab-panel#tab-profil` (tapi masih di dalam `.wrap`), jadi tetap tampil di tab m…
 
 ## v1.1.047 — 27 Sep 2026
 
-**Dibatalkan**
-- **Footer & status sinkron dikembalikan ke posisi semula**: cukup tampil di tab Profil saja (di dalam alur konten `.tab-panel#tab-profil`), tidak lagi jadi bagian dari `.bottom-nav-wrap` yang fixed. `index.html` dan `style.css` kembali identik dengan sebelum v1.1.045 untuk bagian ini (percobaan footer sticky di v1.1.045–v1.1.046 dibatalkan)
+- Footer & status sinkron dikembalikan ke posisi semula — cukup tampil di tab Profil saja (di dalam alur konten `.tab-panel#tab-profil`), tidak lagi jadi bagian dari `.bottom-na…
 
 ## v1.1.046 — 27 Sep 2026
 
-**Diubah**
-- **Posisi footer versi: sekarang di atas baris tombol navigasi** (`index.html`, `style.css`), bukan di bawahnya — tetap sama-sama menjadi bagian dari `.bottom-nav-wrap` yang `position: fixed`, jadi tetap tidak butuh scroll untuk terlihat, di tab mana pun. Garis pemisah ikut pindah ke bawah teks footer (`border-bottom` menggantikan `border-top`). Di desktop (sidebar), footer sekarang di atas daftar menu (bukan di dasar sidebar seperti v1.1.045)
+- Posisi footer versi: sekarang di atas baris tombol navigasi — bukan di bawahnya — tetap sama-sama menjadi bagian dari `.bottom-nav-wrap` yang `position
 
 ## v1.1.045 — 27 Sep 2026
 
-**Diubah**
-- **Footer versi sekarang sticky di bawah** (`index.html`, `style.css`): sebelumnya `#app-footer` (dan `#sync-status` yang disisipkan setelahnya oleh `14-sync.js`) berada di akhir alur konten tab Profil, jadi harus scroll ke bawah dulu untuk melihatnya — walau posisinya di luar `.tab-panel` sehingga sebenarnya tetap tampil di semua tab. Sekarang elemen ini dipindah ke dalam `.bottom-nav-wrap` (bar navigasi bawah yang sudah `position: fixed`), jadi selalu terlihat tanpa scroll dari tab mana pun. Di mobile jadi baris tipis di bawah tombol navigasi (dengan garis pemisah); di desktop (sidebar kiri ≥1024px) `.bottom-nav-wrap` dijadikan `flex column` setinggi layar (`height: 100vh`) supaya footer nempel di dasar sidebar (`margin-top: auto`). Padding bawah `.wrap` dinaikkan (100px→128px umum, 118px→146px di layar <380px) untuk mengimbangi bar bawah yang jadi sedikit lebih tinggi
+- Footer versi sekarang sticky di bawah — sebelumnya `#app-footer` (dan `#sync-status` yang disisipkan setelahnya oleh `14-sync.js`) berada di akhir alur konten…
 
 ## v1.1.044 — 25 Sep 2026
 
-**Diubah**
-- **Nama default diganti jadi "User"** (`01-data.js`, `OWNER_NAME_DEFAULT`) — sebelumnya "Made Ceplor". Cuma jadi prefix nama file export kalau kolom nama pemilik belum diisi
-- **Nama file export JSON sekarang ikut jam:menit** (`13-import-export.js`): `keuangan-user-2026-09-25.json` -> `keuangan-user-2026-09-25-2127.json` (fungsi baru `nowTimeStr()` di `01-data.js`, GMT+8) — supaya beberapa kali export di hari yang sama tidak saling timpa/susah dibedakan. Export CSV & backup-sebelum-reset belum diubah (masih tanggal saja)
+- Nama default diganti jadi "User" — sebelumnya "Made Ceplor".
+- Nama file export JSON sekarang ikut jam:menit — `keuangan-user-2026-09-25.json` -> `keuangan-user-2026-09-25-2127.json` (fungsi baru `nowTimeStr()` di `01-data.js`, GM…
 
 ## v1.1.043 — 25 Sep 2026
 
-**Diubah**
-- **Tombol tampilan (sistem/terang/gelap) dipindah ke header**, jadi ikon di sebelah ikon Profil (`index.html`, `02-navigasi.js`): sebelumnya berupa tombol teks penuh-lebar ("Tampilan: Sistem") di dalam tab Profil, sekarang jadi ikon (monitor = ikut sistem, matahari = terang, bulan = gelap) yang selalu terlihat dari tab mana pun, tanpa perlu buka tab Profil dulu. `applyTheme()` sekarang ganti ikon SVG di tombol (bukan teks), label mode tetap ada lewat `aria-label`/`title` untuk aksesibilitas. Blok "Tampilan" lama di tab Profil dihapus
+- Tombol tampilan (sistem/terang/gelap) dipindah ke header — jadi ikon di sebelah ikon Profil
 
 ## v1.1.042 — 25 Sep 2026
 
-**Diubah**
-- **Rapikan & optimasi tab Profil** (`index.html`, `01-data.js`): blok "Profil pemilik" (nama) dipindah dari posisi teratas ke dalam "Export & import" (di bawah "Pengaturan data lanjutan") karena satu-satunya fungsi nama itu sekarang cuma jadi prefix nama file export/backup (`exportUserPrefix()` di `13-import-export.js`) — sudah tidak dipakai untuk sapaan (dicabut di v1.1.041) maupun sinkron akun. Teks keterangannya ditulis ulang supaya sesuai fungsi aslinya, komentar basi di `01-data.js` yang masih menyebut sapaan/sinkron akun juga diperbarui. Dibersihkan juga beberapa `style="margin-top:22px"` di judul-judul section dalam tab Profil yang sebenarnya tidak berpengaruh sama sekali (sudah ditimpa `.set-block .section-title { margin-top: 0 !important; }` di CSS) — murni beres-beres, tidak mengubah tampilan
+- Rapikan & optimasi tab Profil — blok "Profil pemilik" (nama) dipindah dari posisi teratas ke dalam "Export & import" (di bawah "Pengaturan data lanjuta…
 
 ## v1.1.041 — 25 Sep 2026
 
-**Diubah**
-- **Nama pemilik dicabut sementara dari sapaan** (`02-navigasi.js`, `14-sync.js`, `index.html`): fitur sinkron nama-ke-akun dari v1.1.039/v1.1.040 masih bermasalah (nama tidak update dengan andal, sempat "nyangkut" di nama default). Daripada menampilkan nama yang salah/basi, sapaan di tab Ringkasan disederhanakan jadi cuma "Selamat pagi/siang/sore/malam" tanpa nama. `syncApplyOwnerNameFromSession`, `syncSaveOwnerName`, `syncPrettifyEmailPrefix` dihapus dari `14-sync.js`; `saveOwnerNameFromInput` tidak lagi push ke metadata akun. Kolom nama pemilik di tab Profil tetap ada (tersimpan lokal) untuk sementara belum dipakai di mana pun, siap dipakai lagi kalau fitur sapaan-per-akun ini dirapikan ulang nanti
+- Nama pemilik dicabut sementara dari sapaan — fitur sinkron nama-ke-akun dari v1.1.039/v1.1.040 masih bermasalah (nama tidak update dengan andal, sempat "nyangkut" d…
 
 ## v1.1.040 — 25 Sep 2026
 
-**Diperbaiki**
-- **Sapaan masih menampilkan nama default ("Made Ceplor") walau sudah login** (`14-sync.js`): v1.1.039 kirim nama pemilik ke metadata akun cuma kalau metadata masih kosong, tapi tidak mengecek dulu apakah nama lokal itu sendiri masih nama bawaan app yang belum pernah diisi — jadi nama default ikut terkirim dan dianggap "nama akun". Sekarang `syncApplyOwnerNameFromSession` mengecek itu: kalau nama lokal masih default, nama diturunkan dari bagian sebelum "@" di email akun yang login (fungsi baru `syncPrettifyEmailPrefix`, mis. `imdgeruh@gmail.com` -> "Imdgeruh") baru dikirim ke metadata. Teks keterangan di tab Profil (`index.html`, `profil-name-hint`) juga diperbarui supaya sesuai kondisi sekarang
-- **Kalau akun sudah sempat kepenuhi nama default dari v1.1.039**: buka tab Profil, ganti nama ke nama asli, tap Simpan — ini akan menimpa metadata akun dengan nama yang benar
+- Sapaan masih menampilkan nama default ("Made Ceplor") walau sudah login — v1.1.039 kirim nama pemilik ke metadata akun cuma kalau metadata masih kosong, tapi tidak mengecek dulu apakah nama lok…
+- Kalau akun sudah sempat kepenuhi nama default dari v1.1.039 — buka tab Profil, ganti nama ke nama asli, tap Simpan — ini akan menimpa metadata akun dengan nama yang benar
 
 ## v1.1.039 — 25 Sep 2026
 
-**Ditambah**
-- **Nama pemilik di sapaan sekarang ikut akun sinkron, bukan cuma perangkat** (`14-sync.js`, fungsi baru `syncApplyOwnerNameFromSession` & `syncSaveOwnerName`): sebelumnya nama pemilik (dipakai di sapaan tab Ringkasan) cuma tersimpan di `localStorage` device itu sendiri, jadi login akun yang sama di HP lain menampilkan nama default/berbeda. Sekarang saat login, nama diambil dari metadata akun Supabase (`user_metadata.full_name`/`.name` — otomatis terisi kalau masuk pakai Google) kalau sudah ada; kalau akun belum pernah menyimpan nama, nama lokal yang sedang dipakai dikirim ke metadata supaya tersimpan untuk device lain. `saveOwnerNameFromInput()` (`02-navigasi.js`) juga disesuaikan: tiap nama diedit lewat tab Profil saat sedang login, otomatis ikut dikirim ke metadata akun
+- Nama pemilik di sapaan sekarang ikut akun sinkron, bukan cuma perangkat — sebelumnya nama pemilik (dipakai di sapaan tab Ringkasan) cuma tersimpan di `localStorage` device itu sendiri, jadi log…
 
 ## v1.1.038 — 24 Sep 2026
 
-**Diubah**
-- **Tab Profil dirapikan jadi 2 tingkat** (`index.html`, tidak ada perubahan JS): sejak tab Data digabung ke Profil (v1.1.037), tab ini jadi 7 blok pengaturan ditumpuk vertikal — kepanjangan untuk di-scroll. Sekarang cuma **Profil pemilik**, **Tampilan**, dan **Akun sinkron** yang selalu tampil (paling sering disentuh). Sisanya — Export & import, Tampilan Ringkasan, Data contoh, Reset & ganti data — dikumpulkan ke bagian **"Pengaturan data lanjutan"** yang collapsed by default (elemen `<details>` bawaan HTML, pola yang sama seperti kartu Saran di Laporan, tidak perlu JS baru). Di dalam bagian lanjutan itu juga diurutkan ulang sesuai frekuensi pakai (Export & import duluan, Reset paling akhir & judulnya dikasih warna beda) supaya tombol paling berisiko ("Reset semua data") tidak nempel dekat tombol yang sering dipakai
+- Tab Profil dirapikan jadi 2 tingkat — sejak tab Data digabung ke Profil (v1.1.037), tab ini jadi 7 blok pengaturan ditumpuk vertikal — kepanjangan untuk di-s…
 
 ## v1.1.037 — 24 Sep 2026
 
-**Ditambah**
-- **Tab baru "Tagihan"** di nav bawah (antara Titipan dan Laporan), menggantikan slot tab "Data" (isinya dipindah ke Profil, lihat di bawah) — supaya total tetap 6 tab, tidak menambah. Berisi dua bagian:
-  - **Jatuh tempo** (kartu pengingat yang sebelumnya nempel di atas tab Ringkasan, sekarang pindah ke sini — fungsi `renderDueReminders` tidak berubah, cuma elemen `#due-reminder-card`-nya dipindah)
-  - **Kalender tagihan bulanan** (baru): total tagihan tiap bulan ke depan digabung dari SEMUA akun berutang (pinjaman/pinjol, kartu kredit siklus berjalan, PayLater), lewat fungsi baru `computeBillCalendar()` (`01-data.js`) yang menggabungkan `computeLoanSchedule`, `cardStatementInfo`, dan `paylaterMonthlyBreakdown` per akun jadi satu, dikelompokkan per bulan jatuh tempo. Klik satu bulan buka sheet detail (`openTagihanBulanDetail`/`closeTagihanBulanDetail`, `07-render-akun-transaksi.js`) berisi rincian tiap akun & nominalnya bulan itu; klik satu akun di situ langsung buka detail akunnya
-
-**Diubah**
-- **Tab "Data" dihapus, isinya (Data contoh, Tampilan Ringkasan, Export & import, Reset & ganti data) dipindah jadi bagian bawah tab Profil** (`index.html`) — jadi Profil sekarang berisi semua pengaturan: nama pemilik, tampilan, sinkron cloud, dan pengaturan data. `TAB_NAMES`/`TAB_TITLES`/`renderTabContent()` di `02-navigasi.js` disesuaikan (`renderRingkasanConfig()` sekarang dipanggil dari case `'profil'`, bukan `'data'`)
+- Tab baru "Tagihan" — di nav bawah (antara Titipan dan Laporan), menggantikan slot tab "Data" (isinya dipindah ke Profil, lihat di bawah) — s…
+- Tab "Data" dihapus, isinya (Data contoh, Tampilan Ringkasan, Export & import, Reset & ganti data) dipindah jadi bagian bawah tab Profil — jadi Profil sekarang berisi semua pengaturan
 
 ## v1.1.036 — 24 Sep 2026
 
-**Diubah**
-- **Tombol "Bayar bulan ini" di baris "Tagihan per bulan ke depan" dipindah ke dalam modal detail** (`04-akun.js`): baris di daftar sekarang cuma menampilkan ringkasan (klik untuk buka detail), tombol bayarnya cuma ada di dalam sheet `openPaylaterMonthDetail()` di bagian bawah daftar item. `event.stopPropagation()` di baris jadi tidak perlu lagi dan sudah dihapus
+- Tombol "Bayar bulan ini" di baris "Tagihan per bulan ke depan" dipindah ke dalam modal detail — baris di daftar sekarang cuma menampilkan ringkasan (klik untuk buka detail), tombol bayarnya cuma ada di dalam sheet `…
 
 ## v1.1.035 — 24 Sep 2026
 
-**Ditambah**
-- **Modal detail per-item saat baris "Tagihan per bulan ke depan" (detail akun PayLater) diklik** (`index.html`, `04-akun.js`, fungsi baru `openPaylaterMonthDetail`/`closePaylaterMonthDetail`): sebelumnya daftar item per bulan cuma tampil ringkas terpotong (`...`) di baris itu sendiri. Sekarang klik baris membuka sheet berisi semua item bulan itu tanpa terpotong, diurutkan dari nominal terbesar, tiap item menampilkan cicilan ke berapa dari berapa tenor — memudahkan cocokkan satu-satu dengan rincian tagihan di aplikasi PayLater aslinya kalau ada selisih angka. Item "Bayar Nanti / belum terjadwal" (bagian saldo di luar jadwal cicilan manapun, ditambahkan sejak v1.1.034) ditandai warna beda + catatan bahwa ini yang paling sering jadi sumber selisih. Tombol "Bayar bulan ini" di baris tetap berfungsi seperti biasa (pakai `event.stopPropagation()` supaya tidak ikut membuka modal)
+- Modal detail per-item saat baris "Tagihan per bulan ke depan" (detail akun PayLater) diklik — sebelumnya daftar item per bulan cuma tampil ringkas terpotong (`...`) di baris itu sendiri.
 
 ## v1.1.034 — 23 Sep 2026
 
-**Diperbaiki**
-- **Proyeksi "Tagihan per bulan ke depan" di detail akun PayLater tidak menghitung transaksi "Bayar Nanti"** (`01-data.js`, `paylaterMonthlyBreakdown()`): fungsi ini sebelumnya cuma menjumlahkan cicilan bertenor (`acc.plans`) per bulan jatuh tempo. Transaksi "Bayar Nanti" (dibayar tanpa cicilan, method `nanti`) ikut menambah sisa hutang akun tapi tidak pernah dianggap "jatuh tempo bulan X" di manapun — jadi tidak muncul di breakdown bulanan sama sekali, walau tetap kelihatan di angka "Terpakai" kartu akun. Ketahuan dari bandingkan rincian tagihan Shopee PayLater asli vs breakdown di app: bulan pertama beda ratusan ribu rupiah, padahal bulan-bulan berikutnya (murni cicilan) sudah cocok sampai selisih pembulatan saja. Sekarang bagian saldo yang tidak tercakup jadwal cicilan manapun (Bayar Nanti, atau cicilan yang telat dari jadwalnya) dihitung sebagai `extra` lalu dimasukkan ke siklus tagihan **terdekat** — pakai cara hitung yang sama seperti `computeUpcomingDues()` sudah menghitung kartu "Tagihan PayLater" di Ringkasan, supaya keduanya konsisten
-- Render breakdown bulanan di detail akun (`04-akun.js`) disesuaikan: item tanpa nomor cicilan (yaitu item "Bayar Nanti" yang baru ditambahkan ke breakdown) tidak lagi menampilkan `(ke-null/null)`, dan label jumlah item diganti dari "N cicilan" jadi "N item" karena sekarang bisa campuran cicilan + Bayar Nanti
+- Proyeksi "Tagihan per bulan ke depan" di detail akun PayLater tidak menghitung transaksi "Bayar Nanti" — `)
+- Render breakdown bulanan di detail akun disesuaikan
 
 ## v1.1.033 — 23 Sep 2026
 
-**Ditambah**
-- **"Total jumlah pembayaran" di jadwal angsuran pinjaman** (`04-akun.js`, detail akun → Jadwal angsuran): baris baru di atas daftar per-angsuran, menjumlahkan pokok + bunga & biaya seluruh angsuran sepanjang tenor — setara field "Jumlah Pembayaran" yang biasa ditampilkan aplikasi pinjol (dipakai untuk mencocokkan angka dengan rincian resmi dari penyedia pinjaman)
+- "Total jumlah pembayaran" di jadwal angsuran pinjaman — baris baru di atas daftar per-angsuran, menjumlahkan pokok + bunga & biaya seluruh angsuran sepanjang tenor — setara fi…
 
 ## v1.1.032 — 23 Sep 2026
 
-**Diperbaiki**
-- **Bunga terutang salah bulan saat mencatat pembayaran pinjaman bertanggal mundur** (`04-akun.js`): `computeLoanInterestDue()` selalu mengecek "bunga sudah dibayar" dari bulan **hari ini**, walau form "Catat pembayaran" mengizinkan pilih tanggal di masa lalu. Kalau user mencatat pembayaran untuk bulan lalu, hint & rincian bunga/pokok di layar bisa salah bulan (mis. dianggap bunga bulan ini sudah lunas padahal yang dibayar itu bunga bulan lalu). Sekarang `computeLoanInterestDue()` dan `splitLoanPayment()` menerima parameter `refDate` opsional (dari tanggal yang dipilih di form, bukan selalu hari ini), dipakai konsisten di hint (`onLoanPayModeChange`), preview rincian (`updateLoanPaySplit`), dan saat transaksi benar-benar dicatat (`submitLoanPayment`)
-- Field tanggal pembayaran (`loan-pay-date-input`, `index.html`) sebelumnya tidak memicu apa pun saat diubah — hint & preview di bawahnya tetap memakai perhitungan lama sampai field lain disentuh. Sekarang mengubah tanggal langsung menyegarkan keduanya
-- Teks hint "Bunga bulan ini ..." kini menyebut nama bulan yang sebenarnya (mis. "Bunga bulan Ags 2026 ...") kalau tanggal yang dipilih bukan bulan berjalan
+- Bunga terutang salah bulan saat mencatat pembayaran pinjaman bertanggal mundur — `computeLoanInterestDue()` selalu mengecek "bunga sudah dibayar" dari bulan hari ini, walau form "Catat pembayaran"…
+- Field tanggal pembayaran sebelumnya tidak memicu apa pun saat diubah — hint & preview di bawahnya tetap memakai perhitungan lama sampai fie…
+- Teks hint "Bunga bulan ini ..." kini menyebut nama bulan yang sebenarnya (mis.
 
 ## v1.1.031 — 23 Sep 2026
 
-**Diubah**
-- **Icon gear diganti icon user, langsung buka tab Profil (`index.html`, `02-navigasi.js`):** tombol di pojok kanan atas sebelumnya membuka dropdown menu (Profil / Tampilan / Sinkron) lewat `toggleSettingsMenu()`. Sekarang icon-nya jadi siluet orang dan klik langsung `setTab('profil')` — satu langkah, bukan dua. Dropdown `.settings-menu` beserta CSS-nya, `toggleSettingsMenu()`, `goToSettingsTab()`, dan listener klik-di-luar untuk menutup menu semuanya dihapus karena sudah tidak dipakai
-- **Toggle Tampilan (gelap/terang) dan tombol Masuk/Keluar sinkron dipindah ke tab Profil** (`index.html`) — sebelumnya ada di dropdown menu gear yang sekarang dihapus, jadi semua pengaturan "tentang saya & tampilan" sekarang ngumpul di satu tab. Elemen (`theme-toggle-btn`, `sync-menu-login-btn`, `sync-logout-btn`) tetap id yang sama, cuma pindah lokasi di halaman, jadi kode `02-navigasi.js`/`14-sync.js` yang menunjuknya tidak perlu berubah
-
-**Diperbaiki**
-- **Duplikasi kode parsing akun & transaksi import dipangkas** (`13-import-export.js`): `importJson()` (gabung ke data yang ada) dan `resetAndImport()` (ganti semua data) sebelumnya masing-masing punya ~70 baris logic yang identik untuk menyalin field akun (limit, biaya admin, bunga pinjaman, cicilan PayLater, dst.) dan ~15 baris untuk membentuk objek transaksi. Sekarang dipusatkan jadi dua fungsi bersama, `buildAccountFromImport(a, newId)` dan `buildTxnFromImport(t, idMap, fallbackAccId)`, dipakai oleh keduanya — total baris berkurang ±150, dan field baru ke depannya cukup ditambah sekali, tidak berisiko lupa di salah satu jalur import
+- Icon gear diganti icon user, langsung buka tab Profil — tombol di pojok kanan atas sebelumnya membuka dropdown menu (Profil / Tampilan / Sinkron) lewat `toggleSettingsMenu()`.
+- Toggle Tampilan (gelap/terang) dan tombol Masuk/Keluar sinkron dipindah ke tab Profil — sebelumnya ada di dropdown menu gear yang sekarang dihapus, jadi semua pengaturan "tentang saya & tampilan" sekarang ng…
+- Duplikasi kode parsing akun & transaksi import dipangkas — `importJson()` (gabung ke data yang ada) dan `resetAndImport()` (ganti semua data) sebelumnya masing-masing punya ~70 b…
 
 ## v1.1.030 — 23 Sep 2026
 
-**Ditambah**
-- **Nama file export/backup sekarang berprefix identitas user** (`13-import-export.js`, fungsi baru `exportUserPrefix()`): dipakai di ekspor JSON, ekspor CSV, dan backup otomatis sebelum reset/timpa data (`autoBackupBeforeReset`). Prioritas sumber prefix: bagian sebelum `@` dari email akun cloud kalau sedang login, kalau tidak pakai nama pemilik dari tab Profil, terakhir `'user'` kalau keduanya kosong. Nama disaring jadi slug huruf kecil + angka (aksen dilepas, karakter lain jadi `-`), misal `keuangan-budi-2026-09-23.json`. Berguna terutama sejak device bisa dipakai gantian beberapa akun (lihat perbaikan `syncGuardAccountSwitch` di v1.1.029) — file-file backup dari akun berbeda jadi mudah dibedakan tanpa perlu buka isinya dulu
+- Nama file export/backup sekarang berprefix identitas user — `)
 
 ## v1.1.029 — 23 Sep 2026
 
-**Diperbaiki**
-- **Data bisa "kebawa" antar akun cloud di device yang sama (bug penting):** localStorage (`STORAGE_KEY`) cuma satu untuk seluruh device, tidak dibedakan per akun. Kalau device ini pernah sinkron dengan akun cloud A lalu ada yang Keluar dan Masuk/Daftar dengan akun B (ganti user, pinjam HP, dst) tanpa localStorage sempat dibersihkan, `syncReconcile()` di `14-sync.js` mengira sisa data akun A itu "data di perangkat ini" milik akun B: ditawarkan sebagai pilihan yang bisa keliru dipilih, atau — kalau cloud akun B masih kosong — otomatis ikut terkirim jadi isi awal akun B. Sekarang ditambahkan `syncGuardAccountSwitch()`, dipanggil di awal `syncStartSession()` sebelum `syncReconcile()` menyentuh localStorage sama sekali: kalau `uid` di metadata sinkron device (`kp_sync_meta`) beda dari `uid` akun yang baru login, data lokal lama itu dibackup dulu ke file JSON (`autoBackupBeforeReset`), lalu `STORAGE_KEY` & `kp_seed_demo` dihapus dan metanya direset ke `{uid: akun-baru, version: 0}` sebelum lanjut — jadi device diperlakukan seolah baru pertama kali dipakai akun tersebut (tarik bersih dari cloud, atau mulai kosong kalau cloud-nya juga kosong). Alur migrasi normal "coba mode lokal dulu → baru Daftar" tidak berubah, karena di situ `meta.uid` memang masih kosong (belum pernah sync sama sekali)
+- Data bisa "kebawa" antar akun cloud di device yang sama (bug penting) — localStorage cuma satu untuk seluruh device, tidak dibedakan per akun.
 
 ## v1.1.028 — 23 Sep 2026
 
-**Diperbaiki**
-- **Akun cloud baru tidak lagi ikut kebawa data contoh:** sebelumnya `loadData()` (`01-data.js`) selalu mengisi 7 transaksi contoh bawaan (`defaultData()`) begitu localStorage perangkat kosong. Kalau user sempat coba "Pakai mode lokal dulu" (jadi data contoh itu sudah tersimpan lokal) lalu belakangan Daftar/Masuk Google, data contoh itu ikut terkirim jadi "isi awal" akun cloud yang baru dibuat -- padahal seharusnya kosong. Sekarang:
-  - Kalau `loadData()` pertama kali mengisi data padahal saat itu sedang aktif sesi cloud (`sync.ready`), yang diisi adalah data benar-benar kosong (`emptyData()`, cuma 1 akun Kas saldo 0, tanpa transaksi), bukan data contoh
-  - Data contoh yang tersimpan lokal ditandai (`SEED_DEMO_KEY`, dihapus otomatis oleh `saveData()` begitu ada perubahan sungguhan dari user). Kalau saat sinkron pertama ke akun cloud baru (`syncReconcile` di `14-sync.js`) ternyata data lokalnya masih persis data contoh yang belum tersentuh itu, datanya diganti kosong dulu sebelum dikirim
-  - Data lokal **asli** yang sudah pernah diedit user (bukan data contoh) tetap terkirim apa adanya saat pertama kali disinkronkan ke akun cloud baru -- perilaku migrasi ini tidak berubah
+- Akun cloud baru tidak lagi ikut kebawa data contoh — sebelumnya `loadData()` selalu mengisi 7 transaksi contoh bawaan (`defaultData()`) begitu localStorage perangkat kosong.
 
 ## v1.1.027 — 23 Sep 2026
 
-**Diubah**
-- **`signUp()` di form Daftar sekarang mengirim `emailRedirectTo: location.href`** (`14-sync.js`), sama seperti pola yang sudah dipakai di "Lupa kata sandi" — memastikan link konfirmasi di email pendaftaran mengarah balik ke domain app yang sedang dipakai user, bukan cuma andalkan "Site URL" tunggal di dashboard Supabase. Domain ini tetap harus didaftarkan di Supabase → Authentication → URL Configuration → Redirect URLs, kalau tidak Supabase menolak redirect-nya
+- `signUp()` di form Daftar sekarang mengirim `emailRedirectTo: location.href` — sama seperti pola yang sudah dipakai di "Lupa kata sandi" — memastikan link konfirmasi di email pendaftaran mengarah…
 
 ## v1.1.026 — 23 Sep 2026
 
-**Ditambah**
-- **Masuk/daftar dengan Google (OAuth)** (`14-sync.js`): tombol "Masuk dengan Google" / "Daftar dengan Google" di layar Masuk & Daftar, lewat `supabase.auth.signInWithOAuth({ provider: 'google' })`. Satu tombol ini otomatis berfungsi untuk keduanya — Google akan membuatkan akun baru kalau emailnya belum pernah dipakai, atau langsung login kalau sudah ada. Browser dialihkan penuh ke halaman Google lalu kembali ke app; Supabase-js membaca sesinya dari URL secara otomatis saat halaman dimuat ulang, jadi tidak ada logika baru di `syncBootInner()`. Tombol pakai gaya `.auth-oauth-btn` baru (border tipis, ikon "G" 4 warna) dipisahkan dari form email/password lewat divider "atau pakai email" (`.auth-divider`, CSS baru di `style.css`)
-- **Setup sekali di luar app (wajib sebelum tombol Google berfungsi):** aktifkan provider Google di dashboard Supabase (Authentication → Providers → Google, isi Client ID & Secret dari Google Cloud Console), lalu tambahkan URL tempat app ini di-hosting ke daftar Redirect URLs (Authentication → URL Configuration). Tanpa ini tombol akan menampilkan pesan error dari Supabase saat diklik
+- Masuk/daftar dengan Google (OAuth) — tombol "Masuk dengan Google" / "Daftar dengan Google" di layar Masuk & Daftar, lewat `supabase.auth.signInWithOAuth({ p…
+- Setup sekali di luar app (wajib sebelum tombol Google berfungsi) — aktifkan provider Google di dashboard Supabase (Authentication → Providers → Google, isi Client ID & Secret dari Google…
 
 ## v1.1.025 — 23 Sep 2026
 
-**Ditambah**
-- **Pendaftaran akun baru langsung dari layar masuk** (`14-sync.js`): tautan "Belum punya akun? Daftar" di bawah layar Masuk membuka form Daftar (email, kata sandi, ulangi kata sandi) yang memanggil `supabase.auth.signUp()`. Kalau proyek Supabase mewajibkan konfirmasi email (bawaan default Supabase), user diberi tahu untuk cek email lalu diarahkan balik ke layar Masuk; kalau konfirmasi email dimatikan di pengaturan proyeknya, sesi langsung aktif setelah daftar (perilaku sama seperti login sukses). Validasi dasar (kata sandi minimal 6 karakter, kata sandi & ulangannya harus sama) dilakukan di sisi app sebelum memanggil Supabase. Tidak ada tabel/skema baru — akun tetap dikelola sepenuhnya oleh Supabase Auth, baris `app_data` untuk user baru baru dibuat saat data pertama kali tersinkron (lihat `syncReconcile`)
+- Pendaftaran akun baru langsung dari layar masuk — tautan "Belum punya akun?
 
 ## v1.1.024 — 23 Sep 2026
 
-**Diubah**
-- **Sisa dropdown bawaan browser diganti jadi custom** (`enhanceSelect`, lanjutan v1.1.021): form akun/edit akun — jenis akun, jenis nilai & periode biaya admin, jenis aset, jenis pembayaran minimum kartu kredit, status pinjaman, jenis bunga, satuan suku bunga, cara bayar biaya admin, akun pencairan pinjaman; form "Catat pembayaran" pinjaman — jenis pembayaran & sumber dana; form Titipan — pilih orang & pilih dana; dan metode pembayaran PayLater di form transaksi. Semuanya sekarang tampil senada tema app di semua browser/HP, `<select>` asli tetap ada di balik layar jadi logic lama tidak berubah
-- Panel dropdown custom sekarang ikut menyembunyikan opsi yang di-nonaktifkan lewat kode (mis. opsi "Bayar bunga saja" yang disembunyikan untuk Pinjaman Online), sebelumnya cuma disembunyikan di `<select>` asli tapi masih muncul di panel custom
-- **Filter bulan & urutkan di tab Transaksi ikut diganti juga**: tampilan tetap ringkas seperti sebelumnya (ukuran/padding disesuaikan lewat CSS khusus per lokasi), cuma widget-nya sekarang custom
+- Sisa dropdown bawaan browser diganti jadi custom — form akun/edit akun — jenis akun, jenis nilai & periode biaya admin, jenis aset, jenis pembayaran minimum kartu kredit,…
+- Panel dropdown custom sekarang ikut menyembunyikan opsi yang di-nonaktifkan lewat kode (mis.
+- Filter bulan & urutkan di tab Transaksi ikut diganti juga — tampilan tetap ringkas seperti sebelumnya (ukuran/padding disesuaikan lewat CSS khusus per lokasi), cuma widget-nya sek…
 
 ## v1.1.023 — 23 Sep 2026
 
-**Ditambah**
-- **Tab "Akun" dan "Data" dipindah ke nav bawah** (sebelumnya cuma bisa dibuka lewat menu pengaturan ⚙️): nav bawah sekarang berisi 6 tab — Ringkasan, Akun, Transaksi, Titipan, Laporan, Data — plus tombol + melayang terpisah. Ikon kartu (Akun) dan ikon database (Data) baru ditambahkan senada gaya ikon nav lain. Entri "Akun" & "Data & Export" di menu pengaturan dihapus (redundan), "Profil" tetap di sana. Ukuran font/ikon nav dikecilkan sedikit dan label dibungkus `<span>` supaya bisa ellipsis (…) kalau kepanjangan di layar sempit, supaya 6 tab tetap muat rapi
+- Tab "Akun" dan "Data" dipindah ke nav bawah — (sebelumnya cuma bisa dibuka lewat menu pengaturan ⚙️)
 
 ## v1.1.022 — 23 Sep 2026
 
-**Diubah**
-- **Tombol + (catat transaksi) di nav bawah diganti jadi FAB (floating action button) yang melayang lepas** di pojok kanan bawah layar, bukan lagi menyatu di tengah baris nav — juga berlaku di tampilan desktop (sebelumnya di desktop tombol ini jadi tombol lebar biasa di atas menu sidebar). Empat tombol nav lainnya otomatis membagi rata ruang yang ditinggalkan
+- Tombol + (catat transaksi) di nav bawah diganti jadi FAB (floating action button) yang melayang lepas — di pojok kanan bawah layar, bukan lagi menyatu di tengah baris nav — juga berlaku di tampilan desktop (sebelumnya di de…
 
 ## v1.1.021 — 23 Sep 2026
 
-**Diubah**
-- **Dropdown akun & kategori di form transaksi diganti jadi custom (bukan `<select>` bawaan browser):** field kategori, akun, dan akun tujuan (transfer) sekarang tampil sebagai tombol + panel pilihan sendiri (`06-util-ui.js`, fungsi `enhanceSelect`), supaya tampilannya konsisten di semua browser/HP dan bisa didesain senada tema app (termasuk grouping akun tetap dipertahankan). `<select>` aslinya tetap ada di balik layar (disembunyikan) sebagai sumber data, jadi semua logic form transaksi yang sudah ada tidak diubah/berisiko rusak. Dropdown lain (form akun, sort, bulan, dll) masih pakai `<select>` bawaan browser
+- Dropdown akun & kategori di form transaksi diganti jadi custom (bukan `<select>` bawaan browser) — field kategori, akun, dan akun tujuan (transfer) sekarang tampil sebagai tombol + panel pilihan sendiri, supaya tampila…
 
 ## v1.1.020 — 22 Sep 2026
 
-**Diubah** (color scheme & tipografi — "Modern mint")
-- **Palet warna diganti total,** menjauh dari kombinasi krem+serif+terracotta lama: dasar sekarang abu-hijau sejuk nyaris putih (`--paper: #F3F6F4`), kartu putih bersih dengan border tipis (`--card: #FFFFFF`, sebelumnya `#FDFBF5` hampir menyatu dengan `--paper`), warna utama jadi mint cerah (`--teal: #14B88A`, sebelumnya hijau tua muram `#1F4B43`), dan aksen jadi koral hangat (`--rust: #FF6B4A`, sebelumnya rust `#A9532B`). Mode gelap ikut disegarkan senada (dasar `#0F1613`, mint `#3DDC97`). Warna semantik lain (hijau/merah/biru/ungu/kuning) ikut dicerahkan tipis biar senada
-- **Font judul diganti dari Fraunces (serif) ke Space Grotesk (sans modern)** — dipakai di `h1`, saldo besar di Ringkasan, jumlah di detail transaksi, dan layar login (logo + judul). Body text tetap Inter
+- Palet warna diganti total, — menjauh dari kombinasi krem+serif+terracotta lama
+- Font judul diganti dari Fraunces (serif) ke Space Grotesk (sans modern) — dipakai di `h1`, saldo besar di Ringkasan, jumlah di detail transaksi, dan layar login (logo + judul).
 - Warna shadow/overlay modal disesuaikan dari coklat hangat ke gelap kehijauan biar senada palet baru
-- Ikon PWA (`icon-*.png`, ditambahkan di v1.1.019) dan `manifest.json` (`theme_color`, `background_color`) ikut diperbarui ke palet baru
+- Ikon PWA dan `manifest.json` (`theme_color`, `background_color`) ikut diperbarui ke palet baru
 - Tidak ada perubahan struktur/logika — murni visual
 
 ## v1.1.019 — 22 Sep 2026
 
-**Ditambah**
-- **Bisa di-install sebagai app (PWA):** menambahkan `manifest.json` + ikon (`icon-192.png`, `icon-512.png`, dan versi maskable-nya — motif dompet + koin, warna teal/krem/rust sesuai skema app) serta tag terkait di `index.html`. Di HP (Android/iOS) dan desktop, ini memunculkan opsi "Install" / "Add to Home Screen" yang membuka app di jendela sendiri (tanpa address bar), bukan sekadar shortcut tab browser. **Catatan:** prompt install resmi Chrome butuh app di-host lewat HTTP/HTTPS (mis. `python3 -m http.server`, atau GitHub Pages) — dibuka langsung dari `file://` tetap bisa dipakai seperti biasa, tapi tanpa prompt install otomatis
+- Bisa di-install sebagai app (PWA) — menambahkan `manifest.json` + ikon serta tag terkait di `index.html`.
 
 ## v1.1.018 — 22 Sep 2026
 
-**Dioptimalkan** (performa, tidak ada perubahan tampilan/perilaku)
-- **Hitung bunga pinjaman bunga TETAP dipercepat:** `computeLoanMonthlyInterest()` sebelumnya selalu scan ulang SELURUH `data.txns` lewat `accountBalance()` untuk menghitung `sisaPokok`, padahal nilai itu cuma dipakai untuk pinjaman bunga **menurun** — pinjaman **tetap/flat** memakai pokok awal, bukan sisa pokok, jadi scan itu sia-sia untuk jenis ini. Sekarang scan itu hanya dijalankan kalau jenis bunganya memang menurun, dan fungsi ini juga menerima `bal` opsional (dari `computeAllBalances()`) supaya pemanggil yang sudah punya saldo tidak perlu scan ulang sama sekali. Dampak terasa di tab Akun & Laporan kalau jumlah akun pinjaman dan transaksi sudah banyak — hasil perhitungan sama persis, cuma lebih cepat
+- Hitung bunga pinjaman bunga TETAP dipercepat — `computeLoanMonthlyInterest()` sebelumnya selalu scan ulang SELURUH `data.txns` lewat `accountBalance()` untuk menghitu…
 
 ## v1.1.017 — 22 Sep 2026
 
-**Dioptimalkan** (performa, tidak ada perubahan tampilan/perilaku)
-- **Daftar transaksi divirtualisasi:** tab Transaksi kini menggambar 80 transaksi per halaman (bukan semuanya sekaligus), dengan tombol "Muat lebih banyak" untuk menampilkan 80 berikutnya. Potongan halaman selalu di batas hari (kelompok tanggal tidak pernah terpotong di tengah), dan halaman otomatis kembali ke awal tiap ganti filter/urutan/cari/bulan. Berdampak terutama kalau jurnal transaksi sudah sangat panjang (ratusan–ribuan baris) — sebelumnya semua baris dibangun ulang di DOM tiap render
-- **Hitung saldo akun aset dipercepat:** `computeAllBalances()` sebelumnya scan ulang SELURUH transaksi dari nol untuk tiap akun aset (properti/emas/forex dll — `O(akun aset × transaksi)`). Sekarang transaksi dikelompokkan per akun sekali di awal, jadi totalnya `O(transaksi)` saja. Hasil perhitungan sama persis, cuma lebih cepat kalau akun asetnya banyak
+- Daftar transaksi divirtualisasi — tab Transaksi kini menggambar 80 transaksi per halaman (bukan semuanya sekaligus), dengan tombol "Muat lebih banyak" un…
+- Hitung saldo akun aset dipercepat — `computeAllBalances()` sebelumnya scan ulang SELURUH transaksi dari nol untuk tiap akun aset (properti/emas/forex dll —…
 
 ## v1.1.016 — 21 Sep 2026
 
-**Ditambah** (pinjaman bunga menurun & pinjaman bank)
-- **Anuitas (PMT) untuk bunga menurun:** kalau pokok, tenor, dan suku bunga diisi tapi angsuran dikosongkan, angsuran per bulan dihitung otomatis dengan rumus anuitas (tetap tiap bulan, porsi bunga mengecil dan porsi pokok membesar seiring waktu) — sebelumnya harus dihitung manual
-- **Jadwal angsuran untuk pinjaman menurun:** kalau tenor dan tanggal pencairan diisi, muncul jadwal angsuran, progres terbayar, dan masuk pengingat Jatuh tempo di Ringkasan — sebelumnya hanya pinjaman bunga tetap yang punya ini
-- **Kolom Tenor, tanggal pencairan, dan tanggal jatuh tempo kini muncul untuk pinjaman bank juga** (sebelumnya hanya pinjaman online). Pinjaman bank bunga tetap yang mengisi tenor juga ikut mendapat jadwal angsuran dan pengingat jatuh tempo
-- **Laporan → Total biaya utang** kini menghitung sisa bunga pinjaman menurun dari jadwal anuitas kalau datanya lengkap (sebelumnya selalu tampil "-" untuk pinjaman menurun)
-- **Simulasi pelunasan:** pinjaman menurun yang tenor/tanggal pencairan/suku bunganya lengkap tidak lagi butuh angsuran manual — angsuran anuitas otomatis dipakai, sehingga lebih sedikit pinjaman yang perlu masuk daftar "Belum disertakan" (lihat v1.1.015)
-
-**Catatan**
-- Perhitungan menurun mengasumsikan angsuran dibayar tepat sesuai jadwal (bulan demi bulan), sama seperti asumsi yang sudah dipakai jadwal pinjaman bunga tetap. Kalau pembayaran nyata berbeda dari jadwal, progres "terbayar" bisa sedikit meleset dari histori transaksi sebenarnya
+- Anuitas (PMT) untuk bunga menurun — kalau pokok, tenor, dan suku bunga diisi tapi angsuran dikosongkan, angsuran per bulan dihitung otomatis dengan rumus a…
+- Jadwal angsuran untuk pinjaman menurun — kalau tenor dan tanggal pencairan diisi, muncul jadwal angsuran, progres terbayar, dan masuk pengingat Jatuh tempo di R…
+- Kolom Tenor, tanggal pencairan, dan tanggal jatuh tempo kini muncul untuk pinjaman bank juga — (sebelumnya hanya pinjaman online).
+- Laporan → Total biaya utang — kini menghitung sisa bunga pinjaman menurun dari jadwal anuitas kalau datanya lengkap (sebelumnya selalu tampil "-" unt…
+- Simulasi pelunasan — pinjaman menurun yang tenor/tanggal pencairan/suku bunganya lengkap tidak lagi butuh angsuran manual — angsuran anuitas…
 
 ## v1.1.015 — 21 Sep 2026
 
-**Diperbaiki** (logika pinjaman)
-- **Bayar beberapa angsuran sekaligus (pinjaman flat bertenor):** bunga kini dihitung per angsuran, bukan satu bulan saja. Contoh Rp3,36 juta (3 angsuran) sebelumnya tercatat bunga Rp120 ribu + pokok Rp3,24 juta; sekarang bunga Rp360 ribu + pokok Rp3,0 juta. Sisa pokok dan sisa bunga di tab Akun kembali sama dengan Laporan. Berlaku di mode "Angsuran"; mode "Nominal bebas" dan "Bunga saja" tidak berubah
-- **Simulasi pelunasan:** pinjaman yang angsuran per bulannya belum diisi tidak lagi dianggap lunas dalam 1 bulan. Pinjaman itu dikeluarkan dari simulasi dan muncul catatan "Belum disertakan"
-
-**Diubah**
-- **Baris biaya di Laporan** kini akurat: pinjaman flat menampilkan "Bunga flat ≈ x%/bln dari pokok awal" dan, kalau tenor diketahui, bunga efektifnya (IRR, sudah memperhitungkan admin/materai di depan). Contoh: flat 12%/thn tenor 12 bulan ≈ 1,79%/bln efektif. Pinjaman menurun menampilkan "Bunga menurun ≈ x%/bln dari sisa pokok" (sebelumnya membagi bunga saat ini dengan pokok awal sehingga terlihat lebih kecil)
+- Bayar beberapa angsuran sekaligus (pinjaman flat bertenor) — bunga kini dihitung per angsuran, bukan satu bulan saja.
+- Simulasi pelunasan — pinjaman yang angsuran per bulannya belum diisi tidak lagi dianggap lunas dalam 1 bulan.
+- Baris biaya di Laporan — kini akurat
 
 ## v1.1.014 — 21 Sep 2026
 
-**Diubah** (tampilan desktop)
-- **Transaksi, Titipan, dan Laporan kini dua panel mulai layar 1024px** (sebelumnya 1280px), jadi laptop berlayar 1024–1279px tidak lagi terlihat seperti tampilan ponsel. Panel kiri 264px (filter/ringkasan), isi di kanan. Mulai 1280px panel kiri melebar (320px atau 300px) dan bagian dalam Laporan dua kolom
-- **Akun:** kartu yang sendirian di grupnya kini memenuhi lebar grup, tidak lagi setengah lebar
+- Transaksi, Titipan, dan Laporan kini dua panel mulai layar 1024px — (sebelumnya 1280px), jadi laptop berlayar 1024–1279px tidak lagi terlihat seperti tampilan ponsel.
+- Akun — kartu yang sendirian di grupnya kini memenuhi lebar grup, tidak lagi setengah lebar
 - Di bawah 1024px tidak ada perubahan
 
 ## v1.1.013 — 21 Sep 2026
 
-**Diubah** (tampilan desktop, semua tab)
-- **Layar 1280px ke atas:**
-  - **Akun:** grup akun mengalir dalam dua kolom
-  - **Transaksi:** panel filter (bulan, cari, urutan, jenis, akun) menempel di kiri, daftar di kanan
-  - **Titipan:** ringkasan di kiri, daftar orang di kanan
-  - **Laporan:** pengaturan periode dan filter menempel di kiri; hasil di kanan dengan kartu utang dua kolom dan kategori pemasukan/pengeluaran berdampingan
-  - **Data & Profil:** bagian pengaturan jadi kartu dua kolom
-- **Layar 1024px ke atas:** bagian pengaturan Data & Profil tampil sebagai kartu; tab lain tetap satu kolom selebar maksimal 760px
-- Ponsel, tablet, dan Export PDF tidak berubah. Struktur HTML diberi pembungkus (`txn-filters`, `titipan-side`, `laporan-controls`, dan lainnya) yang tidak berefek di layar kecil
+- Layar 1280px ke atas
+- Layar 1024px ke atas — bagian pengaturan Data & Profil tampil sebagai kartu; tab lain tetap satu kolom selebar maksimal 760px
+- Ponsel, tablet, dan Export PDF tidak berubah.
 
 ## v1.1.012 — 21 Sep 2026
 
-**Ditambah** (tampilan tablet & desktop)
-- **Layar 1024px ke atas:** navigasi pindah ke sidebar kiri (tombol **Catat transaksi** di atas, lalu Ringkasan, Transaksi, Titipan, Laporan). Isi tidak lagi tertutup bilah bawah. Kolom isi maksimal 760px, kecuali Ringkasan
-- **Layar 1280px ke atas:** tab Ringkasan tampil dua kolom (kartu operasional di kiri, grafik di kanan), sehingga halaman jauh lebih pendek
-- **Layar 768px ke atas:** dialog konfirmasi dan sheet detail muncul di tengah layar (sebelumnya naik dari bawah); kolom isi 720px
+- Layar 1024px ke atas — navigasi pindah ke sidebar kiri (tombol Catat transaksi di atas, lalu Ringkasan, Transaksi, Titipan, Laporan).
+- Layar 1280px ke atas — tab Ringkasan tampil dua kolom (kartu operasional di kiri, grafik di kanan), sehingga halaman jauh lebih pendek
+- Layar 768px ke atas — dialog konfirmasi dan sheet detail muncul di tengah layar (sebelumnya naik dari bawah); kolom isi 720px
 - Efek hover pada menu navigasi
 - Ponsel (di bawah 768px) dan Export PDF tidak berubah
 
 ## v1.1.011 — 21 Sep 2026
 
-**Ditambah** (sinkron cloud)
-- **Nama pemilik ikut tersinkron** lewat metadata akun Supabase (`user_metadata.owner_name`). Saat login, nama dari akun dipakai untuk sapaan; kalau akun belum punya nama dan perangkat ini pernah mengisinya, nama itu dikirim sebagai isi awal
-- Menyimpan nama di tab Profil saat sudah login ikut memperbarui akun. Kalau gagal terkirim, muncul pesan bahwa nama baru tersimpan di perangkat ini saja
+- Nama pemilik ikut tersinkron — lewat metadata akun Supabase.
+- Menyimpan nama di tab Profil saat sudah login ikut memperbarui akun.
 - Teks di tab Profil menyesuaikan status login
-
-**Catatan**
-- Nama tetap disalin di localStorage (`kp_owner_name`) supaya sapaan benar saat offline dan mode lokal. Nama tidak ikut Export JSON. Perubahan dari perangkat lain terlihat saat login atau app dibuka ulang
 
 ## v1.1.010 — 21 Sep 2026
 
-**Ditambah** (sinkron cloud)
-- Menu gear punya opsi **Masuk untuk sinkron** yang tampil kalau belum login (misalnya tadi memilih "Pakai mode lokal dulu"). Setelah login, opsi itu berganti jadi **Keluar (email)**. Tidak tampil kalau sinkron cloud tidak dikonfigurasi
-- Layar masuk dari menu gear punya tombol **Batal**. Perubahan yang dibuat selama mode lokal tetap dikirim ke cloud, atau muncul dialog pilihan kalau cloud sudah punya data berbeda
+- Menu gear punya opsi Masuk untuk sinkron yang tampil kalau belum login (misalnya tadi memilih "Pakai mode lokal dulu").
+- Layar masuk dari menu gear punya tombol Batal.
 - Kalau pustaka sinkron belum termuat (offline), muncul pesan untuk periksa koneksi lalu muat ulang
-
-**Diubah**
-- Alur login setelah app terbuka dipakai bersama dengan alur saat boot (`syncStartSession`), jadi perilakunya sama
-- Teks di tab Profil disesuaikan: masuk lewat menu gear kapan saja
+- Alur login setelah app terbuka dipakai bersama dengan alur saat boot, jadi perilakunya sama
+- Teks di tab Profil disesuaikan
 
 ## v1.1.009 — 21 Sep 2026
 
-**Diubah** (sinkron cloud)
-- **Layar masuk didesain ulang**: tanpa kotak modal, satu kolom bersih dengan logo "Rp", judul serif, label di atas kolom, tombol tampil/sembunyikan kata sandi, tombol utama dengan indikator loading, dan pesan galat/sukses di bawah kolom. Mengikuti tema terang/gelap
-- Layar **lupa kata sandi** dan **kata sandi baru** memakai tampilan yang sama. Email yang sudah diketik ikut terbawa saat pindah antar layar
-- Ukuran teks kolom isian 16px supaya iOS tidak memperbesar layar saat mengetik. Layar bisa digulir di HP berlayar pendek
+- Layar masuk didesain ulang — tanpa kotak modal, satu kolom bersih dengan logo "Rp", judul serif, label di atas kolom, tombol tampil/sembunyikan kata…
+- Layar lupa kata sandi dan kata sandi baru memakai tampilan yang sama.
+- Ukuran teks kolom isian 16px supaya iOS tidak memperbesar layar saat mengetik.
 - Istilah diseragamkan jadi "kata sandi" (sebelumnya campur dengan "password")
 
 ## v1.1.008 — 21 Sep 2026
 
-**Diperbaiki**
-- **App tidak tampil sama sekali (semua angka Rp0)**: `15-startup.js` masih memakai konstanta `OWNER_NAME` yang sudah diganti `getOwnerName()`, sehingga startup berhenti dengan error dan `render()` tidak pernah jalan. Sapaan kini lewat `updateGreeting()`
-- **Data lokal rusak tidak lagi ditimpa data contoh**: kalau JSON di localStorage tidak bisa dibaca (atau bentuknya salah), salinan mentahnya diamankan di key `keuangan-app-data-v2-corrupt`, muncul peringatan merah, dan data contoh hanya dipakai di memori (tidak disimpan/dikirim ke cloud) sampai pengguna mengubah sesuatu
-
-**Diubah**
-- README diperbarui: struktur multi-file, sinkron cloud (Supabase), tab Profil, key localStorage baru
+- App tidak tampil sama sekali (semua angka Rp0) — `15-startup.js` masih memakai konstanta `OWNER_NAME` yang sudah diganti `getOwnerName()`, sehingga startup berhenti den…
+- Data lokal rusak tidak lagi ditimpa data contoh — kalau JSON di localStorage tidak bisa dibaca (atau bentuknya salah), salinan mentahnya diamankan di key `keuangan-app-d…
 
 ## v1.1.007 — 21 Sep 2026
 
-**Diubah** (tab Laporan)
-- **Rincian utang**, **Proyeksi kas**, **Total biaya utang**, dan **Simulasi pelunasan** dipadatkan dengan pola yang sama seperti Saran: satu baris per akun/tagihan (titik status, nama, nilai, petunjuk satu baris), ketuk untuk detail. Halaman Laporan sekitar 19% lebih pendek di HP (data uji: 5.224 px jadi 4.236 px)
-- Rincian utang: titik status merah/kuning/hijau per akun (lewat jatuh tempo atau limit ≥70% merah; limit ≥30% atau jatuh tempo ≤7 hari kuning)
-- Proyeksi kas: empat angka ringkasan jadi grid 2×2, urutan bayar tampil 5 dulu lalu "Tampilkan N lagi", catatan dikecilkan. Ganti 30/60 hari kini hanya menggambar ulang kartu ini, jadi baris lain yang sedang dibuka dan posisi gulir tidak berubah
-- Total biaya utang: satu baris per akun dengan total biaya kontrak di kanan, rincian di dalam baris
-- Simulasi pelunasan: label skenario dipersingkat, penjelasan dan catatan pindah ke "Catatan simulasi" (tertutup)
-- **Export PDF**: semua baris lipat (termasuk Saran) dibuka otomatis saat cetak lalu dikembalikan. Sebelumnya isi baris yang tertutup tidak ikut tercetak
-
-**Diperbaiki**
-- Simulasi pelunasan: setelah Laporan digambar ulang (ganti periode, filter akun, dll.), mengetik dana ekstra tidak memperbarui hasil dan nilainya tidak tersimpan. Penyebabnya elemen lama tersangkut di cache DOM (`$()`); kini selalu memakai elemen yang terbaru
-
-**Kinerja**
-- Jadwal dan sisa pinjaman, daftar jatuh tempo, dan rata-rata pemasukan dihitung sekali per render Laporan (dulu berulang di tiap kartu): jadwal 20×→9×, sisa pinjaman 15×→3×, jatuh tempo 2×→1×
+- Rincian utang — Proyeksi kas, Total biaya utang, dan Simulasi pelunasan dipadatkan dengan pola yang sama seperti Saran
+- Proyeksi kas
+- Total biaya utang
+- Simulasi pelunasan
+- Export PDF — semua baris lipat (termasuk Saran) dibuka otomatis saat cetak lalu dikembalikan.
+- Jadwal dan sisa pinjaman, daftar jatuh tempo, dan rata-rata pemasukan dihitung sekali per render Laporan (dulu berulang di tiap kartu)
 - Total biaya utang menjumlah bunga & biaya dalam satu kali lewat transaksi, bukan sekali per akun
 - Input dana ekstra di Simulasi menunggu jeda ketik 120 ms sebelum menghitung ulang
-- Uji dengan 6.000 transaksi: render Laporan rata-rata 14,1 ms jadi 9,9 ms (sekitar 30% lebih cepat). Angka di semua kartu sudah dibandingkan dengan v1.1.006 pada beberapa set data dan hasilnya sama
+- Uji dengan 6.000 transaksi
 
 ## v1.1.006 — 21 Sep 2026
 
-**Diubah**
-- Kartu **Saran** di tab Laporan dipadatkan: satu baris judul per saran dengan titik warna (merah/kuning/abu/hijau), ketuk untuk detail, maksimal 3 tampil awal, sisanya di tombol "Tampilkan N lagi"
+- Kartu Saran di tab Laporan dipadatkan
 - Ringkasan jumlah "segera / waspada" ditampilkan di judul kartu
-- Saran serupa digabung (limit kartu + PayLater jadi satu; pinjol berbiaya tinggi jadi satu). Catatan bunga flat pindah ke dalam detail pinjol
+- Saran serupa digabung (limit kartu + PayLater jadi satu; pinjol berbiaya tinggi jadi satu).
 - Saran "tagihan terdekat" dihapus karena sudah ada di Proyeksi kas
 - Disclaimer dikecilkan jadi satu baris
 
 ## v1.1.005 — 21 Sep 2026
 
-**Diubah**
-- Header dirapikan: judul "Keuangan harian" jadi **"Keuangan pribadi"** (judul tab browser ikut), sapaan sesuai jam + nama pemilik (`OWNER_NAME`), tanggal singkat dengan hari ("Sen, 21 Sep 2026")
+- Header dirapikan
 - Ikon pengaturan ⚙ diganti ikon SVG yang gayanya sama dengan ikon mata di kartu saldo, supaya tampil konsisten di semua perangkat
 - Perataan eyebrow (sapaan, tanggal, ikon) dan jarak ke judul dirapikan
 
 ## v1.1.004 — 21 Sep 2026
 
-**Ditambah**
-- **Footer versi** di bawah semua tab: nama app, nomor versi, tanggal build (konstanta `APP_NAME`, `APP_VERSION`, `APP_BUILD`). Tidak ikut tercetak saat Export PDF
+- Footer versi — di bawah semua tab
 
 ## v1.1.003 — 21 Sep 2026
 
-**Ditambah** (tab Laporan)
-- **Proyeksi kas 30/60 hari**: saldo kas + bank + e-wallet setelah tagihan & angsuran terjadwal, urut per tanggal, dengan peringatan tanggal saldo diperkirakan minus. Angsuran pinjaman diambil dari jadwal semua bulan, cicilan PayLater bulan berikutnya ikut dihitung
-- **Total biaya utang**: bunga, admin, asuransi, materai per akun (sudah dibayar vs sisa, persen dari pokok), plus total gabungan
-- **Simulasi pelunasan**: input dana ekstra per bulan, membandingkan 3 skenario (tanpa ekstra, ekstra bunga tertinggi dulu, ekstra saldo terkecil dulu) dengan cicilan yang lunas digulung ke utang lain. Hasil terbarui langsung saat mengetik
+- Proyeksi kas 30/60 hari — saldo kas + bank + e-wallet setelah tagihan & angsuran terjadwal, urut per tanggal, dengan peringatan tanggal saldo dip…
+- Total biaya utang — bunga, admin, asuransi, materai per akun (sudah dibayar vs sisa, persen dari pokok), plus total gabungan
+- Simulasi pelunasan — input dana ekstra per bulan, membandingkan 3 skenario (tanpa ekstra, ekstra bunga tertinggi dulu, ekstra saldo terkecil…
 
 ## v1.1.002 — 21 Sep 2026
 
-**Ditambah** (tab Laporan)
-- **Rincian utang** per jenis: kartu kredit (pemakaian vs limit, tagihan cetak, minimum, jatuh tempo, estimasi bunga), PayLater (limit terpakai, cicilan aktif, sisa bunga cicilan, tagihan periode ini), pinjol & pinjaman bank (sisa pokok + bunga & biaya, angsuran ke-n, angsuran berikutnya, biaya efektif per bulan)
-- Kartu **Saran** otomatis: tagihan lewat jatuh tempo, pemakaian limit, beban cicilan vs rata-rata pemasukan 90 hari, dana likuid vs tagihan 30 hari, pinjol berbiaya tinggi, prioritas dana ekstra, arus kas & beban bunga
+- Rincian utang — per jenis
+- Kartu Saran otomatis
 
 ## v1.1.001 — 21 Sep 2026
 
-**Ditambah** (akun Pinjaman Online)
-- Field **Asuransi / proteksi pinjaman** (% per bulan dari pokok awal), opsional, boleh kosong
-- Pilihan **Cara bayar biaya admin**: dipotong dari pencairan (default, perilaku lama) atau dicicil bersama angsuran (pencairan Rp0 biaya)
+- Field Asuransi / proteksi pinjaman (% per bulan dari pokok awal), opsional, boleh kosong
+- Pilihan Cara bayar biaya admin
 - Angsuran otomatis kini = pokok/tenor + bunga flat + asuransi + (admin/tenor kalau dicicil), dengan rincian di bawah field angsuran
-- Meta akun menampilkan "Admin ... dicicil" dan "Asuransi ...%/bln (Rp.../bln)"
-- Field baru ikut Export/Import JSON dan Reset-dari-file (`loanAdminMode`, `loanInsurancePercent`)
-
-**Diubah**
-- Asuransi dan admin yang dicicil diperlakukan sebagai bagian "bunga & biaya" tiap angsuran, jadi otomatis ikut sisa hutang, jadwal angsuran (baris jadi "bunga & biaya"), dan rincian "Catat pembayaran"
+- Meta akun menampilkan "Admin ...
+- Field baru ikut Export/Import JSON dan Reset-dari-file
+- Asuransi dan admin yang dicicil diperlakukan sebagai bagian "bunga & biaya" tiap angsuran, jadi otomatis ikut sisa hutang, jadwal angsuran…
 - Kalau admin dicicil, pencairan tidak lagi memotong biaya admin
-
-**Catatan**
-- Akun pinjol lama tidak terpengaruh (admin tetap dipotong saat cair, tanpa asuransi)
 
 ## v1.1.000 — basis revisi
 
-Titik awal penomoran file. Berisi seluruh fitur dari riwayat sebelum penomoran di bawah.
+Titik awal penomoran file.
 
----
-
-## Riwayat sebelum penomoran file
-
-**v1.2**
-- Tambah field **Tanggal** di form "Catat pembayaran" (pinjaman/pinjaman online) dan form "Catat titipan" — sebelumnya keduanya selalu memakai tanggal hari ini tanpa bisa diubah, jadi tidak bisa dipakai untuk mencatat bulan-bulan yang sudah lewat. Sekarang tanggalnya bebas dipilih (maksimal hari ini), dengan validasi supaya tidak bisa diisi tanggal masa depan
-- Pesan konfirmasi kedua form otomatis menampilkan tanggal kalau tanggal yang dipilih bukan hari ini, supaya tidak salah catat
-- Lihat bagian "Mencatat Bulan yang Sudah Lewat" di [README.md](README.md) untuk panduan lengkapnya
-
-**v1.1**
-- Tambah jenis aset **"Forex / trading (akun cent)"** dan **"Kripto / crypto futures"** di dropdown, lengkap dengan hint cara pakai (Jumlah = equity USD/USDT, Harga per satuan = kurs)
-- Tambah tombol **"Lunasi sekarang"** di detail Titipan — mengisi mode & nominal otomatis untuk pelunasan penuh
-- **Perbaikan bug**: sheet detail Titipan sekarang ikut disegarkan otomatis saat ada transaksi yang dihapus/diedit dari riwayatnya (sebelumnya cuma detail Akun biasa yang disegarkan)
-- Tambah normalisasi `assetKind`/`assetUnit` (mis. `"usd"` → `"USD"`, `"forex"` → `"Forex"`) yang berlaku konsisten di input manual **dan** saat Import JSON / Reset-dari-file
-
-**v1.0**
-- Rilis awal: pencatatan kas/bank/e-wallet, aset dengan valuasi, kartu kredit, PayLater, pinjaman bank/online, titipan/piutang, grafik, laporan, export/import JSON & CSV
+Riwayat sebelum penomoran file (v1.0–v1.2): lihat [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
