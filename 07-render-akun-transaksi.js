@@ -298,8 +298,7 @@
   // saja (data tidak berubah), jadi tidak perlu render ulang seluruh tab lain
   // (akun, grafik, titipan, laporan) yang berat dan bikin lag terutama saat mengetik di kolom cari.
   function refreshTxnList() {
-    let data = loadData();
-    data = applyRecurringFees(data);
+    const data = loadData();
     state.txnRenderLimit = TXN_PAGE_SIZE; // filter/urutan/cari/bulan berubah -> mulai lagi dari halaman pertama
     renderTxnMonthRow(data);
     renderFilters(data);

@@ -7,10 +7,11 @@
     return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
+  // Aman untuk teks maupun nilai atribut (tanda kutip ikut di-escape). Pakai penggantian string,
+  // bukan membuat elemen <div> tiap panggilan (dipanggil ratusan kali per render).
+  const _ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   function escapeHtml(s) {
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => _ESC_MAP[c]);
   }
 
   function showConfirm(message) {

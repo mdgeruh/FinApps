@@ -1,206 +1,81 @@
-# Ringkasan: Keuangan Pribadi
+# Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Ringkasan analisis dan perubahan pada proyek **Keuangan Pribadi** (v1.1.007 menjadi **v1.1.020**), tanggal 22 Sep 2026.
+Status per **v1.1.049** (29 Sep 2026). Centang `[x]` = sudah dikerjakan di v1.1.049, `[ ]` = belum.
+Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
-## 1. Gambaran proyek
+## 1. Gambaran singkat
 
-Aplikasi pencatatan keuangan pribadi berbasis web statis: HTML + CSS + JavaScript biasa, tanpa build tool, sekitar 8.300 baris.
+App web statis (HTML + CSS + JS biasa, tanpa build tool), ±404 KB JS tanpa minify. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, export/import.
 
-- Data utama di `localStorage` (key `keuangan-app-data-v2`), jalan offline.
-- Sinkron cloud **opsional** lewat Supabase (login email + kata sandi). Aktif hanya kalau `SUPABASE_ANON_KEY` di `00-config.js` terisi; key saat ini kosong, jadi app masih mode lokal.
-- Fitur: kas/bank/e-wallet, aset dengan valuasi, kartu kredit, PayLater, pinjaman bank & online (pinjol), titipan/piutang, grafik, laporan utang (proyeksi kas, total biaya utang, simulasi pelunasan, saran), export/import JSON & CSV.
+## 2. Koreksi terhadap analisis sebelumnya
 
-**Struktur modul** (dimuat berurutan oleh `index.html`, berbagi scope global):
+Setelah kode dibaca lebih teliti saat mengerjakan, beberapa temuan di versi SUMMARY sebelumnya ternyata kurang tepat:
 
-| File | Isi |
+| Temuan lama | Yang sebenarnya |
 |---|---|
-| `00-config.js` | Konfigurasi Supabase |
-| `01-data.js` | State, penyimpanan, kalkulasi saldo & pinjaman |
-| `02-navigasi.js` | Navigasi, header, tab Profil, sapaan |
-| `03`–`05` | Form transaksi, akun, form titipan |
-| `06`–`08` | Util UI, render akun/transaksi, render titipan |
-| `09`–`12` | Grafik, beranda, laporan, render utama |
-| `13-import-export.js` | Import, export, reset, backup |
-| `14-sync.js` | Login, sinkron cloud, nama pemilik |
-| `15-startup.js` | Startup (dijalankan terakhir) |
+| E1: skrip Supabase "memblokir render" | Skrip ada di akhir `<body>`, jadi parsing HTML tidak terblokir. Yang tertahan adalah **startup app**, karena semua file app dimuat di belakang skrip CDN dan render pertama menunggu sinkron. Sudah diperbaiki lewat lazy-load |
+| E3: `computeAllBalances()` dihitung ulang di ≥10 tempat | Sebagian besar itu handler aksi yang terpisah (satu kali per aksi), bukan duplikasi. Duplikasi nyata hanya di tab Laporan |
+| E7: pencarian tanpa debounce | Sudah ada debounce 220 ms (`08-render-titipan.js`, dan pola sama di Transaksi). Tidak perlu diubah |
+| E10: listener grafik mungkin menumpuk | Tidak. `bindChartInteraction()` dijaga `svg.dataset.interactiveBound`, jadi hanya terpasang sekali |
+| Import menerima ID dari file | Tidak. `importJson` dan `resetAndImport` selalu membuat ID baru lewat `generateId()`; ID file hanya untuk memetakan relasi |
+| Nominal pecahan = bug | Bukan. 4 transaksi itu bunga/pajak bunga bank dengan sen yang sah (mis. Rp9.363,98). Yang ditambahkan hanya perapian ke 2 desimal |
 
-## 2. Temuan analisis dan statusnya
+## 3. Todolist
 
-| # | Temuan | Status |
-|---|---|---|
-| 1 | **Bug kritis:** `15-startup.js` memakai `OWNER_NAME` yang sudah tidak ada, sehingga startup berhenti dan app tidak pernah merender (semua angka Rp0) | **Diperbaiki** (v1.1.008) |
-| 2 | `loadData()` menimpa data lokal yang rusak dengan data contoh, dan bisa ikut terkirim ke cloud | **Diperbaiki** (v1.1.008) |
-| 3 | README dan CHANGELOG usang (masih "satu file HTML, 100% lokal") | **Diperbarui** (v1.1.008 dan seterusnya) |
-| 4 | `escapeHtml` tidak meng-escape tanda kutip, sedangkan dipakai di dua atribut (`03-form-transaksi.js:165`, `14-sync.js`) | Belum |
-| 5 | Cache DOM `$()` rawan elemen basi setelah `innerHTML` dibuat ulang (sumber bug simulasi di v1.1.007) | Belum |
-| 6 | `supabase/setup.sql` tidak ada di unggahan, jadi Row Level Security belum bisa diverifikasi | Belum |
-| 7 | Data keuangan tersimpan di Supabase sebagai JSON biasa (tidak dienkripsi di sisi klien) | Catatan risiko |
-| 8 | Nama default "Made Ceplor" dan data contoh `defaultData()` tertulis langsung di kode | Belum |
+Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
-## 3. Perubahan per versi
+### P0
+- [x] [K] Samakan kode dan CHANGELOG untuk nama pemilik/sapaan. Mengikuti CHANGELOG v1.1.041: fungsi sinkron nama dihapus, sapaan tanpa nama. **Kalau kamu justru ingin sapaan dengan nama, bilang saja**; itu perlu dikembalikan dan CHANGELOG yang diperbaiki
+- [x] [K] `supabase/setup.sql` (tabel + RLS + 4 kebijakan + query verifikasi)
+- [ ] [K] **Kamu yang harus menjalankan:** jalankan `setup.sql` di Supabase SQL Editor, lalu uji dengan dua akun (langkah ada di akhir file SQL). Saya tidak punya akses ke project Supabase-mu, jadi RLS-nya belum terverifikasi
+- [ ] [K] **Kamu yang harus menjalankan:** uji sinkron sungguhan (login, push, bentrok dua perangkat, ganti akun di satu perangkat)
+- [x] [K] Biaya bulanan otomatis keluar dari `render()`, berID deterministik, tidak ganda antar perangkat
+- [x] [E] Pustaka Supabase dimuat lazy, render pertama tidak menunggu sinkron kalau data lokal sudah ada
 
-### v1.1.008: perbaikan kritis
-- Sapaan di startup memakai `updateGreeting()`, jadi app tampil normal lagi.
-- Data lokal rusak diamankan di key `keuangan-app-data-v2-corrupt`, muncul peringatan merah, dan data contoh hanya di memori.
-- README ditulis ulang: struktur multi-file, sinkron cloud, tab Profil.
+### P1
+- [x] [E] Tab Laporan memakai saldo dari `render()`
+- [x] [K] `escapeHtml` aman untuk atribut (sekaligus lebih cepat: tanpa membuat elemen DOM per panggilan)
+- [x] [K] Import: batas 5 MB / 100.000 transaksi, validasi tanggal dan nominal
+- [x] [K] Nominal dirapikan ke 2 desimal di `saveData()` dan import
+- [x] [Q] Sapaan memakai jam GMT+8
+- [-] [E] E9 (jangan bangun ulang `<select>` tiap render): **tidak dikerjakan.** Rebuild-nya murah, sedangkan menahannya berisiko membuat pilihan dropdown basi (fungsi itu juga mengatur pilihan default dan ketersediaan tipe)
+- [-] [K] Cache DOM `$()` basi: **belum ada kasus nyata di kode sekarang**, jadi tidak diubah. Kalau ada elemen yang dibuat ulang lewat `innerHTML` dan dicari lewat `$()`, gunakan `document.getElementById` langsung untuk elemen itu
 
-### v1.1.009: layar login baru
-- Tanpa kotak modal: satu kolom bersih, logo "Rp", judul serif, tombol tampil/sembunyikan kata sandi, spinner saat proses.
-- Layar lupa kata sandi dan kata sandi baru memakai gaya yang sama.
-- Teks isian 16px (iOS tidak zoom), layar bisa digulir di HP pendek, istilah diseragamkan jadi "kata sandi".
+### P2
+- [x] [Q] Test unit: `tests/run.js`, 17 test (`node tests/run.js`)
+- [ ] [E] E2: cache data di memori agar `loadData()` tidak parse ulang. **Ditunda:** ±65 pemanggil, banyak yang memodifikasi objek hasil `loadData()`; risiko data basi/tercemar perlu refactor terpisah dengan test lebih lengkap
+- [ ] [E] E5: indeks transaksi per bulan/akun untuk Laporan/Beranda/grafik. **Ditunda:** ukur dulu (lihat di bawah)
+- [ ] [E] E8: build minify/gabung. **Ditunda:** tidak ada minifier di lingkungan ini dan butuh keputusan alur kerja (sumber modular tetap dijaga)
+- [ ] [E] Ukur performa di HP nyata dengan data 187 dan 5.000 transaksi sebelum optimasi lanjutan
 
-### v1.1.010: login dari menu gear
-- Opsi **Masuk untuk sinkron** tampil kalau belum login; setelah login berganti jadi **Keluar (email)**.
-- Layar masuk dari gear punya tombol **Batal**.
-- Alur sesi dipakai bersama dengan alur saat boot (`syncStartSession`).
-- Pesan khusus kalau pustaka Supabase belum termuat (offline).
+### P3
+- [x] [E] Service worker `sw.js` (network-first, app shell + jsdelivr + font, tidak menyentuh `*.supabase.co`)
+- [ ] [E] Hosting sendiri Supabase JS dan font (sekarang di-cache oleh service worker setelah pemuatan online pertama)
+- [ ] [K] Putuskan enkripsi data cloud. **Butuh keputusanmu**: enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan sinkron tidak bisa dibaca di dashboard
+- [ ] [E] E6: sinkron per-item (bukan satu blob)
+- [ ] [Q] Ganti `onclick` inline dengan event delegation (±90 tempat)
+- [ ] [Q] Pecah `04-akun.js` (1.422 baris) dan `11-laporan.js` (1.010 baris); namespace / ES modules
+- [ ] [Q] Kurangi 235 `style=""` inline dan 14 `!important`
 
-### v1.1.011: nama pemilik tersinkron
-- Nama disimpan di metadata akun Supabase (`user_metadata.owner_name`), dengan salinan lokal di `kp_owner_name`.
-- Akun yang sudah punya nama menang; kalau belum, nama perangkat dikirim sebagai isi awal.
-- Menyimpan nama saat login ikut memperbarui akun, dengan pesan jelas kalau gagal.
+### P4: fitur (butuh keputusan desain darimu, tidak dikerjakan)
+- [ ] [F] Anggaran per kategori · langganan berulang · dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
 
-### v1.1.012: tampilan tablet dan desktop
-- Layar 1024px ke atas: sidebar kiri dengan tombol **Catat transaksi**, kolom isi maksimal 760px.
-- Layar 1280px ke atas: Ringkasan tampil dua kolom (kartu operasional di kiri, grafik di kanan).
-- Layar 768px ke atas: dialog dan sheet muncul di tengah layar.
-- Ponsel dan Export PDF tidak berubah.
+### P5: dokumentasi
+- [x] [Q] README diperbarui (versi, tab Tagihan/Profil, login Google, tanpa menu gear, service worker, cara rilis)
+- [x] [Q] CHANGELOG v1.1.049
+- [x] [Q] Rujukan `syncPullOwnerName` dihapus dari README
 
-### v1.1.013: desktop untuk semua tab
-- Layar 1280px ke atas: Akun dua kolom, Transaksi dan Laporan dengan panel filter menempel di kiri, Titipan dengan ringkasan di kiri, Data & Profil sebagai kartu dua kolom.
-- Layar 1024–1279px: tab tetap satu kolom (maksimal 760px), pengaturan tampil sebagai kartu.
+## 4. Hasil pengujian v1.1.049
 
-### v1.1.014: dua panel mulai 1024px
-- Transaksi, Titipan, dan Laporan memakai dua panel (kiri 264px, isi di kanan) mulai layar 1024px, bukan 1280px. Laptop berlayar 1024–1279px tidak lagi terlihat seperti ponsel.
-- Mulai 1280px panel kiri melebar dan bagian dalam Laporan dua kolom.
-- Akun: kartu yang sendirian di grupnya memenuhi lebar grup.
+- **Test unit:** 17 lulus, 0 gagal (`node tests/run.js`).
+- **Regresi pada data ekspor asli** (26 akun, 187 transaksi): saldo semua akun, tagihan jatuh tempo 365 hari, kalender tagihan 12 bulan, dan dana likuid **identik** antara kode lama dan baru.
+- **Browser (Chromium, layar 390 px):** app render dan semua 7 tab terbuka tanpa error JavaScript; tanpa scroll horizontal; footer `v1.1.049`; `runRecurringFees()` dijalankan lagi tidak menambah transaksi; service worker aktif. Satu-satunya error konsol adalah CDN dan font yang sengaja diblokir di sandbox. App tetap tampil, membuktikan lazy-load bekerja saat CDN tidak terjangkau.
+- **Belum teruji:** login/sinkron ke Supabase sungguhan, service worker di perangkat nyata (offline), dan dua perangkat bentrok.
 
-### v1.1.015: logika pinjaman
-- Bayar beberapa angsuran sekaligus (flat bertenor) kini dipecah benar: bunga per angsuran, bukan satu bulan.
-- Simulasi pelunasan tidak lagi menganggap pinjaman tanpa angsuran lunas dalam 1 bulan; pinjaman itu dikeluarkan dengan catatan.
-- Laporan menampilkan bunga flat dan bunga efektif (IRR) yang dibedakan dari bunga menurun.
+## 5. Yang perlu kamu lakukan setelah memasang
 
-### v1.1.017: performa (virtualisasi transaksi & saldo aset)
-- Tab Transaksi menggambar 80 transaksi per halaman (bukan semuanya sekaligus), dengan tombol "Muat lebih banyak"; potongan halaman selalu di batas hari.
-- `computeAllBalances()` untuk akun aset dipercepat dari `O(akun aset × transaksi)` ke `O(transaksi)` lewat pengelompokan transaksi per akun sekali di awal (`groupTxnsByAccount`).
-
-### v1.1.018: performa perhitungan bunga pinjaman
-- `computeLoanMonthlyInterest()` sebelumnya selalu scan ulang SELURUH `data.txns` lewat `accountBalance()` untuk menghitung sisa pokok, padahal nilai itu cuma dipakai untuk pinjaman bunga **menurun** — pinjaman **tetap/flat** memakai pokok awal, bukan sisa pokok, jadi scan-nya sia-sia untuk jenis ini.
-- Sekarang scan hanya dijalankan kalau jenis bunganya memang menurun; fungsi ini juga menerima `bal` opsional dari pemanggil yang sudah punya saldo (`computeLoanSchedule`, laporan utang), supaya tidak scan ulang sama sekali. Hasil perhitungan sama persis, cuma lebih cepat di tab Akun & Laporan kalau akun pinjaman dan transaksi sudah banyak.
-
-### v1.1.019: bisa di-install sebagai app (PWA)
-- Tambah `manifest.json` + ikon (`icon-192.png`, `icon-512.png`, dan versi `maskable` untuk keduanya), warna ikon mengikuti skema app (teal `#1F4B43` di atas krem `#F6F1E6`). Motif ikon: dompet + koin (aksen rust `#A9532B`), bukan teks "Rp".
-- `index.html`: tautan manifest, `theme-color`, `apple-touch-icon`, dan meta tag `apple-mobile-web-app-*` untuk iOS.
-- Memunculkan opsi "Install"/"Tambahkan ke Layar utama" yang membuka app di jendela sendiri (tanpa address bar) di HP dan desktop.
-- **Catatan:** prompt install otomatis Chrome butuh app di-host lewat `http://`/`https://` (mis. `python3 -m http.server`, GitHub Pages) — dibuka langsung dari `file://` tetap jalan normal, cuma tanpa prompt install otomatis.
-
-### v1.1.020: color scheme & tipografi ("Modern mint")
-- Palet diganti total: dasar abu-hijau sejuk (`#F3F6F4`), kartu putih bersih, primer mint cerah (`#14B88A`), aksen koral (`#FF6B4A`) — menjauh dari kombinasi krem+serif+terracotta lama yang dianggap "klise AI". Mode gelap disegarkan senada.
-- Font judul diganti dari Fraunces (serif) ke Space Grotesk (sans modern); body tetap Inter.
-- Ikon PWA dan `manifest.json` ikut disesuaikan ke palet baru. Murni visual, tidak ada perubahan logika.
-
-## 4. File yang berubah
-
-| File | 008 | 009 | 010 | 011 | 012 | 013 | 014 | 015 | 016 | 017 | 018 | 019 | 020 |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `01-data.js` | ✓ |  |  | ✓ (komentar) |  |  |  | ✓ | ✓ | ✓ | ✓ |  |  |
-| `02-navigasi.js` |  |  |  | ✓ |  |  |  |  |  |  |  |  |  |
-| `12-render-utama.js` (versi) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `14-sync.js` |  | ✓ | ✓ | ✓ |  |  |  |  |  |  |  |  |  |
-| `15-startup.js` | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |
-| `index.html` |  |  | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  |  | ✓ | ✓ |
-| `style.css` |  | ✓ |  |  | ✓ | ✓ | ✓ |  |  |  |  |  | ✓ |
-| `04-akun.js` |  |  |  |  |  |  |  | ✓ | ✓ |  |  |  |  |
-| `11-laporan.js` |  |  |  |  |  |  |  | ✓ | ✓ |  | ✓ |  |  |
-| `README.md` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |  |
-| `CHANGELOG.md` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `manifest.json` *(baru v019)* |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |
-| `icon-192.png`, `icon-512.png`, `icon-maskable-*.png` *(baru v019)* |  |  |  |  |  |  |  |  |  |  |  | ✓ | ✓ |
-
-### v1.1.016: anuitas & jadwal untuk bunga menurun, tenor untuk pinjaman bank
-- Angsuran anuitas (PMT) dihitung otomatis kalau pokok, tenor, dan suku bunga diisi.
-- Jadwal angsuran, progres, dan pengingat jatuh tempo kini juga berlaku untuk pinjaman bunga menurun (sebelumnya hanya bunga tetap).
-- Kolom Tenor dan tanggal pencairan kini muncul di form pinjaman bank juga, tidak hanya pinjol.
-- Laporan Total biaya utang menghitung sisa bunga pinjaman menurun dari jadwal, kalau datanya lengkap.
-
-## 5. Cara pengujian
-
-Semua perubahan diuji di browser headless (Playwright, Chromium) dengan Supabase tiruan:
-
-- Render semua tab dengan data contoh tanpa error JavaScript.
-- Data rusak: data asli tetap utuh, backup dan peringatan muncul.
-- Login: isian kosong, gagal, berhasil, tombol mata, lupa kata sandi, tema terang/gelap, layar pendek.
-- Menu gear: tanpa cloud, mode lokal lalu login, login saat boot.
-- Nama pemilik: akun sudah punya nama, migrasi dari lokal, simpan berhasil, simpan gagal, mode lokal.
-- Tampilan: lebar 1440, 1280, 1100, 1024, 900, dan 390px (tanpa scroll horizontal), dialog di tengah, mode cetak tetap satu kolom, dan interaksi di desktop (cari, filter, periode laporan, detail titipan dan akun).
-
-**Belum teruji:** login dan sinkron ke Supabase sungguhan, karena key kosong.
-
-## 6. Yang belum dikerjakan
-
-1. Perbaiki `escapeHtml` di dalam atribut (escape tanda kutip) atau ganti dengan fungsi khusus atribut.
-2. Kurangi risiko cache `$()` untuk elemen yang dibuat ulang lewat `innerHTML`.
-3. Tinjau `supabase/setup.sql` dan pastikan RLS aktif sebelum mengisi `SUPABASE_ANON_KEY`.
-4. Pertimbangkan mengganti nama default dan menghapus data contoh untuk pengguna baru.
-5. Sinkron nama dari perangkat lain masih terlihat saat login atau app dibuka ulang, belum real-time.
-6. Desktop tahap 3 (opsional): Transaksi bergaya tabel, Titipan master-detail (detail di panel kanan, bukan dialog), dan pintasan keyboard.
-
-## 7. Cara memakai file hasil
-
-Timpa file di folder proyek dengan versi terbaru dari folder output. Urutan pemuatan skrip di `index.html` tidak boleh diubah. Sebelum memasang versi baru, **Export JSON** dulu sebagai cadangan.
-
-Sejak v1.1.019 ada **file baru** (bukan cuma timpa): `manifest.json`, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`. Taruh semuanya di folder yang sama dengan file JS lainnya.
-
-## 8. Lanjutan: v1.1.029 – v1.1.030 (23 Sep 2026, sesi terpisah)
-
-Dua perbaikan tambahan di luar cakupan tabel §4 di atas (yang berhenti di v1.1.020):
-
-### v1.1.029: proteksi ganti akun di device yang sama
-- **Bug:** `STORAGE_KEY` di localStorage cuma satu untuk seluruh device, tidak dibedakan per akun cloud. Kalau device pernah sync ke akun A lalu Keluar dan Masuk/Daftar akun B, `syncReconcile()` (`14-sync.js`) mengira sisa data akun A itu "data perangkat ini" milik akun B — bisa tertukar, atau otomatis terkirim jadi isi awal akun B kalau cloud-nya masih kosong.
-- **Perbaikan:** fungsi baru `syncGuardAccountSwitch()`, dipanggil di awal `syncStartSession()` sebelum `syncReconcile()` menyentuh localStorage. Kalau `uid` di `kp_sync_meta` beda dari akun yang baru login, data lama dibackup ke file JSON (`autoBackupBeforeReset`) lalu dihapus dan meta direset — device diperlakukan seolah baru pertama kali dipakai akun tersebut. Alur migrasi "mode lokal dulu → Daftar" tidak berubah (di situ `meta.uid` memang masih kosong).
-
-### v1.1.030: prefix identitas user di nama file export/backup
-- Fungsi baru `exportUserPrefix()` (`13-import-export.js`), dipakai di `exportJson`, `exportCsv`, dan `autoBackupBeforeReset`. Prioritas sumber: email akun cloud (bagian sebelum `@`) → nama pemilik di tab Profil → `'user'`. Contoh: `keuangan-budi-2026-09-23.json`.
-- Melengkapi v1.1.029: file backup dari akun berbeda di device yang sama jadi mudah dibedakan tanpa buka isinya dulu.
-
-**File yang berubah:** `14-sync.js`, `13-import-export.js`, `12-render-utama.js` (versi), `CHANGELOG.md`, `README.md`, `SUMMARY.md` (dokumen ini).
-
-**Belum diuji end-to-end** dengan Supabase sungguhan (sama seperti catatan di §5) — logika diverifikasi lewat pembacaan kode (alur `syncReconcile`/`syncStartSession` dan pemanggilan `exportUserPrefix` di tiap fungsi export).
-
-## 9. Saran: tab Profil — **sudah dikerjakan, lihat §10**
-
-Usulan perbaikan tab Profil (`02-navigasi.js` `renderProfilTab()`, markup di `index.html` `#tab-profil`):
-
-**Cepat / low effort**
-- Tombol **"Masuk untuk sinkron"** langsung di `#profil-sync-none` (panggil `syncLoginFromMenu()`), bukan cuma teks yang menyuruh buka menu gear.
-- Tombol **Keluar** di tab Profil sendiri (panggil `syncLogout()`), tidak cuma di menu gear.
-- Validasi **email baru ≠ email lama** sebelum memanggil `syncChangeEmail()`.
-
-**Menambah kegunaan**
-- Tampilkan **status sync & tanggal backup JSON terakhir** (`LAST_EXPORT_KEY`) di Profil sebagai ringkasan "kesehatan data", plus tombol pintas **Backup sekarang** (`exportJson()`) — tanpa pindah ke tab Data.
-- Pindahkan **toggle tema** (`cycleTheme()`, sekarang di menu gear) ke Profil, supaya Profil jadi hub preferensi pribadi (nama + tema), terpisah dari tab Data (manajemen data).
-
-**Lebih besar**
-- Opsi **"Hapus akun cloud"** — belum ada jalan bagi user menghapus akunnya sendiri. Hapus user Auth sungguhan butuh Supabase Edge Function (perlu `service_role` key, sengaja tidak ditaruh di client); langkah awal realistis: tombol yang mengosongkan baris `app_data` miliknya + logout, dengan peringatan jelas soal keterbatasannya.
-- **Konfirmasi (`showConfirm`)** sebelum submit ganti email/password — dua aksi sensitif ini sekarang langsung jalan begitu tombol diklik, tidak seperti pola konfirmasi yang sudah dipakai di form transaksi.
-
-## 10. Implementasi saran §9: v1.1.031 (23 Sep 2026)
-
-Semua 7 poin di §9 dikerjakan sekaligus:
-
-| Poin di §9 | Implementasi |
-|---|---|
-| Tombol "Masuk untuk sinkron" di Profil | `#profil-sync-none` di `index.html` sekarang punya tombol, bukan cuma teks |
-| Tombol Keluar di Profil | Ditambahkan di `#profil-sync-section`, memanggil `syncLogout()` yang sudah ada |
-| Validasi email baru ≠ lama | `syncChangeEmail()` (`14-sync.js`) menolak kalau sama persis (case-insensitive) |
-| Status sync & tanggal backup terakhir + tombol Backup sekarang | Bagian baru "Kesehatan data" di Profil; fungsi baru `lastExportSummary()` (`13-import-export.js`) dan `profilBackupNow()`; `syncSetStatus()` (`14-sync.js`) diperbarui supaya juga menulis ke `#profil-sync-status`, bukan cuma footer |
-| Pindahkan toggle tema ke Profil | **Deviasi kecil dari usulan:** tombol tema **ditambahkan** ke Profil (`#profil-theme-btn`), bukan dipindah/dihapus dari menu gear — supaya akses cepat dari tab manapun tetap ada. `applyTheme()` menyamakan label di kedua tombol |
-| Opsi hapus akun cloud | Fungsi baru `syncDeleteCloudData()` (`14-sync.js`, 2x konfirmasi + backup otomatis): hapus baris `app_data` di cloud + localStorage perangkat ini. **Tidak** menghapus akun Auth Supabase itu sendiri — dicatat jelas di UI (butuh Edge Function + `service_role` key, sengaja di luar cakupan app client) |
-| Konfirmasi sebelum ganti email/password | `syncChangeEmail()` dan `syncChangePassword()` (`14-sync.js`) sekarang `showConfirm()` dulu sebelum memanggil Supabase |
-
-**File yang berubah:** `index.html` (markup tab Profil dirombak), `02-navigasi.js` (`renderProfilTab`, `applyTheme`, `cycleTheme`, `currentThemeMode` baru), `13-import-export.js` (`lastExportSummary`, `profilBackupNow` baru; `markExported` memanggil `renderProfilTab`), `14-sync.js` (`syncSetStatus`, `syncChangeEmail`, `syncChangePassword` diubah; `syncDeleteCloudData` baru), `12-render-utama.js` (versi), `CHANGELOG.md`, `README.md`, `SUMMARY.md` (dokumen ini). Tidak ada perubahan CSS — tombol "danger" pakai class `.io-btn.danger` yang sudah ada (dipakai juga di "Reset semua data" tab Data).
-
-**Belum diuji end-to-end** dengan Supabase sungguhan (sama seperti catatan di §5/§8) — termasuk `syncDeleteCloudData()` yang memanggil `.delete()` ke tabel `app_data`.
-
-
-
+1. Timpa seluruh file kode lama dengan isi zip (paket lengkap, termasuk file baru `sw.js`, `supabase/setup.sql`, `tests/run.js`). `manifest.json` dan ikon tidak ada di unggahan, jadi tetap pakai yang lama.
+2. **Export JSON** dulu sebagai cadangan.
+3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
+4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.
+5. Tab yang sudah dibuka sebelum update: tutup dan buka lagi sekali supaya service worker baru mengambil alih.

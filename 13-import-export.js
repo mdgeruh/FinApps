@@ -148,15 +148,31 @@
     return acc;
   }
 
+  // Batas wajar file import: melindungi dari file salah pilih / sangat besar yang membekukan tab.
+  const IMPORT_MAX_BYTES = 5 * 1024 * 1024;   // 5 MB
+  const IMPORT_MAX_TXNS = 100000;
+  function importFileTooBig(file) {
+    if (file && file.size > IMPORT_MAX_BYTES) {
+      showIoMsg('File terlalu besar (' + (file.size / 1048576).toFixed(1) + ' MB, maksimal 5 MB). Pastikan ini file JSON export dari app ini.', 'error');
+      return true;
+    }
+    return false;
+  }
+  function isValidDateStr(v) {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+    const d = new Date(v + 'T00:00:00');
+    return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+  }
+
   function buildTxnFromImport(t, idMap, fallbackAccId) {
     const type = t.type === 'keluar' ? 'keluar' : (t.type === 'transfer' ? 'transfer' : 'masuk');
     const accountId = (t.accountId !== undefined && idMap[t.accountId]) || fallbackAccId;
     const toAccountId = t.toAccountId !== undefined ? ((idMap[t.toAccountId]) || fallbackAccId) : undefined;
     return {
       id: generateId('txn'),
-      date: typeof t.date === 'string' ? t.date : todayStr(),
+      date: isValidDateStr(t.date) ? t.date : todayStr(),
       type, desc: typeof t.desc === 'string' ? t.desc : 'Transfer',
-      amount: Math.abs(t.amount), accountId,
+      amount: roundMoney(Math.abs(t.amount)), accountId,
       ...(type === 'transfer' ? { toAccountId } : {}),
       ...(type === 'transfer' && Array.isArray(t.planPaymentIds) && t.planPaymentIds.length ? { planPaymentIds: t.planPaymentIds.map(cleanPlanId).filter(Boolean) } : {}),
       ...(type === 'transfer' && t.planPaymentThrough && typeof t.planPaymentThrough === 'object' ? { planPaymentThrough: Object.fromEntries(Object.entries(t.planPaymentThrough).map(([pid, no]) => [cleanPlanId(pid), no]).filter(([pid]) => pid)) } : {}),
@@ -170,6 +186,7 @@
   function importJson(event) {
     const file = event.target.files[0];
     if (!file) return;
+    if (importFileTooBig(file)) { event.target.value = ''; return; }
     const reader = new FileReader();
     reader.onload = async () => {
       try {
@@ -183,7 +200,7 @@
           if (!a || typeof a.name !== 'string') return;
           const exists = data.accounts.find(ex => ex.name === a.name && ex.type === a.type);
           if (exists) {
-            idMap[a.id] = exists.id;
+            if (a.id !== undefined) idMap[a.id] = exists.id;
             // Lengkapi info jadwal yang masih kosong di akun pinjaman yang sudah ada (tanpa menimpa yang sudah diisi)
             if (TYPE_LOAN[exists.type]) {
               if (!exists.loanStartDate && typeof a.loanStartDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.loanStartDate)) exists.loanStartDate = a.loanStartDate;
@@ -192,20 +209,21 @@
             return;
           }
           const newId = generateId('acc');
-          idMap[a.id] = newId;
+          if (a.id !== undefined) idMap[a.id] = newId;
           data.accounts.push(buildAccountFromImport(a, newId));
           newAccountsCount++;
         });
 
         const incomingTxns = Array.isArray(parsed) ? parsed : (parsed.transaksi || parsed.txns);
         if (!Array.isArray(incomingTxns)) throw new Error('format tidak dikenali');
+        if (incomingTxns.length > IMPORT_MAX_TXNS) throw new Error('terlalu banyak transaksi (maksimal ' + IMPORT_MAX_TXNS + ')');
 
         if (data.accounts.length === 0) {
           data.accounts.push({ id: generateId('acc'), name: 'Kas / Dompet', type: 'kas', initialBalance: 0 });
         }
         const fallbackAccId = data.accounts[0].id;
         const cleaned = incomingTxns
-          .filter(t => t && typeof t.amount === 'number')
+          .filter(t => t && typeof t.amount === 'number' && isFinite(t.amount))
           .map(t => buildTxnFromImport(t, idMap, fallbackAccId));
 
         if (cleaned.length === 0 && newAccountsCount === 0) throw new Error('tidak ada transaksi atau akun baru yang valid');
@@ -256,6 +274,7 @@
 
         data.txns = data.txns.concat(deduped);
         saveData(data);
+        runRecurringFees();
         render();
         showIoMsg(`${deduped.length} transaksi diimpor` + (skipped > 0 ? `, ${skipped} duplikat dilewati.` : '.'), 'ok');
       } catch (e) {
@@ -400,6 +419,7 @@
     state.sortMode = 'date-desc';
     const sortSel = $('sort-select');
     if (sortSel) sortSel.value = 'date-desc';
+    runRecurringFees();
     render();
     showIoMsg('Data contoh dimuat: ' + dummy.accounts.length + ' akun, ' + dummy.txns.length + ' transaksi.', 'ok');
   }
@@ -425,6 +445,7 @@
   function resetAndImport(event) {
     const file = event.target.files[0];
     if (!file) return;
+    if (importFileTooBig(file)) { event.target.value = ''; return; }
     const reader = new FileReader();
     reader.onload = async () => {
       try {
@@ -432,6 +453,7 @@
         const incomingAccounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
         const incomingTxns = Array.isArray(parsed) ? parsed : (parsed.transaksi || parsed.txns);
         if (!Array.isArray(incomingTxns)) throw new Error('format tidak dikenali');
+        if (incomingTxns.length > IMPORT_MAX_TXNS) throw new Error('terlalu banyak transaksi (maksimal ' + IMPORT_MAX_TXNS + ')');
 
         // Selalu generate id baru sendiri untuk akun & transaksi hasil import — JANGAN percaya
         // id dari file, karena id ini nanti disisipkan ke atribut onclick saat render.
@@ -448,7 +470,7 @@
 
         const fallbackAccId = cleanAccounts[0].id;
         const cleanTxns = incomingTxns
-          .filter(t => t && typeof t.amount === 'number')
+          .filter(t => t && typeof t.amount === 'number' && isFinite(t.amount))
           .map(t => buildTxnFromImport(t, idMap, fallbackAccId));
 
         const ok = await showConfirm(`Ini akan MENGHAPUS semua data yang ada sekarang dan menggantinya dengan isi file ini:\n${cleanAccounts.length} akun (${cleanAccounts.map(a => a.name).join(', ')})\n${cleanTxns.length} transaksi (${(() => { const ds = cleanTxns.map(t => t.date).sort(); return ds[0] === ds[ds.length - 1] ? ds[0] : `${ds[0]} – ${ds[ds.length - 1]}`; })()})\n\nData lama akan dibackup otomatis dulu sebelum dihapus.\n\nLanjutkan?`);
@@ -462,6 +484,7 @@
         state.sortMode = 'date-desc';
         const sortSel = $('sort-select');
         if (sortSel) sortSel.value = 'date-desc';
+        runRecurringFees();
         render();
         showIoMsg(`Data direset: ${cleanAccounts.length} akun, ${cleanTxns.length} transaksi dimuat.` + (backupOk ? ' Backup data lama sudah diunduh.' : ' (Backup gagal diunduh, tapi reset tetap dilanjutkan.)'), 'ok');
       } catch (e) {
