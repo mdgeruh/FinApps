@@ -37,10 +37,10 @@
     el.style.display = 'block';
     el.innerHTML = `
       <div class="section-title" style="margin-bottom:6px;">Cadangkan data</div>
-      <div class="acc-sub" style="margin-bottom:10px;">${days === null ? 'Kamu belum pernah mengekspor cadangan.' : 'Cadangan JSON terakhir ' + days + ' hari lalu.'} Data hanya tersimpan di browser ini, jadi ekspor berkala supaya aman kalau browser dibersihkan atau ganti perangkat.</div>
+      <div class="acc-sub u-mb10">${days === null ? 'Kamu belum pernah mengekspor cadangan.' : 'Cadangan JSON terakhir ' + days + ' hari lalu.'} Data hanya tersimpan di browser ini, jadi ekspor berkala supaya aman kalau browser dibersihkan atau ganti perangkat.</div>
       <div class="acc-form-actions">
-        <button type="button" class="submit-btn" onclick="exportJsonFromReminder()">Ekspor sekarang</button>
-        <button type="button" class="io-btn" onclick="snoozeBackupReminder()">Nanti</button>
+        <button type="button" class="submit-btn" data-act="exportJsonFromReminder">Ekspor sekarang</button>
+        <button type="button" class="io-btn" data-act="snoozeBackupReminder">Nanti</button>
       </div>`;
   }
   async function exportJsonFromReminder() { await exportJson(); renderBackupReminder(loadData()); }
@@ -51,7 +51,7 @@
 
   async function exportJson() {
     const data = loadData();
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '-' + nowTimeStr() + '.json';
 
@@ -232,6 +232,8 @@
           // Cuma akun baru, tanpa transaksi (mis. import saldo pinjaman online yang sudah berjalan).
           const ok = await showConfirm(`File ini berisi ${newAccountsCount} akun baru, tanpa transaksi.\n\nTambahkan akun-akun itu?`);
           if (!ok) { event.target.value = ''; return; }
+          mergeImportedBudgets(data, parsed);
+          mergeImportedSubscriptions(data, parsed, idMap);
           saveData(data);
           render();
           showIoMsg(`${newAccountsCount} akun baru ditambahkan.`, 'ok');
@@ -273,6 +275,8 @@
         if (!ok) { event.target.value = ''; return; }
 
         data.txns = data.txns.concat(deduped);
+        mergeImportedBudgets(data, parsed);
+        mergeImportedSubscriptions(data, parsed, idMap);
         saveData(data);
         runRecurringFees();
         render();
@@ -425,7 +429,7 @@
   }
 
   async function autoBackupBeforeReset(data) {
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-backup-sebelum-reset-' + exportUserPrefix() + '-' + todayStr() + '-' + Date.now() + '.json';
     if (downloadsCap) {
@@ -478,7 +482,7 @@
 
         const backupOk = await autoBackupBeforeReset(loadData());
 
-        saveData({ accounts: cleanAccounts, txns: cleanTxns });
+        saveData({ accounts: cleanAccounts, txns: cleanTxns, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)) });
         state.activeFilter = 'all';
         state.activeTypeFilter = 'all';
         state.sortMode = 'date-desc';

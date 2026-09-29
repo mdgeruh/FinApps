@@ -2,6 +2,41 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.057 — 29 Sep 2026
+
+**Ditambah**
+- **Langganan berulang** (`10c-langganan.js` baru, `index.html`, `01-data.js`, `02-navigasi.js`, `13-import-export.js`, `style.css`): kartu "Langganan berulang" di tab Ringkasan (di bawah kartu Anggaran) menampilkan daftar langganan dan totalnya per bulan. Tombol **Kelola** membuka sheet untuk menambah (nama, nominal, tanggal tagih 1–31, akun kas/bank/e-wallet/kartu kredit), menjeda/mengaktifkan, dan menghapus. Tiap bulan pada tanggalnya, app mencatat 1 pengeluaran berkategori "Tagihan & langganan" (ikut terhitung di Anggaran). Tanggal 31 di bulan yang lebih pendek dipatok ke hari terakhir bulan itu
+- **Aman antar perangkat**: transaksi berID deterministik `sub-<id>-<YYYY-MM>` dan dijalankan dari `runRecurringFees()` (bukan dari `render()`), sama seperti biaya bulanan pinjaman/kartu, jadi dua perangkat tidak membuat transaksi ganda. Bulan yang terlewat (app lama tidak dibuka) dikejar maksimal 12 bulan
+- **Tidak mencatat mundur**: langganan baru atau yang diaktifkan lagi mulai dicatat dari bulan ini hanya kalau tanggal tagihnya belum lewat (atau tepat hari ini); kalau sudah lewat, bulan ini dilewati, supaya tidak menggandakan transaksi yang sudah Anda catat manual. Bulan selama dijeda tidak dikejar
+- **Data**: `data.subscriptions` (opsional; data lama tetap valid), selalu dirapikan lewat `sanitizeSubscriptions` (maks 100, nama/nominal/tanggal divalidasi). Ikut sinkron cloud, ekspor JSON, dan cadangan otomatis. Import gabung memetakan akun lewat `idMap`, melewati yang sama (nama + akun + tanggal), dan membuang langganan yang akunnya tidak ada; import ganti-semua memakai langganan dari file. Hapus langganan tidak menghapus transaksi yang sudah tercatat
+- **11 test baru** (total 35)
+
+**Diubah**
+- `sw.js`: `10c-langganan.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.057`
+
+**Pengujian**: 35 test unit lulus; semua file lolos cek sintaks; Chromium 390 px dengan klik nyata: buka sheet, validasi form, tambah (tanggal tagih = hari ini, langsung tercatat 1 transaksi), dijalankan ulang tetap 1, bertahan setelah reload, jeda, hapus dengan konfirmasi (transaksi tetap ada), tanpa scroll horizontal di 5 tab, tanpa error JavaScript. **Belum teruji:** HP nyata, sinkron `subscriptions` antar perangkat, dan pergantian bulan sungguhan (hanya diuji lewat tanggal palsu di test unit)
+
+## v1.1.056 — 29 Sep 2026
+
+**Ditambah**
+- **Anggaran per kategori** (`10b-anggaran.js` baru, `index.html`, `02-navigasi.js`, `13-import-export.js`, `style.css`): kartu "Anggaran bulan ini" di tab Ringkasan (di bawah kartu "Bulan ini") menampilkan realisasi vs batas per kategori pengeluaran, dengan bar dan sisa/lebih. Tombol **Atur** membuka sheet berisi semua kategori pengeluaran; kosong = tanpa batas. Batas berlaku per bulan kalender (GMT+8). Warna: hijau di bawah 80%, kuning 80–100%, merah di atas 100%. Realisasi memakai aturan yang sama dengan kartu "Bulan ini" (arus utang tidak dihitung), dan kategori `Cicilan/utang` tidak bisa dianggarkan karena sudah tercatat sebagai arus utang
+- **Data**: `data.budgets` = `{ kategori: nominal }`, opsional (data lama tanpa `budgets` tetap valid). Ikut terkirim dalam sinkron cloud karena sinkron mengirim seluruh data. Ekspor JSON dan cadangan otomatis menyertakan `budgets`; import gabung hanya mengisi kategori yang belum punya anggaran (tidak menimpa), import ganti-semua memakai anggaran dari file. Isi `budgets` selalu dirapikan (`sanitizeBudgets`): kategori tidak dikenal, nominal ≤ 0, atau bukan angka dibuang
+- **7 test baru** (`tests/run.js`, total 24)
+
+**Diubah**
+- `sw.js`: `10b-anggaran.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.056`
+
+**Pengujian**: 24 test unit lulus; semua file lolos cek sintaks; Chromium 390 px: sheet terbuka dari Ringkasan, isi batas lalu **Simpan** (klik nyata), kartu terisi, data bertahan setelah reload, tersimpan di localStorage dan ikut ekspor, tanpa scroll horizontal di 5 tab, tanpa error JavaScript. Catatan: sheet awalnya diletakkan di dalam panel tab Akun sehingga tidak tampil dari Ringkasan; sudah dipindah ke level atas sebelum rilis. **Belum teruji:** sentuhan nyata di HP, dan sinkron `budgets` antar perangkat
+
+## v1.1.055 — 29 Sep 2026
+
+**Diubah**
+- **Handler inline terakhir dipindah ke event delegation** (`12-render-utama.js`): tombol hapus di daftar tab Transaksi kini `data-act="deleteTxn"` dengan ID dari `data-a0` (sudah di-escape). Klik baris ditangani `row.onclick`, yang sekarang mengabaikan klik dari dalam `.del-btn` supaya tidak membuka detail. Tidak ada lagi `onclick=`/`oninput=`/`onchange=`/`onkeydown=` inline di kode
+- **`!important` dikurangi 2** (`style.css`): `.acc-tile` (`min-width`, `padding`) dan `.acc-accent` (`padding-left`, diganti selektor `.txn-row.acc-accent` yang lebih spesifik). Sisa `!important` sengaja dibiarkan: blok `@media print`, `[data-user-hidden]`/`[data-empty]` (harus menang atas `display` lain), dan aturan desktop yang menimpa `style=""` inline
+- **`render()` parse localStorage 1x, bukan 4x** (`03-form-transaksi.js`): `updateTypeAvailability`, `updatePaylaterUI`, dan `updateAssetHint` menerima `data` opsional dari `populateAccountSelects(data)` (hanya dibaca). Dipanggil tanpa argumen (dari handler lain) tetap memuat sendiri. Ini versi aman dari E2: tanpa cache global, jadi tidak ada risiko data basi/tercemar
+
+**Pengujian**: 17 test unit lulus; semua file lolos cek sintaks; Chromium 390 px v1.1.054 vs v1.1.055: nilai CSS terhitung (padding, min-width, margin, display, border) ±900–1.100 elemen per tab (Ringkasan, Transaksi, Laporan) identik, 0 selisih, tanpa error JavaScript; klik tombol hapus hanya memanggil `deleteTxn('<id>')` dan klik baris hanya `openTxnDetail('<id>')`; parse JSON besar saat `render()` turun dari 4 ke 1. `CACHE_VERSION` naik ke `kp-v1.1.055`
+
 ## v1.1.054 — 29 Sep 2026
 
 **Diubah**

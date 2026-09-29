@@ -3,7 +3,7 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.054';
+  const APP_VERSION = 'v1.1.057';
   const APP_BUILD = '29 Sep 2026';
   (function () { const f = document.getElementById('app-footer'); if (f) f.textContent = APP_NAME + ' · ' + APP_VERSION + ' · ' + APP_BUILD; })();
 
@@ -93,7 +93,7 @@
     function buildRow(t, showDate) {
       const row = document.createElement('div');
       row.className = 'txn-row clickable';
-      row.onclick = () => openTxnDetail(t.id);
+      row.onclick = (e) => { if (e.target.closest && e.target.closest('.del-btn')) return; openTxnDetail(t.id); }; // tombol hapus ditangani delegasi (data-act)
       const accName = accById[t.accountId] ? accById[t.accountId].name : '?';
       let metaText, descText, sign;
       if (t.type === 'transfer') {
@@ -119,7 +119,7 @@
         </div>
         <div class="txn-right">
           <span class="txn-amount ${t.type}">${sign} ${formatRp(t.amount)}</span>
-          <button class="del-btn" onclick="event.stopPropagation(); deleteTxn('${t.id}')" aria-label="Hapus">×</button>
+          <button class="del-btn" data-act="deleteTxn" data-a0="${escapeHtml(String(t.id))}" data-stop aria-label="Hapus">×</button>
         </div>
       `;
       return row;

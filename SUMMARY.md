@@ -1,6 +1,6 @@
 # Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Status per **v1.1.054** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.054, `[ ]` = belum.
+Status per **v1.1.057** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.057, `[ ]` = belum.
 Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
 ## 1. Gambaran singkat
@@ -43,7 +43,7 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 
 ### P2
 - [x] [Q] Test unit: `tests/run.js`, 17 test (`node tests/run.js`)
-- [ ] [E] E2: cache data di memori agar `loadData()` tidak parse ulang. **Ditunda, dan hasil ukur menunjukkan belum perlu:** ±65 pemanggil, banyak yang memodifikasi objek hasil `loadData()`; risiko data basi/tercemar perlu refactor terpisah dengan test lebih lengkap. Manfaatnya terukur hanya ±2x pada `render()` di 5.000 transaksi (parse JSON ±55% waktunya), tidak terasa di 187 transaksi
+- [~] [E] E2: cache data di memori agar `loadData()` tidak parse ulang. **Sebagian (v1.1.055):** `render()` kini parse 1x, bukan 4x (3 fungsi form menerima `data` opsional, tanpa cache global). **Cache global tetap ditunda, dan hasil ukur menunjukkan belum perlu:** ±65 pemanggil, banyak yang memodifikasi objek hasil `loadData()`; risiko data basi/tercemar perlu refactor terpisah dengan test lebih lengkap. Manfaatnya terukur hanya ±2x pada `render()` di 5.000 transaksi (parse JSON ±55% waktunya), tidak terasa di 187 transaksi
 - [ ] [E] E5: indeks transaksi per bulan/akun untuk Laporan/Beranda/grafik. **Ditunda, dan hasil ukur menunjukkan belum perlu:** `render()` 16–42 ms di 187 transaksi dan ±150 ms di 5.000 (CPU 4x lebih lambat), lihat bagian 4
 - [ ] [E] E8: build minify/gabung. **Ditunda:** tidak ada minifier di lingkungan ini dan butuh keputusan alur kerja (sumber modular tetap dijaga)
 - [~] [E] Ukur performa dengan data 187 dan 5.000 transaksi sebelum optimasi lanjutan. **Sudah diukur di Chromium dengan CPU diperlambat 4x** (hasil di bagian 4): tidak ada yang lambat di ukuran data nyata (187 transaksi), jadi E2/E5 tidak perlu dikerjakan sekarang. **Yang belum:** ukur di HP nyata; kalau di HP terasa lambat saat pindah tab atau simpan, bilang, dan hasilnya jadi dasar memilih E2 atau E5
@@ -53,13 +53,15 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - [ ] [E] Hosting sendiri Supabase JS dan font (sekarang di-cache oleh service worker setelah pemuatan online pertama)
 - [ ] [K] Putuskan enkripsi data cloud. **Butuh keputusanmu**: enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan sinkron tidak bisa dibaca di dashboard
 - [ ] [E] E6: sinkron per-item (bukan satu blob)
-- [x] [Q] Ganti `onclick` inline dengan event delegation: v1.1.053 memindahkan 131 handler (99 click, 15 input, 17 change) ke `data-act` / `data-input-act` / `data-change-act`. v1.1.054 memindahkan sisanya (backdrop modal, `stopPropagation`, keydown, input file, multi-perintah); **tinggal 1 handler inline** (tombol hapus di tab Transaksi, karena induknya `row.onclick`). Item ini selesai kecuali namespace/ES modules di bawah
+- [x] [Q] Ganti `onclick` inline dengan event delegation: v1.1.053 memindahkan 131 handler (99 click, 15 input, 17 change) ke `data-act` / `data-input-act` / `data-change-act`. v1.1.054 memindahkan sisanya (backdrop modal, `stopPropagation`, keydown, input file, multi-perintah); tombol hapus di tab Transaksi (handler inline terakhir) dipindah di v1.1.055. Item ini selesai kecuali namespace/ES modules di bawah
 - [x] [Q] Pecah `04-akun.js` (1.423 baris) jadi 3 file dan `11-laporan.js` (1.010 baris) jadi 3 file (v1.1.051; isi identik, tiap file 280–570 baris)
 - [ ] [Q] Namespace / ES modules (semua masih berbagi scope global; butuh perubahan besar di ratusan pemanggilan, terutama `onclick` inline, jadi sebaiknya dikerjakan bersama item event delegation di atas)
-- [ ] [Q] Kurangi `style=""` inline dan 14 `!important`. **Sebagian selesai di v1.1.052:** 119 inline yang paling sering berulang diganti kelas utilitas `u-*` (total `style="` di kode 393 → 274). Sisanya sengaja dibiarkan: `display:none` (diubah JS lewat `style.display`), elemen `.section-title` (margin diatur aturan CSS yang lebih spesifik), warna/fill/stroke SVG grafik, dan gaya unik satu-kali. `!important` belum disentuh (sebagian besar ada di blok `@media print`)
+- [ ] [Q] Kurangi `style=""` inline dan 14 `!important`. **Sebagian selesai di v1.1.052:** 119 inline yang paling sering berulang diganti kelas utilitas `u-*` (total `style="` di kode 393 → 274). Sisanya sengaja dibiarkan: `display:none` (diubah JS lewat `style.display`), elemen `.section-title` (margin diatur aturan CSS yang lebih spesifik), warna/fill/stroke SVG grafik, dan gaya unik satu-kali. v1.1.055 menghapus 2 `!important` (`.acc-tile`, `.acc-accent`); sisanya di blok `@media print`, `[data-user-hidden]`/`[data-empty]`, dan aturan desktop yang menimpa `style=""` inline, sengaja dibiarkan
 
 ### P4: fitur (butuh keputusan desain darimu, tidak dikerjakan)
-- [ ] [F] Anggaran per kategori · langganan berulang · dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
+- [x] [F] Anggaran per kategori (v1.1.056: kartu di Ringkasan, batas bulanan, peringatan 80%/100%; kategori Cicilan/utang tidak bisa dianggarkan)
+- [x] [F] Langganan berulang (v1.1.057: kartu di Ringkasan, catat otomatis tiap bulan dengan ID deterministik, jeda/hapus, ikut ekspor/import/sinkron)
+- [ ] [F] Dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
 
 ### P5: dokumentasi
 - [x] [Q] README diperbarui (versi, tab Tagihan/Profil, login Google, tanpa menu gear, service worker, cara rilis)
@@ -80,6 +82,12 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 
 - **v1.1.054 (sisa handler + ID contoh):** 17 test unit lulus; semua file lolos cek sintaks; perbandingan otomatis Chromium 390 px v1.1.053 vs v1.1.054 dengan data dummy: 182 elemen termasuk modal dinamis, 0 selisih, tanpa error JavaScript. **Belum teruji:** sentuhan nyata di perangkat sungguhan (terutama klik latar modal dan Enter/Spasi pada kartu akun).
 
+- **v1.1.055 (handler terakhir, !important, render 1 parse):** 17 test unit lulus; Chromium 390 px v1.1.054 vs v1.1.055: CSS terhitung 3 tab identik (0 selisih); klik hapus/baris terpisah benar; parse besar di `render()` 4 → 1. **Belum teruji:** sentuhan nyata di HP.
+
+- **v1.1.056 (anggaran per kategori):** 24 test unit lulus (7 baru); Chromium 390 px: buka sheet, simpan lewat klik nyata, kartu terisi, bertahan setelah reload, ikut ekspor, tanpa scroll horizontal, tanpa error JS. **Belum teruji:** HP nyata dan sinkron `budgets` antar perangkat.
+
+- **v1.1.057 (langganan berulang):** 35 test unit lulus (11 baru); Chromium 390 px dengan klik nyata: tambah, validasi, catat otomatis, idempoten, bertahan setelah reload, jeda, hapus, tanpa scroll horizontal, tanpa error JS. **Belum teruji:** HP nyata, sinkron antar perangkat, pergantian bulan sungguhan.
+
 ### Ukur performa (29 Sep 2026, v1.1.054)
 
 Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, **bukan** HP nyata), data dummy 7 akun dengan transaksi digandakan dan tanggal diacak dalam 12 bulan. Waktu dalam milidetik, tiga kali ukur:
@@ -96,7 +104,7 @@ Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, **buk
 
 ## 5. Yang perlu kamu lakukan setelah memasang
 
-1. Timpa file lama dengan isi zip. Zip v1.1.052, v1.1.053, dan v1.1.054 hanya berisi file yang berubah (`style.css`, `index.html`, `sw.js`, file `.js` yang diubah, dan dokumen); file lain tetap dari v1.1.051. Paket lengkap berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
+1. Timpa file lama dengan isi zip. Zip v1.1.052 sampai v1.1.057 hanya berisi file yang berubah (`style.css`, `index.html`, `sw.js`, file `.js` yang diubah, dan dokumen); file lain tetap dari v1.1.051. Paket lengkap berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
 2. **Export JSON** dulu sebagai cadangan.
 3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
 4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.
