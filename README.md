@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.071** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.074** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
@@ -268,12 +268,14 @@ JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua b
 | `10d-changelog` | Riwayat perubahan di tombol `?` (`CHANGELOG_ENTRIES`) |
 | `10g-denda-telat`, `10h-ics-tagihan`, `10i-rekonsiliasi` | Perkiraan denda telat, ekspor `.ics`, rekonsiliasi saldo |
 | `09-grafik` (urutan kartu) | `RINGKASAN_ORDER_UNITS`, `sanitizeRingkasanOrder`, `moveInOrder`, `applyRingkasanOrder`; pengaturan di Profil > Tampilan Ringkasan (▲ ▼, tersimpan per perangkat) |
+| `10b-anggaran` + `10-render-beranda` (proyeksi) | `computeMonthProjection` (murni) dan `renderMonthProjection`: baris "Proyeksi akhir bulan" di blok insight kartu Bulan ini |
+| `09-grafik` (aksesibilitas) | `applyChartA11y`, `chartAriaLabel`, `describeChartPoint`, `describePieChart`, `trendArrow`; grafik `role="img"` + `aria-label`, keyboard (panah, Home, End, Esc) lewat `bindChartInteraction`, pembacaan titik lewat `#chart-live` (aria-live) |
 | `09-grafik` (segmen) | Kartu "Grafik" di Ringkasan: `CHART_SEGMENTS`, `pickChartSegment`, `setChartSegment`; `computeRingkasanVisibility` menentukan kartu mana yang dirender |
 | `10j-perhatian` | Strip "Perlu perhatian" di puncak Ringkasan (`computeAttentionItems`, `renderAttentionStrip`) dan kartu ajakan rencana (`renderPlanCta`; kartu Anggaran/Langganan/Dana darurat yang belum dipakai tersembunyi otomatis, `computePlanUsage`) |
 | `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
 | `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
 | `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
-| `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 58 test unit |
+| `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 93 test unit |
 
 Titik masuk yang sering dipakai saat memodifikasi:
 

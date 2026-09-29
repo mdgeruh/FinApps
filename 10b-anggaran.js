@@ -35,6 +35,30 @@
     }).sort((a, b) => b.pct - a.pct);
   }
 
+  // Proyeksi akhir bulan (v1.1.073, R8). Fungsi murni.
+  // Pengeluaran sungguhan (tanpa bayar utang) sampai hari ini dibagi jumlah hari berjalan, dikali jumlah hari sebulan
+  // (= yang sudah keluar + rata-rata harian x sisa hari). Kalau ada anggaran, dibandingkan hanya untuk kategori yang
+  // dianggarkan (total semua pengeluaran vs batas beberapa kategori tidak sebanding). null bila belum ada pengeluaran.
+  function computeMonthProjection(data, monthKey, day, daysInMonth) {
+    if (!(day >= 1) || !(daysInMonth >= day)) return null;
+    let spent = 0;
+    ((data && data.txns) || []).forEach(t => {
+      if (t.type === 'keluar' && !isNonOperatingTxn(t) && monthKeyFromDate(t.date) === monthKey) spent += t.amount;
+    });
+    spent = roundMoney(spent);
+    if (!(spent > 0)) return null;
+    const factor = daysInMonth / day;
+    const out = { spent, day, daysInMonth, remaining: daysInMonth - day, projected: roundMoney(spent * factor), rough: day < 7, budget: null };
+    const items = computeBudgetStatus(data, monthKey);
+    if (items.length) {
+      const limit = roundMoney(items.reduce((s, it) => s + it.limit, 0));
+      const bSpent = roundMoney(items.reduce((s, it) => s + it.spent, 0));
+      const projected = roundMoney(bSpent * factor);
+      out.budget = { limit, spent: bSpent, projected, diff: roundMoney(projected - limit), status: projected > limit ? 'over' : (projected >= limit * BUDGET_WARN_PCT / 100 ? 'warn' : 'ok') };
+    }
+    return out;
+  }
+
   function renderBudgetCard(data) {
     const card = $('budget-card'), list = $('budget-list');
     if (!card || !list) return;
