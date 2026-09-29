@@ -212,3 +212,56 @@
   ].forEach(enhanceSelect);
 
 
+
+  // ============================================================
+  // EVENT DELEGATION: satu listener per jenis event di document, menggantikan
+  // handler inline (onclick/oninput/onchange/onkeydown).
+  //   data-act="namaFungsi"                  -> klik   (argumen: data-a0, data-a1 ... = teks; data-n0 ... = angka)
+  //   data-input-act / data-change-act / data-keydown-act -> event input / change / keydown
+  //     (argumen: data-input-a0, data-change-n0, data-keydown-a0, dst.)
+  //   data-stop="1"                          -> setelah handler elemen ini jalan, jangan lanjut ke elemen di atasnya
+  //   data-<event>-with-event="1"            -> event asli ikut jadi argumen terakhir (mis. input file)
+  //   data-keydown-keys="Enter| "            -> keydown hanya jalan untuk tombol ini (dipisah |), dan preventDefault
+  //   data-keydown-stop="1"                  -> elemen ini menahan keydown supaya tidak sampai ke handler di atasnya
+  //   data-backdrop="namaFungsi"             -> dipanggil hanya kalau klik tepat di elemen itu sendiri (latar modal)
+  // Fungsi dicari di scope global (semua fungsi handler adalah `function` global); `this` = elemen pemilik atribut.
+  // Elemen bersarang: handler dipanggil dari yang terdalam ke luar, sama seperti bubbling inline.
+  // ============================================================
+  function dispatchDelegated(ev, e) {
+    const actAttr = ev === 'click' ? 'data-act' : 'data-' + ev + '-act';
+    const base = ev === 'click' ? 'data-' : 'data-' + ev + '-';
+    const sel = ev === 'keydown' ? '[data-keydown-act],[data-keydown-stop]' : '[' + actAttr + ']';
+    if (ev === 'click' && e.target instanceof Element && e.target.hasAttribute('data-backdrop')) {
+      const bfn = window[e.target.getAttribute('data-backdrop')];
+      if (typeof bfn === 'function') bfn.call(e.target);
+    }
+    for (let el = e.target instanceof Element ? e.target.closest(sel) : null; el; el = el.parentElement && el.parentElement.closest(sel)) {
+      if (!el.hasAttribute(actAttr)) break; // data-keydown-stop: berhenti di sini
+      if (ev === 'keydown' && el.hasAttribute('data-keydown-keys')) {
+        if (el.getAttribute('data-keydown-keys').split('|').indexOf(e.key) < 0) continue;
+        e.preventDefault();
+      }
+      const fn = window[el.getAttribute(actAttr)];
+      if (typeof fn !== 'function') { console.warn('handler tidak ditemukan:', el.getAttribute(actAttr)); continue; }
+      const args = [];
+      for (let i = 0; ; i++) {
+        if (el.hasAttribute(base + 'a' + i)) args.push(el.getAttribute(base + 'a' + i));
+        else if (el.hasAttribute(base + 'n' + i)) args.push(Number(el.getAttribute(base + 'n' + i)));
+        else break;
+      }
+      if (el.hasAttribute(base + 'with-event')) args.push(e);
+      fn.apply(el, args);
+      if (ev === 'click' && el.hasAttribute('data-stop')) break;
+    }
+  }
+  ['click', 'input', 'change', 'keydown'].forEach(ev => document.addEventListener(ev, e => dispatchDelegated(ev, e)));
+
+  // Pembungkus untuk handler yang dulu berupa beberapa perintah / butuh state atau `this`
+  function quickAddTitipanFromDetail() { quickAddTitipanFor(state.detailTitipanId); }
+  function lunasiTitipanFromDetail() { lunasiTitipan(state.detailTitipanId); }
+  function clickById(id) { $(id).click(); }
+  function onTransferTargetChange() { updateQuickPayButtons(); updateAssetHint(); }
+  function onAmountInput() { state.pendingTransferLabel = null; updatePaylaterPreview(); }
+  function payMonthAndClose(accId, groupIdx) { closePaylaterMonthDetail(); payMonthFromDetail(accId, groupIdx); }
+  function openAccountFromTagihanBulan(accId) { closeTagihanBulanDetail(); openAccountDetail(accId); }
+  function toggleRingkasanCardFromEl(id) { toggleRingkasanCard(id, this.checked); } // this = <input> (fn.apply(el, ...))

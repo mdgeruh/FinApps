@@ -17,7 +17,7 @@
     card.style.display = 'block';
     const periodBtns = [7, 30, 90, 365].map(d => {
       const lbl = d === 7 ? '7H' : (d === 30 ? '30H' : (d === 90 ? '90H' : '1Th'));
-      return `<button type="button" class="type-btn${d === dueReminderPeriodDays ? ' active' : ''}" style="padding:6px 0; font-size:11px;" onclick="setDueReminderPeriod(${d})">${lbl}</button>`;
+      return `<button type="button" class="type-btn${d === dueReminderPeriodDays ? ' active' : ''}" style="padding:6px 0; font-size:11px;" data-act="setDueReminderPeriod" data-n0="${d}">${lbl}</button>`;
     }).join('');
     const dueTotal = items.reduce((s, it) => s + it.amount, 0);
     const header = `<div class="section-title-row" style="margin-bottom:6px;"><div class="section-title">Jatuh tempo</div>${items.length ? `<span class="txn-amount keluar" style="font-size:14px;">${formatRp(dueTotal)}</span>` : ''}</div>
@@ -31,7 +31,7 @@
       const when = late ? 'Lewat ' + (-it.days) + ' hari' : (it.days === 0 ? 'Hari ini' : (it.days === 1 ? 'Besok' : it.days + ' hari lagi'));
       const color = late ? 'var(--red)' : (it.days <= 3 ? 'var(--amber)' : 'var(--ink-soft)');
       return `
-        <div class="txn-row clickable" onclick="openAccountDetail('${it.id}')">
+        <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${it.id}">
           <div class="txn-left">
             <span class="dot keluar"></span>
             <div class="txn-text">
@@ -39,7 +39,7 @@
               <div class="txn-meta" style="color:${color}; font-weight:600;">${when} · ${escapeHtml(fmtTgl(it.due))}</div>
             </div>
           </div>
-          <div class="txn-right"><span class="txn-amount keluar">${formatRp(it.amount)}</span>${it.payKind ? `<button type="button" class="io-btn" style="padding:6px 12px; font-size:12px;" onclick="event.stopPropagation(); payDueFromRingkasan('${it.id}')">Bayar</button>` : ''}</div>
+          <div class="txn-right"><span class="txn-amount keluar">${formatRp(it.amount)}</span>${it.payKind ? `<button type="button" class="io-btn" style="padding:6px 12px; font-size:12px;" data-act="payDueFromRingkasan" data-a0="${it.id}" data-stop="1">Bayar</button>` : ''}</div>
         </div>`;
     }).join('') + (() => {
       const liquid = computeLiquidFunds(data, balances || computeAllBalances(data));
@@ -58,7 +58,7 @@
     wrap.innerHTML = months.map((mo, idx) => {
       const accCount = new Set(mo.items.map(it => it.accId)).size;
       return `
-        <div class="txn-row clickable" onclick="openTagihanBulanDetail(${idx})">
+        <div class="txn-row clickable" data-act="openTagihanBulanDetail" data-n0="${idx}">
           <div class="txn-left"><div class="txn-text">
             <div class="txn-desc">${escapeHtml(fmtBulanTahun(mo.items[0].due))}</div>
             <div class="txn-meta">${accCount} akun · ${mo.items.length} item</div>
@@ -79,7 +79,7 @@
     const accCount = new Set(mo.items.map(it => it.accId)).size;
     $('tagihan-bulan-detail-meta').textContent = accCount + ' akun · ' + mo.items.length + ' item';
     $('tagihan-bulan-detail-items').innerHTML = mo.items.map(it => `
-      <div class="txn-row clickable" onclick="closeTagihanBulanDetail(); openAccountDetail('${it.accId}')">
+      <div class="txn-row clickable" data-act="openAccountFromTagihanBulan" data-a0="${it.accId}">
         <div class="txn-left"><div class="txn-text">
           <div class="txn-desc">${escapeHtml(it.accName)}</div>
           <div class="txn-meta">${escapeHtml(it.label)} · jatuh tempo ${escapeHtml(fmtTgl(it.due))}</div>
@@ -199,17 +199,17 @@
         const metaBits = (it.metaExtra ? it.metaExtra.replace(/^ · /, '').split(' · ') : []);
         metaBits.push(it.txnCount + ' transaksi');
         return `
-          <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" onclick="openAccountDetail('${it.acc.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAccountDetail('${it.acc.id}');}">
+          <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${it.acc.id}" data-keydown-act="openAccountDetail" data-keydown-a0="${it.acc.id}" data-keydown-keys="Enter| ">
             <div class="acc-name">${escapeHtml(it.acc.name)}</div>
             <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
             <div class="acc-tile-meta">${metaBits.map(escapeHtml).join(' · ')}</div>
             ${it.barHtml}
-            ${it.canPay ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" onclick="event.stopPropagation(); payCardFromDetail('${it.acc.id}','tagihan')" onkeydown="event.stopPropagation()">Bayar tagihan</button>` : ''}
+            ${it.canPay ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="payCardFromDetail" data-a0="${it.acc.id}" data-a1="tagihan" data-stop="1" data-keydown-stop="1">Bayar tagihan</button>` : ''}
           </div>`;
       }).join('');
       return `
         <div class="acc-group${collapsed ? ' collapsed' : ''}" data-type="${type}">
-          <button class="acc-group-head" onclick="toggleAccGroup('${type}')" aria-expanded="${collapsed ? 'false' : 'true'}">
+          <button class="acc-group-head" data-act="toggleAccGroup" data-a0="${type}" aria-expanded="${collapsed ? 'false' : 'true'}">
             <span class="dot" style="background: var(${colorVar})"></span>
             <span class="acc-group-title">${TYPE_LABELS[type]}</span>
             <span class="acc-group-count">${group.length}</span>
