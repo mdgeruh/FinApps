@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi di footer app: **v1.1.049**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi di footer app: **v1.1.051**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
@@ -272,7 +272,7 @@ JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua b
 14. Import / export / reset data
 15. Sinkron cloud (`14-sync.js`) dan startup (`15-startup.js`, dijalankan terakhir)
 
-Nomor di atas mengikuti komentar `STRUKTUR FILE INI` di `01-data.js`; file JS di folder memakai awalan `00`–`15`. Kode yang memanggil fungsi dari file lain harus ada di `15-startup.js`.
+Nomor di atas mengikuti komentar `STRUKTUR FILE INI` di `01-data.js`; file JS di folder memakai awalan `00`–`15`. Dua modul besar dipecah dengan akhiran huruf, dimuat berurutan tepat sesudah file induknya: Akun = `04-akun.js` (form, simpan, hapus) → `04b-akun-detail.js` (modal detail akun) → `04c-akun-aset-tagihan.js` (nilai aset, bayar kartu/PayLater, pembayaran pinjaman, `addTxn`); Laporan = `11-laporan.js` (filter periode, breakdown) → `11b-laporan-utang.js` (rincian utang, saran) → `11c-laporan-proyeksi.js` (proyeksi kas, biaya utang, simulasi pelunasan). Urutan `<script>` di `index.html` dan daftar `APP_SHELL` di `sw.js` harus ikut. Kode yang memanggil fungsi dari file lain harus ada di `15-startup.js`.
 
 Titik masuk yang sering dipakai saat memodifikasi:
 
@@ -280,12 +280,12 @@ Titik masuk yang sering dipakai saat memodifikasi:
 |---|---|
 | Rumus bunga/angsuran pinjaman | `computeLoanMonthlyInterest`, `computeOnlineInstallment`, `loanMonthlyFees`, `computeLoanSchedule`, `computeLoanRemaining` |
 | Form akun pinjol | `updateAccFormFields`, `updateOnlineLoanEstimate`, `saveAccount` |
-| Kartu-kartu di Laporan | `renderLaporanExtra`, `laporanDebtDetailHtml`, `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate`, `laporanAdviceHtml` |
+| Kartu-kartu di Laporan | `renderLaporanExtra` (`11-laporan.js`), `laporanDebtDetailHtml`, `laporanAdviceHtml` (`11b-laporan-utang.js`), `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate` (`11c-laporan-proyeksi.js`) |
 | Nomor versi di footer | konstanta `APP_VERSION`, `APP_BUILD` (`12-render-utama.js`) |
 | Nama pemilik (awalan file export) & sapaan | `getOwnerName`, `setOwnerName` (`01-data.js`), `updateGreeting` (`02-navigasi.js`), `saveOwnerNameFromInput` (`02-navigasi.js`) |
 | Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush` (`14-sync.js`), konfigurasi di `00-config.js` |
 | Penanganan data rusak | `loadData`, `handleCorruptData` (`01-data.js`) |
-| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment`, `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11-laporan.js`) |
+| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment` (`04c-akun-aset-tagihan.js`), `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11-laporan.js`) |
 
 ---
 
@@ -300,4 +300,4 @@ Nomor versi ada di konstanta `APP_VERSION` dan tampil di footer (`v1.1.NNN`). No
 3. Jalankan `node tests/run.js` (semua test harus lulus) dan buka semua tab di browser.
 4. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
 
-File baru sejak v1.1.049: `sw.js`, `supabase/setup.sql`, `tests/run.js`.
+File baru sejak v1.1.049: `sw.js`, `supabase/setup.sql`, `tests/run.js`. Sejak v1.1.050 paket juga menyertakan `manifest.json` dan ikon (`icon-192/512.png`, `icon-maskable-192/512.png`). Sejak v1.1.051 ada empat file JS baru hasil pemecahan (`04b-`, `04c-`, `11b-`, `11c-`); saat menimpa versi lama, salin semua file zip termasuk keempat file baru itu (`04-akun.js` dan `11-laporan.js` namanya tetap, isinya kini lebih pendek).
