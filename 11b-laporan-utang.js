@@ -35,7 +35,7 @@
     return `<div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px;"><span style="color:var(--ink-soft);">${label}</span><strong style="font-variant-numeric:tabular-nums; text-align:right;${color ? ' color:' + color + ';' : ''}">${val}</strong></div>`;
   }
   function lapCard(title, body) {
-    return `<div class="chart-card" style="margin-top:10px;"><div class="section-title" style="margin-bottom:4px;">${title}</div>${body}</div>`;
+    return `<div class="chart-card u-mt10"><div class="section-title" style="margin-bottom:4px;">${title}</div>${body}</div>`;
   }
   // Baris ringkas seperti kartu Saran: titik status + judul (+ nilai di kanan) + petunjuk satu baris; kalau ada
   // `lines`, baris bisa diketuk untuk membuka detail. title = teks biasa (di-escape di sini); hint & lines = HTML yang sudah aman.
@@ -47,7 +47,7 @@
       (o.hint ? `<div class="acc-sub"${o.hintColor ? ` style="color:${o.hintColor};"` : ''}>${o.hint}</div>` : '');
     const lines = (o.lines || []).filter(Boolean);
     const chev = lines.length ? '<span class="adv-chev" style="color:var(--ink-soft); font-size:11px; margin-top:2px;">▾</span>' : '';
-    const row = `<div style="display:flex; align-items:flex-start; gap:9px; padding:9px 0;">${dot}<div style="flex:1; min-width:0;">${head}</div>${chev}</div>`;
+    const row = `<div style="display:flex; align-items:flex-start; gap:9px; padding:9px 0;">${dot}<div class="u-flex1-min0">${head}</div>${chev}</div>`;
     if (!lines.length) return `<div style="border-bottom:1px solid var(--line);">${row}</div>`;
     return `<details class="adv-item" style="border-bottom:1px solid var(--line);"><summary>${row}</summary><div class="acc-sub" style="padding:0 0 10px ${o.noDot ? 0 : 17}px; line-height:1.5;">` +
       lines.map(l => `<div${l.color ? ` style="color:${l.color};"` : ''}>${l.text}</div>`).join('') + '</div></details>';
@@ -265,7 +265,7 @@
     const color = { red: 'var(--red)', amber: 'var(--amber)', info: 'var(--ink-soft)', green: 'var(--green)' };
     const one = (i) => {
       const dot = `<span style="flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:${color[i.level]};"></span>`;
-      const row = `<div style="display:flex; align-items:center; gap:9px; padding:9px 0; font-size:13px;">${dot}<span style="flex:1; min-width:0;">${i.title}</span>${i.detail ? '<span class="adv-chev" style="color:var(--ink-soft); font-size:11px;">▾</span>' : ''}</div>`;
+      const row = `<div style="display:flex; align-items:center; gap:9px; padding:9px 0; font-size:13px;">${dot}<span class="u-flex1-min0">${i.title}</span>${i.detail ? '<span class="adv-chev" style="color:var(--ink-soft); font-size:11px;">▾</span>' : ''}</div>`;
       if (!i.detail) return `<div style="border-bottom:1px solid var(--line);">${row}</div>`;
       return `<details class="adv-item" style="border-bottom:1px solid var(--line);"><summary>${row}</summary><div class="acc-sub" style="padding:0 0 10px 17px; line-height:1.5;">${i.detail}</div></details>`;
     };

@@ -1028,6 +1028,7 @@
   // tab Profil, saat tanggal berganti, dan setelah simpan akun / import / reset data.
   function runRecurringFees() {
     try { applyRecurringFees(loadData()); } catch (e) { console.error('biaya berulang gagal', e); }
+    try { if (typeof applySubscriptions === 'function') applySubscriptions(loadData()); } catch (e) { console.error('langganan berulang gagal', e); }
   }
 
 

@@ -171,8 +171,9 @@
     $('category-custom-row').style.display = sel.value === CATEGORY_CUSTOM ? 'flex' : 'none';
   }
 
-  function updateTypeAvailability() {
-    const data = loadData();
+  // `data` opsional: render() sudah punya snapshot, jadi tidak perlu parse ulang localStorage (hanya dibaca, tidak diubah)
+  function updateTypeAvailability(data) {
+    data = data || loadData();
     const accSel = $('account-select');
     const acc = data.accounts.find(a => a.id === accSel.value);
     const masukBtn = document.querySelector('.type-btn[data-type="masuk"]');
@@ -203,15 +204,15 @@
     } else {
       hint.style.display = 'none';
     }
-    updatePaylaterUI();
-    updateAssetHint();
+    updatePaylaterUI(data);
+    updateAssetHint(data);
   }
 
   // Petunjuk saat Transfer melibatkan aset (beli / jual) + kategori otomatis "Beli/jual aset".
-  function updateAssetHint() {
+  function updateAssetHint(data) {
     const el = $('asset-hint');
     if (!el) return;
-    const data = loadData();
+    data = data || loadData();
     const from = data.accounts.find(a => a.id === $('account-select').value);
     const to = data.accounts.find(a => a.id === $('to-account-select').value);
     const fromAsset = !!(from && from.type === 'aset'), toAsset = !!(to && to.type === 'aset');
@@ -232,10 +233,10 @@
   }
 
   // Pilihan Bayar nanti / Cicilan hanya muncul untuk pengeluaran baru di akun PayLater.
-  function updatePaylaterUI() {
+  function updatePaylaterUI(data) {
     const row = $('paylater-row');
     if (!row) return;
-    const data = loadData();
+    data = data || loadData();
     const acc = data.accounts.find(a => a.id === $('account-select').value);
     const show = !!acc && acc.type === 'paylater' && state.currentType === 'keluar' && !state.editingTxnId;
     row.style.display = show ? 'block' : 'none';
@@ -290,7 +291,7 @@
     toSel.innerHTML = opts;
     if (data.accounts.some(a => a.id === prevSelected)) accSel.value = prevSelected;
     if (data.accounts.length > 1) toSel.selectedIndex = 1;
-    updateTypeAvailability();
+    updateTypeAvailability(data);
   }
 
   let editingAccountId = null;

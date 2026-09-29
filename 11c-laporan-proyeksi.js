@@ -62,7 +62,7 @@
       if (run < minBal) { minBal = run; minDate = e.date; }
       if (run < 0 && !firstNeg) firstNeg = e;
     });
-    const btn = (d) => `<button type="button" class="type-btn${d === horizon ? ' active' : ''}" style="padding:6px 0; font-size:11px;" onclick="setLaporanProjDays(${d})">${d} hari</button>`;
+    const btn = (d) => `<button type="button" class="type-btn${d === horizon ? ' active' : ''}" style="padding:6px 0; font-size:11px;" data-act="setLaporanProjDays" data-n0="${d}">${d} hari</button>`;
     const stat = (label, val, color) => `<div><div class="acc-sub" style="margin:0;">${label}</div><strong style="font-size:13.5px; font-variant-numeric:tabular-nums;${color ? ' color:' + color + ';' : ''}">${val}</strong></div>`;
     let body = `<div class="type-toggle no-print" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin:6px 0 4px;">${btn(30)}${btn(60)}</div>` +
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:8px 0 10px; border-bottom:1px solid var(--line);">' +
@@ -74,13 +74,13 @@
       body += `<div style="border-left:3px solid var(--red); padding:6px 0 6px 10px; margin:8px 0; font-size:13px;"><strong style="color:var(--red);">Minus mulai ${escapeHtml(fmtTgl(firstNeg.date))}</strong> saat bayar ${escapeHtml(firstNeg.name)} ${formatRp(firstNeg.amount)}. Siapkan tambahan dana atau atur ulang urutan bayar.</div>`;
     }
     if (!events.length) {
-      body += '<div class="acc-sub" style="margin-top:8px;">Tidak ada tagihan atau angsuran jatuh tempo dalam ' + horizon + ' hari ke depan.</div>';
+      body += '<div class="acc-sub u-mt8">Tidak ada tagihan atau angsuran jatuh tempo dalam ' + horizon + ' hari ke depan.</div>';
     } else {
       const shown = events.slice(0, 20);
       body += '<div class="acc-sub" style="margin:10px 0 0;">Urutan bayar & saldo sesudahnya</div>' + lapMore(shown.map(e => lapItem({
         noDot: true, title: e.name + ' · ' + formatRp(e.amount), right: formatRp(e.after), rightColor: e.after < 0 ? 'var(--red)' : 'var(--ink)',
         hint: escapeHtml(e.label) + ' · ' + (e.late ? '<span style="color:var(--red);">sudah lewat, bayar sekarang</span>' : escapeHtml(fmtTgl(e.date)))
-      })), 5) + (events.length > 20 ? '<div class="acc-sub" style="margin-top:4px;">+' + (events.length - 20) + ' tagihan lain tidak ditampilkan.</div>' : '');
+      })), 5) + (events.length > 20 ? '<div class="acc-sub u-mt4">+' + (events.length - 20) + ' tagihan lain tidak ditampilkan.</div>' : '');
     }
     body += lapNote('Saldo = kas + bank + e-wallet. Hanya tagihan & angsuran yang sudah terjadwal; pemasukan (gaji dll.), belanja harian, dan tagihan kartu yang belum dicetak belum ikut dihitung.');
     return card('Proyeksi kas ' + horizon + ' hari', body);
@@ -239,7 +239,7 @@
     const mLabel = (r) => r.finished ? r.months + ' bln (' + laporanMonthLabel(r.months) + ')' : '&gt; 20 tahun';
     const totalBal = debts.reduce((s2, d) => s2 + d.bal, 0);
     const totalMin = debts.reduce((s2, d) => s2 + d.minFn(d.bal), 0);
-    let html = '<div class="acc-sub" style="margin-bottom:4px;">' + debts.length + ' utang · total ' + formatRp(Math.round(totalBal)) + ' · cicilan wajib ± ' + formatRp(Math.round(totalMin)) + '/bln</div>';
+    let html = '<div class="acc-sub u-mb4">' + debts.length + ' utang · total ' + formatRp(Math.round(totalBal)) + ' · cicilan wajib ± ' + formatRp(Math.round(totalMin)) + '/bln</div>';
     html += sc.map((x, i) => {
       const saved = i === 0 ? null : base.interest - x.r.interest;
       const faster = i === 0 || !base.finished ? null : base.months - x.r.months;
@@ -277,7 +277,7 @@
     const shown = state.laporanSimExtra != null ? state.laporanSimExtra : (() => { const inc = laporanMonthlyIncome(data); return inc > 0 ? Math.round(inc * 0.1 / 50000) * 50000 : 500000; })();
     return card('Simulasi pelunasan',
       '<div class="acc-sub" style="margin:4px 0 6px;">Dana ekstra per bulan (Rp), di luar cicilan wajib</div>' +
-      `<div class="field-row no-print" style="margin-bottom:8px;"><input type="number" id="laporan-sim-extra" value="${shown}" inputmode="numeric" min="0" step="50000" oninput="onLaporanSimInput()" aria-label="Dana ekstra per bulan untuk bayar utang" style="width:100%;"></div>` +
+      `<div class="field-row no-print u-mb8"><input type="number" id="laporan-sim-extra" value="${shown}" inputmode="numeric" min="0" step="50000" data-input-act="onLaporanSimInput" aria-label="Dana ekstra per bulan untuk bayar utang" style="width:100%;"></div>` +
       '<div id="laporan-sim-result">' + laporanSimResultHtml(data, balances) + '</div>');
   }
 
@@ -321,7 +321,7 @@
       };
       const deltaColor = (cur, prev, upGood) => { if (prev <= 0 || cur === prev) return ''; return ((cur > prev) === upGood) ? 'var(--green)' : 'var(--red)'; };
       html += card('Dibanding periode sebelumnya',
-        `<div class="acc-sub" style="margin-bottom:4px;">${escapeHtml(fmtTgl(prevStart))} – ${escapeHtml(fmtTgl(prevEnd))}</div>` +
+        `<div class="acc-sub u-mb4">${escapeHtml(fmtTgl(prevStart))} – ${escapeHtml(fmtTgl(prevEnd))}</div>` +
         row('Pemasukan', formatRp(totalIn) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn) + ')</span> ' + delta(totalIn, pIn, true), deltaColor(totalIn, pIn, true)) +
         row('Pengeluaran', formatRp(totalOut) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pOut) + ')</span> ' + delta(totalOut, pOut, false), deltaColor(totalOut, pOut, false)) +
         row('Selisih (laba bersih)', formatRp(net) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn - pOut) + ')</span>', net >= (pIn - pOut) ? 'var(--green)' : 'var(--red)'));
