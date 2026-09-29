@@ -1,6 +1,6 @@
 # Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Status per **v1.1.051** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.051, `[ ]` = belum.
+Status per **v1.1.053** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.053, `[ ]` = belum.
 Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
 ## 1. Gambaran singkat
@@ -53,10 +53,10 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - [ ] [E] Hosting sendiri Supabase JS dan font (sekarang di-cache oleh service worker setelah pemuatan online pertama)
 - [ ] [K] Putuskan enkripsi data cloud. **Butuh keputusanmu**: enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan sinkron tidak bisa dibaca di dashboard
 - [ ] [E] E6: sinkron per-item (bukan satu blob)
-- [ ] [Q] Ganti `onclick` inline dengan event delegation (±90 tempat)
+- [x] [Q] Ganti `onclick` inline dengan event delegation: v1.1.053 memindahkan 131 handler (99 click, 15 input, 17 change) ke `data-act` / `data-input-act` / `data-change-act`. **Sisa 29 handler inline sengaja dibiarkan** (butuh `event`/`this`, atau lebih dari satu perintah, atau `${q(...)}` dinamis); bisa diselesaikan kalau mau, tapi butuh perubahan fungsi handlernya
 - [x] [Q] Pecah `04-akun.js` (1.423 baris) jadi 3 file dan `11-laporan.js` (1.010 baris) jadi 3 file (v1.1.051; isi identik, tiap file 280–570 baris)
 - [ ] [Q] Namespace / ES modules (semua masih berbagi scope global; butuh perubahan besar di ratusan pemanggilan, terutama `onclick` inline, jadi sebaiknya dikerjakan bersama item event delegation di atas)
-- [ ] [Q] Kurangi 235 `style=""` inline dan 14 `!important`
+- [ ] [Q] Kurangi `style=""` inline dan 14 `!important`. **Sebagian selesai di v1.1.052:** 119 inline yang paling sering berulang diganti kelas utilitas `u-*` (total `style="` di kode 393 → 274). Sisanya sengaja dibiarkan: `display:none` (diubah JS lewat `style.display`), elemen `.section-title` (margin diatur aturan CSS yang lebih spesifik), warna/fill/stroke SVG grafik, dan gaya unik satu-kali. `!important` belum disentuh (sebagian besar ada di blok `@media print`)
 
 ### P4: fitur (butuh keputusan desain darimu, tidak dikerjakan)
 - [ ] [F] Anggaran per kategori · langganan berulang · dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
@@ -74,9 +74,13 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - **v1.1.051 (setelah pemecahan file):** 17 test unit lulus; semua file lolos cek sintaks; di Chromium 390 px semua tab terbuka, 12 fungsi yang berpindah file tetap terdefinisi, detail akun terbuka, tab Laporan terisi, tanpa scroll horizontal, tanpa error JavaScript.
 - **Belum teruji:** login/sinkron ke Supabase sungguhan, service worker di perangkat nyata (offline), dan dua perangkat bentrok.
 
+- **v1.1.052 (kelas utilitas):** 17 test unit lulus; semua file lolos cek sintaks; perbandingan otomatis Chromium 390 px v1.1.051 vs v1.1.052 (7 tab + 3 modal detail akun, data contoh): nilai CSS terhitung semua elemen identik (0 selisih), tanpa error JavaScript.
+
+- **v1.1.053 (event delegation):** 17 test unit lulus; semua file lolos cek sintaks; perbandingan otomatis Chromium 390 px v1.1.052 vs v1.1.053: 131 elemen, urutan + argumen panggilan fungsi identik (0 selisih), semua nama fungsi handler terdefinisi, tanpa error JavaScript. **Belum teruji:** klik nyata di semua modal dan alur input di perangkat sungguhan; coba cepat semua tombol setelah memasang.
+
 ## 5. Yang perlu kamu lakukan setelah memasang
 
-1. Timpa seluruh file kode lama dengan isi zip (paket lengkap, termasuk `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
+1. Timpa file lama dengan isi zip. Zip v1.1.052 dan v1.1.053 hanya berisi file yang berubah (`style.css`, `index.html`, `sw.js`, file `.js` yang diubah, dan dokumen); file lain tetap dari v1.1.051. Paket lengkap berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
 2. **Export JSON** dulu sebagai cadangan.
 3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
 4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.

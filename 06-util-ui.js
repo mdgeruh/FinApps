@@ -212,3 +212,29 @@
   ].forEach(enhanceSelect);
 
 
+
+  // ============================================================
+  // EVENT DELEGATION: satu listener per jenis event di document, menggantikan
+  // onclick/oninput/onchange inline yang berupa satu panggilan fungsi sederhana.
+  //   data-act="namaFungsi"                  -> klik   (argumen: data-a0, data-a1 ... = teks; data-n0 ... = angka)
+  //   data-input-act / data-change-act       -> event input / change (argumen: data-input-a0, data-change-n0, dst.)
+  // Fungsi dicari di scope global (semua fungsi handler adalah `function` global).
+  // Elemen bersarang: handler dipanggil dari yang terdalam ke luar, sama seperti bubbling inline.
+  // Handler yang butuh `event`/`this` atau lebih dari satu perintah tetap inline.
+  // ============================================================
+  function dispatchDelegated(ev, e) {
+    const actAttr = ev === 'click' ? 'data-act' : 'data-' + ev + '-act';
+    const base = ev === 'click' ? 'data-' : 'data-' + ev + '-';
+    for (let el = e.target instanceof Element ? e.target.closest('[' + actAttr + ']') : null; el; el = el.parentElement && el.parentElement.closest('[' + actAttr + ']')) {
+      const fn = window[el.getAttribute(actAttr)];
+      if (typeof fn !== 'function') { console.warn('handler tidak ditemukan:', el.getAttribute(actAttr)); continue; }
+      const args = [];
+      for (let i = 0; ; i++) {
+        if (el.hasAttribute(base + 'a' + i)) args.push(el.getAttribute(base + 'a' + i));
+        else if (el.hasAttribute(base + 'n' + i)) args.push(Number(el.getAttribute(base + 'n' + i)));
+        else break;
+      }
+      fn.apply(el, args);
+    }
+  }
+  ['click', 'input', 'change'].forEach(ev => document.addEventListener(ev, e => dispatchDelegated(ev, e)));
