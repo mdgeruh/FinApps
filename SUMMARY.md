@@ -1,6 +1,6 @@
 # Ringkasan & Todolist: Keuangan Pribadi
 
-Status per **v1.1.074** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
+Status per **v1.1.078** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
 Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
 
 ## 1. Gambaran singkat
@@ -22,7 +22,7 @@ App web statis (HTML + CSS + JS biasa, tanpa build tool), ±462 KB JS tanpa mini
 
 Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
-### PRIORITAS UTAMA SEKARANG: perbaikan tab Akun (usulan, menunggu persetujuanmu)
+### PRIORITAS UTAMA SEKARANG: perbaikan tab Akun (A1 selesai v1.1.075, A2 selesai v1.1.076, A3 selesai v1.1.077, A5 + A6 selesai v1.1.078; A4 + A7 berikutnya)
 
 Optimalisasi (bagian "Ditunda" di bawah) **dilewati dulu atas permintaanmu**; tidak dikerjakan sampai kamu minta. Fokus berikutnya adalah tab Akun.
 
@@ -35,17 +35,17 @@ Dasar temuan (dibaca dari `07-render-akun-transaksi.js`, `04b-akun-detail.js`, `
 
 Urut dari dampak terbesar ke terkecil:
 
-- [ ] **A1 [K] Samakan definisi "utang" di header, kelompok, kartu, dan kekayaan bersih.** Butuh keputusanmu: (a) utang = pokok saja, bunga tetap yang belum jatuh tempo hanya keterangan ("+ bunga terjadwal Rp1.000.000"), atau (b) utang = pokok + sisa bunga tetap di semua tempat. Usulan saya (a) karena bunga belum jatuh tempo bukan kewajiban saat ini dan tidak mengubah kekayaan bersih di Ringkasan; kartu dan kelompok diberi label jelas "Pokok" dan "+ bunga". Test unit membandingkan header dengan jumlah kelompok
-- [ ] **A2 [Q] Satu fungsi bersama untuk teks kartu dan detail akun** (`accountDisplayInfo(data, acc, bal)`), supaya kartu dan detail tidak bisa berbeda lagi; dikerjakan sebelum A3/A4 karena keduanya menyentuh blok yang sama. Termasuk merapikan indentasi baris `feeAdminMetaText` di `renderAccounts`
-- [ ] **A3 [F] Kartu akun lebih ringkas dan berguna:** maksimal dua baris prioritas (kartu kredit: sisa tagihan cetak + jatuh tempo; pinjaman: angsuran berikutnya + tanggal; PayLater/kartu: pemakaian limit), sisanya pindah ke detail. Baris telat berwarna merah dengan ▲/▼ (bukan hanya warna)
+- [x] **A1 [K] (selesai v1.1.075, pilihan a: pokok saja) Samakan definisi "utang" di header, kelompok, kartu, dan kekayaan bersih.** Utang = pokok (saldo buku); bunga tetap yang belum jatuh tempo hanya keterangan "+ bunga terjadwal" di kartu dan "total sampai lunas" di detail. `loanDebtParts`/`loanBungaNote` dipakai bersama kartu dan detail. Laporan utang sengaja tetap pokok + bunga (label diperjelas). Sisa: PayLater berbunga (kartu memakai `paylaterCreditUsed`, header memakai saldo buku) bisa masih berbeda; ikut ditangani di A2/A3
+- [x] **A2 [Q] (selesai v1.1.076; tampilan sengaja tidak berubah, pemangkasan ada di A3) Satu fungsi bersama untuk teks kartu dan detail akun** (`accountDisplayInfo(data, acc, bal, { detail })` di `01-data.js`): kartu dan detail tidak bisa berbeda lagi; `sortVal`/`groupVal` berasal dari fungsi yang sama. Indentasi baris `feeAdminMetaText` ikut rapi
+- [x] **A3 [F] (selesai v1.1.077) Kartu akun lebih ringkas dan berguna:** maksimal dua baris prioritas lewat `accountPriorityLines` (kartu kredit: sisa tagihan cetak + jatuh tempo, lalu limit; pinjaman: angsuran berikutnya + tanggal, lalu terbayar/bunga terjadwal; PayLater: limit + jatuh tempo). Baris telat merah dengan "▲ Telat N hari", limit ≥ 90% juga ▲; keterangan panjang pindah ke detail (yang kini juga memuat jumlah transaksi). Belum teruji: tema gelap dan layar lebar
 - [ ] **A4 [F] Arsipkan akun** (pengganti "hapus dulu semua transaksi"): hanya untuk akun bersaldo 0 atau lunas; akun arsip hilang dari daftar dan dari pilihan transaksi baru, masuk bagian "Diarsipkan" yang terlipat; riwayat, laporan, dan saldo historis tetap utuh; bisa dipulihkan. Menambah field `archived` (perlu masuk sanitasi, ekspor/impor, dan sinkron cloud serta test)
-- [ ] **A5 [F] Ringkasan atas tab Akun:** tambah Kekayaan bersih dan pemakaian limit kartu (total terpakai ÷ total limit, merah ≥90% seperti bar kartu). Angka mengikuti keputusan A1
-- [ ] **A6 [F] Aksi cepat di kartu/detail akun:** "Catat transaksi" dan "Transfer dari sini" dengan akun terisi otomatis; "Bayar" untuk PayLater dan cicilan pinjaman (sekarang hanya kartu kredit)
+- [x] **A5 [F] (selesai v1.1.078) Ringkasan atas tab Akun:** kartu Kekayaan bersih (aset − utang, definisi A1) dan Limit kartu terpakai (`computeLimitUsage`: kartu kredit + PayLater berlimit; merah ▲ ≥90%, amber ≥70%; tersembunyi bila tidak ada limit)
+- [x] **A6 [F] (selesai v1.1.078) Aksi cepat di kartu/detail akun:** tombol Bayar di kartu kini juga untuk PayLater ("Bayar tagihan") dan pinjaman/pinjol ("Bayar angsuran") lewat alur `payDueFromRingkasan` yang sudah ada; detail akun punya "Catat transaksi" dan "Transfer dari sini" dengan akun terisi otomatis (`quickTxnForAccount`, aturan di `accountQuickActions`: akun utang tidak jadi sumber transfer, aset hanya Transfer, titipan tidak ada)
 - [ ] **A7 [F] Cari akun dan chip filter** (Semua | Ada tagihan | Lunas | Diarsipkan) untuk daftar panjang; pola sama dengan filter tab Transaksi
 - [ ] **A8 [F] Sematkan dan urutkan manual:** tombol ▲ ▼ per akun, tersimpan per perangkat (pola R4), akun yang disematkan tampil di puncak kelompoknya
 - [ ] **A9 [Q] Form tambah/edit akun** (satu sheet panjang dengan baris bergantung jenis akun): **belum ditelaah**; ditelaah dulu sebelum diusulkan perubahan apa pun
 
-Urutan kerja yang disarankan: A1 (setelah kamu memilih a/b) → A2 → A3 → A5 + A6 → A4 + A7 → A8 → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
+Urutan kerja yang disarankan: A1 (selesai) → A2 (selesai) → A3 (selesai) → A5 + A6 (selesai) → A4 + A7 → A8 → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
 
 ### Perbaikan tab Ringkasan (R1–R9 selesai semua; dicatat sebagai arsip)
 
@@ -71,7 +71,6 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 - [ ] [E] Ukur performa di HP nyata; kalau terasa lambat, hasilnya jadi dasar memilih E2 atau E5
 
 ### Butuh keputusanmu
-- [ ] [K] **A1:** definisi utang di tab Akun: (a) pokok saja + keterangan bunga tetap, atau (b) pokok + sisa bunga tetap di semua tempat. Usulan saya (a); lihat bagian prioritas tab Akun
 - [ ] [K] Enkripsi data cloud. Enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan data tidak bisa dibaca di dashboard Supabase
 - [ ] [F] Desktop tahap 3 (belum ada rinciannya di dokumen mana pun)
 - [ ] [F] Akun forex USD/cent dengan kurs (sekarang lewat aset + trik harga per satuan)
@@ -101,7 +100,7 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 
 ## 4. Hasil pengujian
 
-**Unit:** 93 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+**Unit:** 116 test lulus (`node tests/run.js`); semua file lolos `node --check`.
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 
@@ -116,6 +115,10 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 | 1.1.055 | 3 tab identik; klik hapus/baris terpisah benar; parse di `render()` 4 → 1 | lulus |
 | 1.1.056–057 | anggaran dan langganan dengan klik nyata (tambah, validasi, idempoten, reload, ekspor) | lulus |
 | 1.1.059, 1.1.064–067 | hanya unit test dan cek sintaks | tampilan belum diuji |
+| 1.1.078 | A5 + A6: 7 akun (kas, aset, kartu kredit, PayLater, pinjaman, pinjol, titipan): Limit kartu terpakai 28% dan Kekayaan bersih tampil; tombol Bayar per jenis akun benar; Bayar angsuran membuka panel bayar nominal Rp1.100.000; Bayar PayLater membuka Transfer Rp950.000; Transfer dari sini dan Catat transaksi mengisi akun dengan benar; kartu kredit tanpa Transfer; titipan tanpa tombol; tanpa scroll horizontal; tema gelap dan mode samarkan saldo belum | tanpa error JS |
+| 1.1.077 | A3: 6 akun (kas, kartu kredit dengan tagihan cetak telat, PayLater limit 95%, pinjaman telat 90 hari, pinjol 2 hari lagi, titipan): kartu utang tepat 2 baris meta, ▲ Telat N hari dan ▲ limit tampil, tombol Bayar tagihan tetap, detail memuat jumlah transaksi, tanpa scroll horizontal; tema gelap dan layar lebar belum | tanpa error JS |
+| 1.1.076 | A1 + A2: 4 akun (kas, kartu kredit, pinjaman bunga tetap Rp10 juta, pinjol): header Total utang Rp12.700.000 = jumlah kelompok; kartu "Sisa pokok" + "+ bunga terjadwal"; detail "total sampai lunas" dan bunga efektif pinjol hanya di detail; tanpa scroll horizontal | tanpa error JS |
+| 1.1.075 | A1: unit test (pokok/bunga contoh Rp10 juta, header = jumlah pokok kartu + pinjaman); tampilannya diuji di 1.1.076 | unit + sintaks lulus |
 | 1.1.074 | R9: segmen Utang dengan kartu kredit + transfer pembayaran: total, kenaikan, 6 batang, label aksesibilitas benar; unit: identik dengan cara lama pada 300 data acak | tanpa error JS |
 | 1.1.073 | R8: proyeksi tanpa anggaran, anggaran terlampaui (▲ merah), anggaran longgar (▼), data kosong menyembunyikan blok, tanpa scroll horizontal | tanpa error JS |
 | 1.1.072 | R6: 5 segmen grafik + lingkaran kategori punya `role`/`aria-label`, fokus keyboard menampilkan titik terakhir, ArrowLeft/Home/Esc bekerja dan `#chart-live` terisi, Enter di legenda membuka rincian, tanda ▲ tampil, tanpa scroll horizontal | tanpa error JS |

@@ -7,6 +7,20 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.078', d: '29 Sep 2026', items: [
+      'Bagian atas tab Akun kini menampilkan juga Kekayaan bersih (aset dikurangi utang) dan Limit kartu terpakai: total pemakaian semua kartu kredit dan PayLater yang punya limit dibagi total limitnya. Angka limit menjadi merah dengan tanda ▲ kalau sudah 90% ke atas',
+      'Tombol Bayar kini ada di kartu PayLater (Bayar tagihan) dan kartu pinjaman (Bayar angsuran), tidak hanya di kartu kredit. Bayar angsuran membuka panel pembayaran dengan nominal angsuran terisi',
+      'Di halaman detail akun ada dua tombol cepat: Catat transaksi (akun sudah terpilih) dan Transfer dari sini (akun ini jadi sumber). Tombol yang tidak berlaku disembunyikan: akun utang tidak bisa jadi sumber transfer, aset hanya bisa Transfer, titipan memakai form sendiri'] },
+    { v: 'v1.1.077', d: '29 Sep 2026', items: [
+      'Kartu di tab Akun kini ringkas: paling banyak dua baris yang paling penting. Kartu kredit menampilkan sisa tagihan cetak dan jatuh temponya, lalu pemakaian limit; pinjaman menampilkan angsuran berikutnya beserta tanggalnya, lalu kemajuan pembayaran; PayLater menampilkan pemakaian limit dan jatuh tempo',
+      'Yang telat tampil merah dan diawali tanda ▲ beserta jumlah hari telatnya, jadi tidak hanya dibedakan lewat warna. Limit terpakai 90% ke atas juga diberi ▲ merah',
+      'Keterangan lengkap (bunga, biaya, skema kartu, jumlah transaksi) tetap ada di halaman detail akun yang terbuka saat kartu diketuk'] },
+    { v: 'v1.1.076', d: '29 Sep 2026', items: [
+      'Kartu akun dan halaman detail akun kini memakai satu sumber untuk nilai dan keterangan, jadi angka dan tulisan keduanya tidak akan berbeda lagi. Tampilanmu hampir tidak berubah; ini perapian di balik layar yang jadi dasar perbaikan kartu akun berikutnya'] },
+    { v: 'v1.1.075', d: '29 Sep 2026', items: [
+      'Angka utang di tab Akun kini konsisten: total di atas, total per kelompok, dan kartu pinjaman semuanya memakai sisa pokok, jadi tidak ada lagi selisih antara header dan kartu',
+      'Bunga kontrak pinjaman yang belum jatuh tempo tidak dihitung sebagai utang saat ini; ia tampil sebagai keterangan \"+ bunga terjadwal\" di kartu, dan di detail akun ada total sampai lunas. Tulisan \"Sisa hutang\" pada kartu pinjaman berubah menjadi \"Sisa pokok\"',
+      'Di tab Laporan, total utang tetap menyertakan bunga terjadwal (seperti total sisa pinjaman di bank) dan kini diberi label yang jelas'] },
     { v: 'v1.1.074', d: '29 Sep 2026', items: [
       'Grafik \"Tren total utang\" kini dihitung lebih cepat (hasilnya tetap sama), terutama terasa kalau kamu punya banyak akun utang dan ribuan transaksi'] },
     { v: 'v1.1.073', d: '29 Sep 2026', items: [

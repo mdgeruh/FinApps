@@ -14,55 +14,12 @@
     const bal = accountBalance(data, id);
     const isDebt = TYPE_DEBT[acc.type];
     const colorVar = TYPE_COLOR_VAR[acc.type] || '--teal';
-    let valueText, color, metaExtra = '', pct = 0, barColor = colorVar;
-
-    if (isDebt) {
-      const limit = acc.limit || 0;
-      const used = acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
-      const overpaid = bal > 0 ? bal : 0;
-      const sisa = limit - used;
-      pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-      const remD = TYPE_LOAN[acc.type] ? computeLoanRemaining(data, acc, bal) : null;
-      const usedD = remD ? remD.total : used;
-      valueText = overpaid > 0 ? 'Lebih bayar ' + formatRp(overpaid) : (TYPE_LOAN[acc.type] ? (usedD > 0 ? 'Sisa hutang ' + formatRp(usedD) : 'Lunas') : 'Terpakai ' + formatRp(used));
-      color = usedD > 0 ? 'var(--red)' : 'var(--ink)';
-      metaExtra = limit > 0 ? ' · Sisa limit ' + formatRp(sisa) : '';
-      if (remD && remD.flat && usedD > 0) metaExtra += ' · Sisa pokok ' + formatRp(remD.sisaPokok) + ' + bunga ' + formatRp(remD.sisaBunga);
-      if (acc.interestPercent && acc.type !== 'paylater') metaExtra += ' · Bunga ' + acc.interestPercent + '%/bln jika belum lunas';
-      metaExtra += feeAdminMetaText(acc);
-      metaExtra += cardSchemeMetaText(acc);
-      metaExtra += assetMetaText(acc);
-      if (acc.type === 'paylater') metaExtra += paylaterMetaExtra(data, acc);
-      if (acc.loanRatePercent) metaExtra += ' · Bunga ' + acc.loanRatePercent + (acc.loanRateUnit === 'bulan' ? '%/bln (' : '%/thn (') + (acc.loanInterestType === 'menurun' ? 'menurun' : 'tetap') + ')';
-      if (acc.type === 'pinjaman_online' && acc.loanInstallment && acc.loanTenorMonths) {
-        const totalBayar = acc.loanInstallment * acc.loanTenorMonths;
-        const pokokAwal = Math.abs(acc.originalPrincipal || acc.initialBalance || 0);
-        const bungaEfektifTotal = totalBayar - pokokAwal;
-        if (bungaEfektifTotal > 0 && pokokAwal > 0) {
-          const persenPerBulan = (bungaEfektifTotal / acc.loanTenorMonths / pokokAwal) * 100;
-          metaExtra += ' · Estimasi bunga efektif ≈' + persenPerBulan.toFixed(1) + '%/bln';
-        }
-      }
-      if (TYPE_LOAN[acc.type] && ((acc.loanAdminFee || 0) > 0 || (acc.loanStampFee || 0) > 0) && acc.loanAdminMode !== 'cicil') {
-        const feeBits = [];
-        if (acc.loanAdminFee) feeBits.push('admin ' + formatRp(acc.loanAdminFee) + (acc.loanAdminPercent ? ' (' + acc.loanAdminPercent + '%)' : ''));
-        if (acc.loanStampFee) feeBits.push('materai ' + formatRp(acc.loanStampFee));
-        metaExtra += ' · Biaya awal: ' + feeBits.join(' + ');
-      } else if (TYPE_LOAN[acc.type] && (acc.loanStampFee || 0) > 0) {
-        metaExtra += ' · Biaya awal: materai ' + formatRp(acc.loanStampFee);
-      }
-      if (acc.type === 'pinjaman_online' && acc.loanAdminMode === 'cicil' && acc.loanAdminFee) metaExtra += ' · Admin ' + formatRp(acc.loanAdminFee) + (acc.loanAdminPercent ? ' (' + acc.loanAdminPercent + '%)' : '') + ' dicicil';
-      if (acc.type === 'pinjaman_online' && (acc.loanInsurancePercent || 0) > 0) metaExtra += ' · Asuransi ' + acc.loanInsurancePercent + '%/bln (' + formatRp(Math.round(Math.abs(acc.originalPrincipal || acc.initialBalance || 0) * acc.loanInsurancePercent / 100)) + '/bln)';
-      barColor = pct >= 90 ? '--red' : (pct >= 70 ? '--amber' : colorVar);
-    } else if (acc.type === 'titipan') {
-      if (bal > 0) { valueText = 'Berutang ' + formatRp(bal); color = 'var(--red)'; }
-      else if (bal < 0) { valueText = 'Lebih ' + formatRp(Math.abs(bal)); color = 'var(--green)'; }
-      else { valueText = 'Lunas'; color = 'var(--ink-soft)'; }
-    } else {
-      valueText = formatRp(bal);
-      color = bal < 0 ? 'var(--red)' : 'var(--ink)';
-      metaExtra += assetMetaText(acc);
-    }
+    const di = accountDisplayInfo(data, acc, bal, { detail: true });
+    const { valueText, color, pct, barColor } = di;
+    let metaExtra = di.metaExtra;
+    { const q = accountQuickActions(acc), qWrap = $('acc-detail-quick');
+      if (qWrap) { qWrap.style.display = (q.catat || q.transfer) ? 'flex' : 'none'; $('acc-quick-catat').style.display = q.catat ? '' : 'none'; $('acc-quick-transfer').style.display = q.transfer ? '' : 'none'; } }
+    { const st = computeAccountTxnStats(data)[id]; metaExtra += ' · ' + (st ? st.count : 0) + ' transaksi'; }
 
     // Jadwal angsuran (pinjaman bunga flat bertenor)
     const schedEl = $('acc-detail-schedule');

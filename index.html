@@ -230,6 +230,17 @@
           <div class="acc-balance neg u-mt6" id="akun-total-utang">Rp0</div>
         </div>
       </div>
+      <div style="display:flex; gap:10px; margin-bottom:14px;">
+        <div class="acc-card u-flex1-min0">
+          <div class="acc-type">Kekayaan bersih</div>
+          <div class="acc-balance u-mt6" id="akun-net-worth">Rp0</div>
+        </div>
+        <div class="acc-card u-flex1-min0" id="akun-limit-card" style="display:none;">
+          <div class="acc-type">Limit kartu terpakai</div>
+          <div class="acc-balance u-mt6" id="akun-limit-usage">0%</div>
+          <div class="acc-tile-meta" id="akun-limit-sub"></div>
+        </div>
+      </div>
       <div class="list-section u-mt0" id="accounts-scroll"></div>
       <div class="sheet-overlay" id="acc-form" data-backdrop="cancelAccForm">
         <div class="sheet-panel">
@@ -525,6 +536,10 @@
         <div id="recon-result" class="acc-sub"></div>
         <div class="acc-form-actions"><button type="button" class="io-btn" data-act="reconcileCheck">Cek selisih</button><button type="button" class="submit-btn" id="recon-apply-btn" style="display:none;" data-act="reconcileApply">Catat penyesuaian</button></div>
         <div id="recon-msg" class="io-msg"></div>
+      </div>
+      <div class="acc-form-actions" id="acc-detail-quick" style="margin-bottom:12px; display:none;">
+        <button class="io-btn" id="acc-quick-catat" data-act="quickTxnFromDetail" data-a0="catat">Catat transaksi</button>
+        <button class="io-btn" id="acc-quick-transfer" data-act="quickTxnFromDetail" data-a0="transfer">Transfer dari sini</button>
       </div>
       <div class="acc-form-actions" style="margin-bottom:18px;">
         <button class="io-btn" data-act="editAccountFromDetail">Edit akun</button>

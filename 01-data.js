@@ -606,6 +606,151 @@
     });
     return { aset, utang };
   }
+  // Definisi "utang" di tab Akun (A1, pilihan a): POKOK saja, sama dengan saldo buku yang dipakai header dan kekayaan bersih.
+  // Bunga kontrak yang belum jatuh tempo bukan kewajiban saat ini; hanya jadi keterangan "+ bunga terjadwal".
+  // Dipakai bersama oleh kartu akun dan detail akun supaya angkanya tidak bisa berbeda lagi.
+  function loanDebtParts(data, acc, bal) {
+    if (!TYPE_LOAN[acc.type]) return null;
+    const r = computeLoanRemaining(data, acc, bal);
+    return { pokok: r.sisaPokok, bunga: r.sisaBunga };
+  }
+  function loanBungaNote(parts) {
+    return parts && parts.pokok > 0 && parts.bunga > 0 ? ' · + bunga terjadwal ' + formatRp(parts.bunga) : '';
+  }
+  // A5: pemakaian limit gabungan semua kartu kredit + PayLater yang punya limit (terpakai ÷ limit).
+  // Kartu kredit memakai saldo buku; PayLater memakai pokok kredit terpakai (paylaterCreditUsed). null bila tidak ada limit.
+  function computeLimitUsage(data, balances) {
+    let used = 0, limit = 0, count = 0;
+    data.accounts.forEach(acc => {
+      if ((acc.type !== 'kartu_kredit' && acc.type !== 'paylater') || !(acc.limit > 0)) return;
+      const bal = balances[acc.id] || 0;
+      used += acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
+      limit += acc.limit; count++;
+    });
+    if (!count) return null;
+    return { used, limit, count, pct: Math.round(used / limit * 100) };
+  }
+  // A6: aksi cepat yang berlaku untuk sebuah akun. Catat transaksi: bukan aset (pakai Transfer) dan bukan titipan
+  // (punya form sendiri). Transfer dari sini: bukan akun utang (bayar utang = Transfer KE akun utang) dan bukan titipan.
+  function accountQuickActions(acc) {
+    const noTxn = acc.type === 'aset' || acc.type === 'titipan';
+    return { catat: !noTxn, transfer: !TYPE_DEBT[acc.type] && acc.type !== 'titipan' };
+  }
+  // A3: maksimal dua baris prioritas untuk kartu akun (sisanya ada di detail). Tiap baris { text, tone } dengan tone
+  // '' | 'warn' (amber, jatuh tempo <= 7 hari atau limit >= 70%) | 'late' (merah, telat atau limit >= 90%).
+  // Baris telat dan limit kritis diawali ▲ supaya tidak hanya dibedakan lewat warna.
+  function accountPriorityLines(data, acc, bal, info) {
+    const today = todayStr();
+    const t0 = new Date(today + 'T00:00:00');
+    const daysTo = ds => Math.round((new Date(ds + 'T00:00:00') - t0) / 86400000);
+    const dueLine = (ds, label) => {
+      const d = daysTo(ds);
+      if (d < 0) return { text: '▲ Telat ' + (-d) + ' hari · ' + label + ' · jatuh tempo ' + fmtTgl(ds), tone: 'late' };
+      return { text: label + ' · jatuh tempo ' + fmtTgl(ds) + (d === 0 ? ' (hari ini)' : (d <= 7 ? ' (' + d + ' hari lagi)' : '')), tone: d <= 7 ? 'warn' : '' };
+    };
+    const limitLine = () => info.limit > 0
+      ? { text: (info.pct >= 90 ? '▲ ' : '') + 'Limit terpakai ' + info.pct + '% · sisa ' + formatRp(Math.max(0, info.limit - info.used)), tone: info.pct >= 90 ? 'late' : (info.pct >= 70 ? 'warn' : '') }
+      : null;
+    const lines = [];
+    if (acc.type === 'kartu_kredit') {
+      const ci = cardStatementInfo(data, acc, today);
+      if (info.used <= 0) lines.push({ text: 'Tidak ada tagihan', tone: '' });
+      else if (ci && ci.remaining > 0) lines.push(dueLine(ci.dueDate, 'Sisa tagihan cetak ' + formatRp(ci.remaining)));
+      else if (ci) lines.push({ text: 'Tagihan cetak lunas', tone: '' });
+      else if (acc.feeDay) lines.push({ text: 'Jatuh tempo tgl ' + acc.feeDay, tone: '' });
+      lines.push(limitLine());
+    } else if (TYPE_LOAN[acc.type]) {
+      if (info.usedShown <= 0) return [];
+      const sch = computeLoanSchedule(data, acc, bal);
+      if (sch && sch.next) lines.push(dueLine(sch.next.due, 'Angsuran ke-' + sch.next.no + ' ' + formatRp(sch.next.total)));
+      const bits = [];
+      const lp = computeLoanProgress(acc, bal);
+      if (lp) bits.push('Terbayar ' + lp.pct + '%');
+      if (sch) bits.push('angsuran ' + sch.paid + '/' + sch.tenor);
+      const bn = loanBungaNote(loanDebtParts(data, acc, bal)).replace(/^ · /, '');
+      if (bn) bits.push(bn);
+      if (bits.length) lines.push({ text: bits.join(' · '), tone: '' });
+    } else if (acc.type === 'paylater') {
+      lines.push(limitLine());
+      const bits = paylaterMetaExtra(data, acc).replace(/^ · /, '').split(' · ').filter(Boolean).slice(0, 2);
+      if (bits.length) lines.push({ text: bits.join(' · '), tone: '' });
+    } else if (info.metaExtra) {
+      lines.push({ text: info.metaExtra.replace(/^ · /, ''), tone: '' });
+    }
+    return lines.filter(Boolean).slice(0, 2);
+  }
+
+  // A2: satu sumber untuk nilai, warna, dan teks keterangan sebuah akun. Dipakai kartu (renderAccounts) dan detail
+  // (openAccountDetail) supaya keduanya tidak bisa berbeda lagi. opts.detail = true menambah keterangan yang hanya
+  // muat di detail (bunga efektif pinjol, biaya awal, asuransi); tanpa itu = versi kartu (plus Terbayar dan Angsuran).
+  // Murni terhadap DOM: hanya membaca data.
+  function accountDisplayInfo(data, acc, bal, opts) {
+    const detail = !!(opts && opts.detail);
+    const colorVar = TYPE_COLOR_VAR[acc.type] || '--teal';
+    const info = { isDebt: !!TYPE_DEBT[acc.type], valueText: '', color: '', metaExtra: '', pct: 0, barColor: colorVar, bar: null,
+      used: 0, limit: 0, usedShown: 0, canPay: false, sortVal: Math.abs(bal), groupVal: bal };
+    if (info.isDebt) {
+      const limit = acc.limit || 0;
+      const used = acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
+      const overpaid = bal > 0 ? bal : 0;
+      const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+      const parts = loanDebtParts(data, acc, bal);
+      const shown = parts ? parts.pokok : used;
+      Object.assign(info, { used, limit, pct, usedShown: shown, sortVal: shown, groupVal: shown });
+      info.canPay = (acc.type === 'kartu_kredit' && used > 0) || (acc.type === 'paylater' && used > 0) || (!!parts && shown > 0);
+      info.payLabel = parts ? 'Bayar angsuran' : 'Bayar tagihan';
+      info.payAct = acc.type === 'kartu_kredit' ? 'payCardFromDetail' : 'payDueFromRingkasan';
+      info.valueText = overpaid > 0 ? 'Lebih bayar ' + formatRp(overpaid) : (parts ? (shown > 0 ? 'Sisa pokok ' + formatRp(shown) : 'Lunas') : 'Terpakai ' + formatRp(used));
+      info.color = shown > 0 ? 'var(--red)' : 'var(--ink)';
+      let m = limit > 0 ? ' · Sisa limit ' + formatRp(limit - used) : '';
+      if (detail) { if (parts && shown > 0 && parts.bunga > 0) m += ' · + bunga terjadwal ' + formatRp(parts.bunga) + ' (total sampai lunas ' + formatRp(shown + parts.bunga) + ')'; }
+      else m += loanBungaNote(parts);
+      if (acc.interestPercent && acc.type !== 'paylater') m += ' · Bunga ' + acc.interestPercent + '%/bln jika belum lunas';
+      m += feeAdminMetaText(acc);
+      m += cardSchemeMetaText(acc);
+      m += assetMetaText(acc);
+      if (acc.type === 'paylater') m += paylaterMetaExtra(data, acc);
+      if (acc.loanRatePercent) m += ' · Bunga ' + acc.loanRatePercent + (acc.loanRateUnit === 'bulan' ? '%/bln (' : '%/thn (') + (acc.loanInterestType === 'menurun' ? 'menurun' : 'tetap') + ')';
+      if (detail) {
+        if (acc.type === 'pinjaman_online' && acc.loanInstallment && acc.loanTenorMonths) {
+          const totalBayar = acc.loanInstallment * acc.loanTenorMonths;
+          const pokokAwal = Math.abs(acc.originalPrincipal || acc.initialBalance || 0);
+          const bungaEfektifTotal = totalBayar - pokokAwal;
+          if (bungaEfektifTotal > 0 && pokokAwal > 0) m += ' · Estimasi bunga efektif ≈' + ((bungaEfektifTotal / acc.loanTenorMonths / pokokAwal) * 100).toFixed(1) + '%/bln';
+        }
+        if (TYPE_LOAN[acc.type] && ((acc.loanAdminFee || 0) > 0 || (acc.loanStampFee || 0) > 0) && acc.loanAdminMode !== 'cicil') {
+          const feeBits = [];
+          if (acc.loanAdminFee) feeBits.push('admin ' + formatRp(acc.loanAdminFee) + (acc.loanAdminPercent ? ' (' + acc.loanAdminPercent + '%)' : ''));
+          if (acc.loanStampFee) feeBits.push('materai ' + formatRp(acc.loanStampFee));
+          m += ' · Biaya awal: ' + feeBits.join(' + ');
+        } else if (TYPE_LOAN[acc.type] && (acc.loanStampFee || 0) > 0) {
+          m += ' · Biaya awal: materai ' + formatRp(acc.loanStampFee);
+        }
+        if (acc.type === 'pinjaman_online' && acc.loanAdminMode === 'cicil' && acc.loanAdminFee) m += ' · Admin ' + formatRp(acc.loanAdminFee) + (acc.loanAdminPercent ? ' (' + acc.loanAdminPercent + '%)' : '') + ' dicicil';
+        if (acc.type === 'pinjaman_online' && (acc.loanInsurancePercent || 0) > 0) m += ' · Asuransi ' + acc.loanInsurancePercent + '%/bln (' + formatRp(Math.round(Math.abs(acc.originalPrincipal || acc.initialBalance || 0) * acc.loanInsurancePercent / 100)) + '/bln)';
+      }
+      info.barColor = pct >= 90 ? '--red' : (pct >= 70 ? '--amber' : colorVar);
+      if (!detail) {
+        if (TYPE_LOAN[acc.type]) {
+          const lp = computeLoanProgress(acc, bal);
+          if (lp) { m += ' · Terbayar ' + lp.pct + '%'; info.bar = { pct: lp.pct, color: '--green' }; }
+          const sch = computeLoanSchedule(data, acc, bal);
+          if (sch) m += ' · Angsuran ' + sch.paid + '/' + sch.tenor + (sch.next ? ' · berikutnya ' + fmtTgl(sch.next.due) : '');
+        } else if (limit > 0) info.bar = { pct, color: info.barColor };
+      }
+      info.metaExtra = m;
+    } else if (acc.type === 'titipan') {
+      if (bal > 0) { info.valueText = 'Berutang ' + formatRp(bal); info.color = 'var(--red)'; }
+      else if (bal < 0) { info.valueText = 'Lebih ' + formatRp(Math.abs(bal)); info.color = 'var(--green)'; }
+      else { info.valueText = 'Lunas'; info.color = 'var(--ink-soft)'; }
+    } else {
+      info.valueText = formatRp(bal);
+      info.color = bal < 0 ? 'var(--red)' : 'var(--ink)';
+      info.metaExtra = assetMetaText(acc);
+    }
+    if (!detail) info.lines = accountPriorityLines(data, acc, bal, info);
+    return info;
+  }
   // Uang yang benar-benar siap dipakai bayar tagihan: kas + bank + e-wallet (saldo positif saja).
   function computeLiquidFunds(data, balances) {
     let sum = 0;
