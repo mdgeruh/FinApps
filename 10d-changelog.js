@@ -7,6 +7,18 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.067', d: '29 Sep 2026', items: [
+      'Di detail akun kas, bank, dan e-wallet ada bagian "Cocokkan saldo": isi saldo asli, lihat selisihnya dengan saldo di app, lalu catat sebagai penyesuaian kalau perlu',
+      'Penyesuaian saldo tidak dihitung sebagai pemasukan atau pengeluaran di Ringkasan, grafik, anggaran, maupun Laporan',
+      'Di tab Tagihan ada tombol "Ekspor ke kalender (.ics)" untuk memasukkan tagihan ke Google Calendar atau Kalender di HP'] },
+    { v: 'v1.1.066', d: '29 Sep 2026', items: [
+      'Di tab Tagihan ada tombol "Ekspor ke kalender (.ics)": semua tagihan 12 bulan ke depan bisa dimasukkan ke Google Calendar atau Kalender di HP, lengkap dengan pengingat sehari sebelum jatuh tempo'] },
+    { v: 'v1.1.065', d: '29 Sep 2026', items: [
+      'Pinjaman kini bisa diisi denda telat (persen per hari) dan batas maksimalnya; app menampilkan perkiraan denda untuk angsuran yang telat, di detail akun dan di Laporan',
+      'Ini hanya perkiraan dan tidak mengubah saldo; catat sebagai pengeluaran kalau denda benar-benar ditagih'] },
+    { v: 'v1.1.064', d: '29 Sep 2026', items: [
+      'Grafik baru "Tren total utang" di Ringkasan: lihat total utang kartu kredit, PayLater, dan pinjaman di akhir tiap bulan, beserta naik atau turunnya dibanding bulan lalu',
+      'Grafik bisa disembunyikan lewat Profil, dan tidak muncul kalau kamu belum punya akun utang'] },
     { v: 'v1.1.063', d: '29 Sep 2026', items: [
       'Tombol tampilan terang/gelap/otomatis kembali ke bagian atas, di samping ikon Profil; ikonnya berubah sesuai mode yang dipilih'] },
     { v: 'v1.1.062', d: '29 Sep 2026', items: [

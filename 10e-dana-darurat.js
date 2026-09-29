@@ -17,7 +17,7 @@
     const d0 = new Date(today + 'T00:00:00'); d0.setDate(d0.getDate() - 90);
     const p2 = n => String(n).padStart(2, '0');
     const from = d0.getFullYear() + '-' + p2(d0.getMonth() + 1) + '-' + p2(d0.getDate());
-    const exp = data.txns.filter(t => t.type === 'keluar' && !isDebtFlowTxn(t) && t.date >= from && t.date <= today);
+    const exp = data.txns.filter(t => t.type === 'keluar' && !isNonOperatingTxn(t) && t.date >= from && t.date <= today);
     if (!exp.length) return 0;
     const firstAny = data.txns.reduce((m, t) => (t.date && t.date < m) ? t.date : m, today);
     const startD = firstAny > from ? firstAny : from;

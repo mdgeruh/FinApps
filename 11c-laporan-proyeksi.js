@@ -310,7 +310,7 @@
       const prevStart = ymd(ps), prevEnd = ymd(pe);
       let pt = data.txns.filter(t => t.date >= prevStart && t.date <= prevEnd);
       if (state.laporanAccFilter !== 'all') pt = pt.filter(t => t.accountId === state.laporanAccFilter || t.toAccountId === state.laporanAccFilter);
-      pt = pt.filter(t => !isDebtFlowTxn(t)); // konsisten dengan periode ini
+      pt = pt.filter(t => !isNonOperatingTxn(t)); // konsisten dengan periode ini
       const pIn = pt.filter(t => t.type === 'masuk' && (state.laporanCatMasukFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatMasukFilter)).reduce((s2, t) => s2 + t.amount, 0);
       const pOut = pt.filter(t => t.type === 'keluar' && (state.laporanCatKeluarFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatKeluarFilter)).reduce((s2, t) => s2 + t.amount, 0);
       const delta = (cur, prev, upGood) => {

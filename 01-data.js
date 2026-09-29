@@ -41,8 +41,8 @@
   const TYPE_LOAN = { pinjaman: true, pinjaman_online: true };
   const TYPE_COLOR_VAR = { kas: '--teal', bank: '--blue', ewallet: '--purple', aset: '--amber', kartu_kredit: '--rust', paylater: '--amber', pinjaman: '--blue', pinjaman_online: '--purple', titipan: '--green' };
   const CATEGORIES = {
-    masuk: ['Gaji', 'Bonus/THR', 'Hasil usaha', 'Hadiah', 'Cashback/bunga', 'Jual barang', 'Lainnya'],
-    keluar: ['Makan & minum', 'Transportasi', 'Belanja harian', 'Tagihan & langganan', 'Hiburan', 'Kesehatan', 'Pendidikan', 'Upacara/Ibadah', 'Cicilan/utang', 'Bunga & biaya bank', 'Biaya admin & materai pinjaman', 'Lainnya'],
+    masuk: ['Gaji', 'Bonus/THR', 'Hasil usaha', 'Hadiah', 'Cashback/bunga', 'Jual barang', 'Penyesuaian saldo', 'Lainnya'],
+    keluar: ['Makan & minum', 'Transportasi', 'Belanja harian', 'Tagihan & langganan', 'Hiburan', 'Kesehatan', 'Pendidikan', 'Upacara/Ibadah', 'Cicilan/utang', 'Bunga & biaya bank', 'Biaya admin & materai pinjaman', 'Penyesuaian saldo', 'Lainnya'],
     transfer: ['Top up saldo', 'Tarik tunai', 'Bayar tagihan/utang', 'Pindah dana antar akun', 'Beli/jual aset', 'Titipan/piutang', 'Lainnya']
   };
   const CATEGORY_CUSTOM = 'Lainnya';
@@ -565,6 +565,16 @@
     if (t.type === 'masuk' && (t.loanId || /pencairan\s+pinjaman/i.test(t.desc || ''))) return true;
     return false;
   }
+  // Penyesuaian saldo (rekonsiliasi, v1.1.067): selisih saldo app vs saldo asli. Bukan pemasukan/pengeluaran sungguhan,
+  // jadi ikut dikecualikan dari ringkasan, grafik, anggaran, dan Laporan — tapi BUKAN arus utang (tidak masuk debtFlowsOf).
+  const RECONCILE_CATEGORY = 'Penyesuaian saldo';
+  function isNonOperatingTxn(t) { return isDebtFlowTxn(t) || t.category === RECONCILE_CATEGORY; }
+  // Selisih = saldo asli - saldo di app (dibulatkan 2 desimal). Positif = app kurang catat pemasukan.
+  function computeReconcileDiff(appBalance, actualBalance) {
+    return Math.round(((Number(actualBalance) || 0) - (Number(appBalance) || 0)) * 100) / 100;
+  }
+  const RECONCILE_TYPES = { kas: true, bank: true, ewallet: true };
+
   // Total bayar utang & pencairan di satu bulan. Bayar utang = pengeluaran berkategori utang
   // + transfer ke akun bertipe utang (kartu, PayLater, pinjaman).
   function debtFlowsOf(data, txnList) {

@@ -133,7 +133,7 @@
       accRow.appendChild(chip);
     });
 
-    const catsMasuk = Array.from(new Set(data.txns.filter(t => t.type === 'masuk' && !isDebtFlowTxn(t)).map(t => t.category || 'Tanpa kategori')));
+    const catsMasuk = Array.from(new Set(data.txns.filter(t => t.type === 'masuk' && !isNonOperatingTxn(t)).map(t => t.category || 'Tanpa kategori')));
     const catMasukRow = $('laporan-cat-masuk-row');
     catMasukRow.innerHTML = '';
     const allMasukChip = document.createElement('button');
@@ -149,7 +149,7 @@
       catMasukRow.appendChild(chip);
     });
 
-    const catsKeluar = Array.from(new Set(data.txns.filter(t => t.type === 'keluar' && !isDebtFlowTxn(t)).map(t => t.category || 'Tanpa kategori')));
+    const catsKeluar = Array.from(new Set(data.txns.filter(t => t.type === 'keluar' && !isNonOperatingTxn(t)).map(t => t.category || 'Tanpa kategori')));
     const catKeluarRow = $('laporan-cat-keluar-row');
     catKeluarRow.innerHTML = '';
     const allKeluarChip = document.createElement('button');
@@ -303,8 +303,8 @@
     }
 
     // Sama dengan Ringkasan: bayar utang & pencairan pinjaman tidak dihitung sebagai pengeluaran/pemasukan.
-    const masukTxns = txns.filter(t => t.type === 'masuk' && !isDebtFlowTxn(t) && (state.laporanCatMasukFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatMasukFilter));
-    const keluarTxns = txns.filter(t => t.type === 'keluar' && !isDebtFlowTxn(t) && (state.laporanCatKeluarFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatKeluarFilter));
+    const masukTxns = txns.filter(t => t.type === 'masuk' && !isNonOperatingTxn(t) && (state.laporanCatMasukFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatMasukFilter));
+    const keluarTxns = txns.filter(t => t.type === 'keluar' && !isNonOperatingTxn(t) && (state.laporanCatKeluarFilter === 'all' || (t.category || 'Tanpa kategori') === state.laporanCatKeluarFilter));
 
     const totalIn = masukTxns.reduce((s, t) => s + t.amount, 0);
     const totalOut = keluarTxns.reduce((s, t) => s + t.amount, 0);

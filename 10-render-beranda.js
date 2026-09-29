@@ -58,8 +58,8 @@
     const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     const monthTxns = data.txns.filter(t => monthKeyFromDate(t.date) === curMonthKey);
     // Pemasukan/pengeluaran "sungguhan": tanpa pembayaran utang & pencairan pinjaman (lihat isDebtFlowTxn).
-    const monthIn = monthTxns.filter(t => t.type === 'masuk' && !isDebtFlowTxn(t)).reduce((s, t) => s + t.amount, 0);
-    const monthOut = monthTxns.filter(t => t.type === 'keluar' && !isDebtFlowTxn(t)).reduce((s, t) => s + t.amount, 0);
+    const monthIn = monthTxns.filter(t => t.type === 'masuk' && !isNonOperatingTxn(t)).reduce((s, t) => s + t.amount, 0);
+    const monthOut = monthTxns.filter(t => t.type === 'keluar' && !isNonOperatingTxn(t)).reduce((s, t) => s + t.amount, 0);
     const rawMonthOut = monthTxns.filter(t => t.type === 'keluar').reduce((s, t) => s + t.amount, 0);
     const net = monthIn - monthOut;
     const debtLineEl = $('month-debt-line');
@@ -91,8 +91,8 @@
       const day = Number(t.date.split('-')[2]);
       return day <= daysElapsed;
     });
-    const prevIn = prevMonthTxns.filter(t => t.type === 'masuk' && !isDebtFlowTxn(t)).reduce((s, t) => s + t.amount, 0);
-    const prevOut = prevMonthTxns.filter(t => t.type === 'keluar' && !isDebtFlowTxn(t)).reduce((s, t) => s + t.amount, 0);
+    const prevIn = prevMonthTxns.filter(t => t.type === 'masuk' && !isNonOperatingTxn(t)).reduce((s, t) => s + t.amount, 0);
+    const prevOut = prevMonthTxns.filter(t => t.type === 'keluar' && !isNonOperatingTxn(t)).reduce((s, t) => s + t.amount, 0);
 
     // higherIsGood: true untuk pemasukan (naik = bagus), false untuk pengeluaran (naik = kurang bagus).
     function renderCompare(elId, current, prev, higherIsGood) {
@@ -120,7 +120,7 @@
     if (avgEl) avgEl.textContent = formatRp(avgDaily);
 
     const rawExpenseTxns = monthTxns.filter(t => t.type === 'keluar');
-    const expenseTxns = rawExpenseTxns.filter(t => !isDebtFlowTxn(t));
+    const expenseTxns = rawExpenseTxns.filter(t => !isNonOperatingTxn(t));
     const labelEl = $('biggest-expense-label');
     const amountEl = $('biggest-expense-amount');
     if (expenseTxns.length === 0) {

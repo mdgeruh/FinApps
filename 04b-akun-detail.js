@@ -73,15 +73,18 @@
         const icon = { lunas: '✓', telat: '!', belum: '○' };
         const colr = { lunas: 'var(--green)', telat: 'var(--red)', belum: 'var(--ink-soft)' };
         const nextNo = sch.next ? sch.next.no : 0;
+        const lf = computeLateFees(acc, sch), lfBy = {};
+        if (lf) lf.items.forEach(x => { lfBy[x.no] = x; });
+        const lfNote = lf && lf.total > 0 ? '<div class="acc-sub" style="color:var(--red); margin-bottom:8px;">Perkiraan denda telat ' + formatRp(lf.total) + ' (' + lf.items.length + ' angsuran, ' + escapeHtml(lateFeeRuleText(lf)) + '). Ini hanya perkiraan; catat sebagai pengeluaran kalau memang ditagih.</div>' : '';
         schedEl.style.display = 'block';
-        schedEl.innerHTML = '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
+        schedEl.innerHTML = lfNote + '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
           sch.rows.map(r => `
             <div class="txn-row" style="${r.no === nextNo ? 'background:var(--teal-soft); border-radius:10px;' : ''}">
               <div class="txn-left">
                 <span style="color:${colr[r.status]}; font-weight:700; width:16px; text-align:center;">${icon[r.status]}</span>
                 <div class="txn-text">
-                  <div class="txn-desc">Ke-${r.no} · ${escapeHtml(fmtTgl(r.due))}${r.status === 'telat' ? ' · lewat jatuh tempo' : ''}</div>
-                  <div class="txn-meta">Pokok ${formatRp(r.pokok)} + ${loanMonthlyFees(acc) > 0 ? 'bunga & biaya' : 'bunga'} ${formatRp(r.bunga)} · sisa pokok ${formatRp(r.sisa)}</div>
+                  <div class="txn-desc">Ke-${r.no} · ${escapeHtml(fmtTgl(r.due))}${r.status === 'telat' ? ' · lewat ' + (lfBy[r.no] ? lfBy[r.no].days + ' hari' : 'jatuh tempo') : ''}</div>
+                  <div class="txn-meta">Pokok ${formatRp(r.pokok)} + ${loanMonthlyFees(acc) > 0 ? 'bunga & biaya' : 'bunga'} ${formatRp(r.bunga)} · sisa pokok ${formatRp(r.sisa)}${lfBy[r.no] && lfBy[r.no].fee > 0 ? ' · perkiraan denda ' + formatRp(lfBy[r.no].fee) : ''}</div>
                 </div>
               </div>
               <div class="txn-right"><span class="txn-amount" style="color:${colr[r.status]};">${formatRp(r.total)}</span></div>
@@ -147,6 +150,7 @@
     }
 
     renderAssetPanel(data, acc, bal);
+    renderReconcilePanel(data, acc);
 
     // Tombol bayar tagihan kartu kredit
     const payEl = $('acc-detail-pay');

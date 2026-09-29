@@ -77,6 +77,8 @@
       loanOriginalEl.value = isLoan ? (acc.originalPrincipal || '') : '';
       $('acc-loan-start-input').value = isLoan ? (acc.loanStartDate || '') : '';
       $('acc-loan-dueday-input').value = isLoan ? (acc.loanDueDay || '') : '';
+      $('acc-loan-latefee-input').value = isLoan ? (acc.loanLateFeePercent || '') : '';
+      $('acc-loan-latefee-cap-input').value = isLoan ? (acc.loanLateFeeCapPercent || '') : '';
       loanStageEl.value = 'baru';
       updateOnlineLoanEstimate();
       $('acc-form-title').textContent = 'Edit akun';
@@ -96,6 +98,7 @@
       updateFeeAmountLabel();
       loanTypeEl.value = 'tetap'; loanRateEl.value = ''; loanRateUnitEl.value = 'tahun'; loanAdminEl.value = ''; loanStampEl.value = ''; loanSavingsEl.value = ''; loanInstallmentEl.value = ''; loanTenorEl.value = ''; loanOriginalEl.value = ''; loanStageEl.value = 'baru';
       $('acc-loan-start-input').value = ''; $('acc-loan-dueday-input').value = '';
+      $('acc-loan-latefee-input').value = ''; $('acc-loan-latefee-cap-input').value = '';
       typeEl.value = 'kas';
       updateAccFormFields();
       $('acc-form-title').textContent = 'Tambah akun';
@@ -386,6 +389,8 @@
     const loanStartRaw = isLoan ? String($('acc-loan-start-input').value || '') : '';
     const loanStartVal = /^\d{4}-\d{2}-\d{2}$/.test(loanStartRaw) ? loanStartRaw : '';
     const loanDueDayVal = isLoan ? Math.min(31, Math.max(0, parseInt($('acc-loan-dueday-input').value, 10) || 0)) : 0;
+    const loanLateVal = isLoan ? sanitizeLateFeePct($('acc-loan-latefee-input').value) : 0;
+    const loanLateCapVal = isLoan ? sanitizeLateFeeCap($('acc-loan-latefee-cap-input').value) : 0;
     // Pokok awal cuma dibaca kalau barisnya tampil (kalau tersembunyi, nilai sisa di kolom itu sudah tidak berlaku).
     const loanOriginalVal = (isLoan && $('acc-loan-original-row').style.display !== 'none') ? Math.max(0, parseFloat(loanOriginalEl.value) || 0) : 0;
     // Stage cuma dibaca saat BIKIN akun baru (baris & selectnya disembunyikan/tidak berlaku pas edit).
@@ -445,6 +450,8 @@
           if (loanTenorVal > 0) acc.loanTenorMonths = loanTenorVal; else delete acc.loanTenorMonths;
           if (loanStartVal) acc.loanStartDate = loanStartVal; else delete acc.loanStartDate;
           if (loanDueDayVal > 0) acc.loanDueDay = loanDueDayVal; else delete acc.loanDueDay;
+          if (loanLateVal > 0) acc.loanLateFeePercent = loanLateVal; else delete acc.loanLateFeePercent;
+          if (loanLateVal > 0 && loanLateCapVal > 0) acc.loanLateFeeCapPercent = loanLateCapVal; else delete acc.loanLateFeeCapPercent;
           if (loanOriginalVal > 0) acc.originalPrincipal = loanOriginalVal; else delete acc.originalPrincipal;
         } else if (isDebt) {
           acc.limit = limitVal;
@@ -487,6 +494,8 @@
         if (loanTenorVal > 0) acc.loanTenorMonths = loanTenorVal;
         if (loanStartVal) acc.loanStartDate = loanStartVal;
         if (loanDueDayVal > 0) acc.loanDueDay = loanDueDayVal;
+        if (loanLateVal > 0) acc.loanLateFeePercent = loanLateVal;
+        if (loanLateVal > 0 && loanLateCapVal > 0) acc.loanLateFeeCapPercent = loanLateCapVal;
         if (loanOriginalVal > 0) acc.originalPrincipal = loanOriginalVal;
       } else if (isDebt) {
         acc.limit = limitVal;

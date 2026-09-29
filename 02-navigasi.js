@@ -84,6 +84,7 @@
         renderEmergencyCard(data, balances);
         renderCategoryChart(data);
         renderTrendChart(data);
+        renderDebtTrendChart(data);
         renderCashflowChart(data);
         renderNetWorthChart(data);
         applyRingkasanVisibility(data);

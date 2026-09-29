@@ -142,6 +142,10 @@
     if (typeof a.loanTenorMonths === 'number') acc.loanTenorMonths = a.loanTenorMonths;
     if (typeof a.loanStartDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.loanStartDate)) acc.loanStartDate = a.loanStartDate;
     if (typeof a.loanDueDay === 'number' && a.loanDueDay >= 1 && a.loanDueDay <= 31) acc.loanDueDay = Math.round(a.loanDueDay);
+    if (sanitizeLateFeePct(a.loanLateFeePercent) > 0) {
+      acc.loanLateFeePercent = sanitizeLateFeePct(a.loanLateFeePercent);
+      if (sanitizeLateFeeCap(a.loanLateFeeCapPercent) > 0) acc.loanLateFeeCapPercent = sanitizeLateFeeCap(a.loanLateFeeCapPercent);
+    }
     if (typeof a.originalPrincipal === 'number') acc.originalPrincipal = a.originalPrincipal;
     if (typeof a.lastFeeAppliedMonth === 'string' && /^\d{4}-\d{2}$/.test(a.lastFeeAppliedMonth)) acc.lastFeeAppliedMonth = a.lastFeeAppliedMonth;
     if (acc.type === 'paylater') { const pls = sanitizePlans(a.plans); if (pls.length) acc.plans = pls; }
@@ -205,6 +209,10 @@
             if (TYPE_LOAN[exists.type]) {
               if (!exists.loanStartDate && typeof a.loanStartDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.loanStartDate)) exists.loanStartDate = a.loanStartDate;
               if (!exists.loanDueDay && typeof a.loanDueDay === 'number' && a.loanDueDay >= 1 && a.loanDueDay <= 31) exists.loanDueDay = Math.round(a.loanDueDay);
+              if (!exists.loanLateFeePercent && sanitizeLateFeePct(a.loanLateFeePercent) > 0) {
+                exists.loanLateFeePercent = sanitizeLateFeePct(a.loanLateFeePercent);
+                if (sanitizeLateFeeCap(a.loanLateFeeCapPercent) > 0) exists.loanLateFeeCapPercent = sanitizeLateFeeCap(a.loanLateFeeCapPercent);
+              }
             }
             return;
           }
