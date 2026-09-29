@@ -101,6 +101,18 @@
     const { aset: totalAset, utang: totalUtang } = computeAssetDebt(data, balances);
     asetEl.textContent = formatRp(totalAset);
     utangEl.textContent = formatRp(totalUtang);
+    // A5: kekayaan bersih (aset − utang, definisi utang sama dengan A1) dan pemakaian limit kartu
+    const nwEl = $('akun-net-worth');
+    if (nwEl) { nwEl.textContent = formatRp(totalAset - totalUtang); nwEl.classList.toggle('neg', totalAset - totalUtang < 0); }
+    const lu = computeLimitUsage(data, balances);
+    const luCard = $('akun-limit-card'), luEl = $('akun-limit-usage'), luSub = $('akun-limit-sub');
+    if (luCard) luCard.style.display = lu ? '' : 'none';
+    if (lu && luEl && luSub) {
+      const tone = lu.pct >= 90 ? 'var(--red)' : (lu.pct >= 70 ? 'var(--amber)' : '');
+      luEl.textContent = (lu.pct >= 90 ? '▲ ' : '') + lu.pct + '%';
+      luEl.style.color = tone;
+      luSub.textContent = formatRp(lu.used) + ' dari ' + formatRp(lu.limit);
+    }
   }
 
   // Tab Akun: dikelompokkan per tipe (bisa dilipat), tiap akun berupa kartu. Tipe sederhana (kas, bank, e-wallet)
@@ -134,50 +146,14 @@
     // Hitung tampilan tiap akun
     const items = data.accounts.map(acc => {
       const bal = balances[acc.id];
-      const isDebt = TYPE_DEBT[acc.type];
       const colorVar = TYPE_COLOR_VAR[acc.type] || '--teal';
       const txnCount = txnStats[acc.id] ? txnStats[acc.id].count : 0;
-      let valueText, color, metaExtra = '', barHtml = '', sortVal = Math.abs(bal), groupVal = bal, canPay = false;
-
-      if (isDebt) {
-        const limit = acc.limit || 0;
-        const used = acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
-        const overpaid = bal > 0 ? bal : 0;
-        const sisa = limit - used;
-        const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-        const remL = TYPE_LOAN[acc.type] ? computeLoanRemaining(data, acc, bal) : null;
-        const usedL = remL ? remL.total : used;
-        canPay = acc.type === 'kartu_kredit' && used > 0;
-        sortVal = usedL; groupVal = usedL;
-        valueText = overpaid > 0 ? 'Lebih bayar ' + formatRp(overpaid) : (TYPE_LOAN[acc.type] ? (usedL > 0 ? 'Sisa hutang ' + formatRp(usedL) : 'Lunas') : 'Terpakai ' + formatRp(used));
-        color = usedL > 0 ? 'var(--red)' : 'var(--ink)';
-        metaExtra = limit > 0 ? ' · Sisa limit ' + formatRp(sisa) : '';
-        if (acc.interestPercent && acc.type !== 'paylater') metaExtra += ' · Bunga ' + acc.interestPercent + '%/bln jika belum lunas';
-      metaExtra += feeAdminMetaText(acc);
-        metaExtra += cardSchemeMetaText(acc);
-        metaExtra += assetMetaText(acc);
-        if (acc.type === 'paylater') metaExtra += paylaterMetaExtra(data, acc);
-        if (acc.loanRatePercent) metaExtra += ' · Bunga ' + acc.loanRatePercent + (acc.loanRateUnit === 'bulan' ? '%/bln (' : '%/thn (') + (acc.loanInterestType === 'menurun' ? 'menurun' : 'tetap') + ')';
-        const barColor = pct >= 90 ? '--red' : (pct >= 70 ? '--amber' : colorVar);
-        if (TYPE_LOAN[acc.type]) {
-          const lp = computeLoanProgress(acc, bal);
-          if (lp) {
-            metaExtra += ' · Terbayar ' + lp.pct + '%';
-            barHtml = `<div class="acc-bar"><div class="acc-bar-fill" style="width:${lp.pct}%; background:var(--green);"></div></div>`;
-          }
-          const sch = computeLoanSchedule(data, acc, bal);
-          if (sch) metaExtra += ' · Angsuran ' + sch.paid + '/' + sch.tenor + (sch.next ? ' · berikutnya ' + fmtTgl(sch.next.due) : '');
-        } else if (limit > 0) barHtml = `<div class="acc-bar"><div class="acc-bar-fill" style="width:${pct}%; background:var(${barColor});"></div></div>`;
-      } else if (acc.type === 'titipan') {
-        if (bal > 0) { valueText = 'Berutang ' + formatRp(bal); color = 'var(--red)'; }
-        else if (bal < 0) { valueText = 'Lebih ' + formatRp(Math.abs(bal)); color = 'var(--green)'; }
-        else { valueText = 'Lunas'; color = 'var(--ink-soft)'; }
-      } else {
-        valueText = formatRp(bal);
-        color = bal < 0 ? 'var(--red)' : 'var(--ink)';
-        metaExtra += assetMetaText(acc);
-      }
-      return { acc, colorVar, valueText, color, metaExtra, barHtml, txnCount, sortVal, groupVal, canPay };
+      const di = accountDisplayInfo(data, acc, bal);
+      const { valueText, color, metaExtra, sortVal, groupVal, canPay, payLabel, payAct } = di;
+      const lines = di.lines.slice();
+      if (!di.isDebt) { if (lines.length) lines[0] = { text: lines[0].text + ' · ' + txnCount + ' transaksi', tone: '' }; else lines.push({ text: txnCount + ' transaksi', tone: '' }); }
+      const barHtml = di.bar ? `<div class="acc-bar"><div class="acc-bar-fill" style="width:${di.bar.pct}%; background:var(${di.bar.color});"></div></div>` : '';
+      return { acc, colorVar, valueText, color, metaExtra, lines, barHtml, txnCount, sortVal, groupVal, canPay, payLabel, payAct };
     });
 
     // Kelompokkan per tipe (urutan mengikuti TYPE_LABELS), tipe kosong dilewati.
@@ -196,15 +172,15 @@
       const collapsed = !!accCollapsed[type];
       const wide = !!ACC_WIDE_TYPES[type];
       const cards = group.map(it => {
-        const metaBits = (it.metaExtra ? it.metaExtra.replace(/^ · /, '').split(' · ') : []);
-        metaBits.push(it.txnCount + ' transaksi');
+        const toneCss = { late: 'color:var(--red); font-weight:600;', warn: 'color:var(--amber);' };
+        const metaHtml = it.lines.map(l => `<div class="acc-tile-meta"${toneCss[l.tone] ? ' style="' + toneCss[l.tone] + '"' : ''}>${escapeHtml(l.text)}</div>`).join('');
         return `
           <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${it.acc.id}" data-keydown-act="openAccountDetail" data-keydown-a0="${it.acc.id}" data-keydown-keys="Enter| ">
             <div class="acc-name">${escapeHtml(it.acc.name)}</div>
             <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
-            <div class="acc-tile-meta">${metaBits.map(escapeHtml).join(' · ')}</div>
+            ${metaHtml}
             ${it.barHtml}
-            ${it.canPay ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="payCardFromDetail" data-a0="${it.acc.id}" data-a1="tagihan" data-stop="1" data-keydown-stop="1">Bayar tagihan</button>` : ''}
+            ${it.canPay ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="${it.payAct}" data-a0="${it.acc.id}"${it.payAct === 'payCardFromDetail' ? ' data-a1="tagihan"' : ''} data-stop="1" data-keydown-stop="1">${it.payLabel}</button>` : ''}
           </div>`;
       }).join('');
       return `

@@ -170,6 +170,29 @@
     if (form && form.scrollIntoView) form.scrollIntoView({ block: 'start' });
   }
 
+  // A6: dari detail akun, buka form transaksi dengan akun ini terisi. mode 'catat' = akun sebagai akun transaksi;
+  // mode 'transfer' = akun sebagai SUMBER transfer (akun tujuan otomatis dipindah kalau sama dengan sumber).
+  function quickTxnForAccount(accId, mode) {
+    const data = loadData();
+    const acc = data.accounts.find(a => a.id === accId);
+    if (!acc) return;
+    const q = accountQuickActions(acc);
+    if (mode === 'transfer' ? !q.transfer : !q.catat) return;
+    closeAccountDetail();
+    openAddTxnForm();
+    const accSel = $('account-select');
+    if (Array.from(accSel.options).some(o => o.value === accId)) accSel.value = accId;
+    if (mode === 'transfer') {
+      const toSel = $('to-account-select');
+      if (toSel.value === accId) { const other = Array.from(toSel.options).find(o => o.value !== accId); if (other) toSel.value = other.value; }
+      setType('transfer');
+    }
+    updateTypeAvailability(data);
+    const form = $('txn-form');
+    if (form && form.scrollIntoView) form.scrollIntoView({ block: 'start' });
+  }
+  function quickTxnFromDetail(mode) { if (detailAccountId) quickTxnForAccount(detailAccountId, mode); }
+
   // Tombol "Bayar" di kartu Jatuh tempo (Ringkasan). Tiap jenis akun memakai alur bayarnya sendiri:
   //  - kartu kredit : form Transfer, nominal tagihan cetak
   //  - PayLater     : form Transfer per bulan tagihan (periode cicilan ikut ditandai lunas)

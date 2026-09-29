@@ -84,7 +84,7 @@
     const dues = lapUpcomingDues(data, balances, 365);
     const dueById = {};
     dues.forEach(d => { if (!dueById[d.id] || d.days < dueById[d.id].days) dueById[d.id] = d; });
-    const res = { cards: [], paylaters: [], online: [], bank: [], totalDebt: 0, due30: 0, dues, liquid: 0 };
+    const res = { cards: [], paylaters: [], online: [], bank: [], totalDebt: 0, totalBunga: 0, due30: 0, dues, liquid: 0 };
     data.accounts.forEach(acc => {
       const bal = balances[acc.id];
       if (!TYPE_DEBT[acc.type]) {
@@ -108,6 +108,7 @@
         const sch = lapLoanSchedule(data, acc, bal);
         const pokokAwal = Math.abs(acc.originalPrincipal || acc.initialBalance || 0);
         const monthlyCost = pokokAwal > 0 ? computeLoanMonthlyInterest(data, acc, bal) / pokokAwal * 100 : 0;
+        res.totalBunga += rem.sisaBunga;
         const item = { acc, rem, sch, due, monthlyCost, effMonthly: loanEffectiveMonthlyRate(data, acc), total: rem.total };
         (acc.type === 'pinjaman_online' ? res.online : res.bank).push(item);
       }
@@ -146,7 +147,7 @@
     const pctColor = (pct) => pct === null ? '' : (pct >= 70 ? 'var(--red)' : (pct >= 30 ? 'var(--amber)' : 'var(--green)'));
     const levelOf = (pct, d) => ((d && d.days < 0) || (pct !== null && pct >= 70)) ? 'red' : (((pct !== null && pct >= 30) || (d && d.days <= 7)) ? 'amber' : 'ok');
     const hintOf = (parts, d) => ({ hint: parts.concat(dueShort(d) || []).filter(Boolean).join(' · '), hintColor: d && d.days < 0 ? 'var(--red)' : '' });
-    let html = row('Total semua utang', formatRp(an.totalDebt), 'var(--red)') +
+    let html = row(an.totalBunga > 0 ? 'Total semua utang (pokok + bunga terjadwal)' : 'Total semua utang', formatRp(an.totalDebt), 'var(--red)') +
       row('Tagihan & angsuran 30 hari ke depan', formatRp(an.due30), an.due30 > 0 ? 'var(--red)' : '');
 
     if (an.cards.length) {
