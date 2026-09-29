@@ -1,6 +1,6 @@
 # Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Status per **v1.1.058** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.058, `[ ]` = belum.
+Status per **v1.1.063** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.063, `[ ]` = belum.
 Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
 ## 1. Gambaran singkat
@@ -61,10 +61,11 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 ### P4: fitur (butuh keputusan desain darimu, tidak dikerjakan)
 - [x] [F] Anggaran per kategori (v1.1.056: kartu di Ringkasan, batas bulanan, peringatan 80%/100%; kategori Cicilan/utang tidak bisa dianggarkan)
 - [x] [F] Langganan berulang (v1.1.057: kartu di Ringkasan, catat otomatis tiap bulan dengan ID deterministik, jeda/hapus, ikut ekspor/import/sinkron)
-- [ ] [F] Dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
+- [x] [F] Dana darurat (v1.1.059: kartu di Ringkasan, target dalam bulan pengeluaran, dana = kas + bank + e-wallet)
+- [ ] [F] Tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
 
 ### P5: dokumentasi
-- [x] [F] Tombol `?` riwayat perubahan di tab Profil + rapikan tab Profil (v1.1.058; tiap rilis tambah entri di `CHANGELOG_ENTRIES`, `10d-changelog.js`)
+- [x] [F] Tombol `?` riwayat perubahan di tab Profil + rapikan tab Profil (v1.1.058; tiap rilis tambah entri di `CHANGELOG_ENTRIES`, `10d-changelog.js`, ditulis dengan bahasa awam; yang tampil hanya rilis terbaru tiap tanggal)
 - [x] [Q] README diperbarui (versi, tab Tagihan/Profil, login Google, tanpa menu gear, service worker, cara rilis)
 - [x] [Q] CHANGELOG v1.1.049
 - [x] [Q] Rujukan `syncPullOwnerName` dihapus dari README
@@ -89,6 +90,8 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 
 - **v1.1.057 (langganan berulang):** 35 test unit lulus (11 baru); Chromium 390 px dengan klik nyata: tambah, validasi, catat otomatis, idempoten, bertahan setelah reload, jeda, hapus, tanpa scroll horizontal, tanpa error JS. **Belum teruji:** HP nyata, sinkron antar perangkat, pergantian bulan sungguhan.
 
+- **v1.1.059 (dana darurat):** 41 test unit lulus (6 baru); semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP dan sinkron `emergencyMonths` antar perangkat.
+
 ### Ukur performa (29 Sep 2026, v1.1.054)
 
 Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, **bukan** HP nyata), data dummy 7 akun dengan transaksi digandakan dan tanggal diacak dalam 12 bulan. Waktu dalam milidetik, tiga kali ukur:
@@ -105,7 +108,7 @@ Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, **buk
 
 ## 5. Yang perlu kamu lakukan setelah memasang
 
-1. Timpa file lama dengan isi zip. Zip v1.1.052 sampai v1.1.057 hanya berisi file yang berubah (`style.css`, `index.html`, `sw.js`, file `.js` yang diubah, dan dokumen); file lain tetap dari v1.1.051. Paket lengkap berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
+1. Timpa file lama dengan isi zip. Zip v1.1.052 sampai v1.1.063 hanya berisi file yang berubah (`style.css`, `index.html`, `sw.js`, file `.js` yang diubah, dan dokumen); file lain tetap dari v1.1.051. Paket lengkap berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
 2. **Export JSON** dulu sebagai cadangan.
 3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
 4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.

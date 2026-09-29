@@ -2,6 +2,53 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.063 — 29 Sep 2026
+
+**Diubah**
+- **Tombol tema dikembalikan ke header, di sebelah ikon Profil** (`index.html`, `02-navigasi.js`, `style.css`): satu tombol ikon yang bergilir Sistem → Terang → Gelap (`cycleTheme`). Ikon (monitor / matahari / bulan) mengikuti `data-mode` pada tombol, diatur `applyTheme()`; `aria-label` dan `title` berisi "Tampilan: …". Blok "Tampilan" di tab Profil dihapus, sehingga tombolnya tidak ganda. Id tombol tetap `theme-toggle-btn`
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.063); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.063`
+
+**Pengujian**: 43 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP (ukuran dan jarak tiga ikon di header)
+
+## v1.1.062 — 29 Sep 2026
+
+**Diubah**
+- **Riwayat perubahan di tombol `?` hanya menampilkan entri terbaru untuk tiap tanggal** (`10d-changelog.js`): fungsi murni baru `changelogLatestPerDate()` menyaring `CHANGELOG_ENTRIES` saat ditampilkan. Kalau satu hari ada beberapa rilis, hanya yang paling baru yang tampil; tanggal sebelumnya tampil dengan rilis terbarunya. Data `CHANGELOG_ENTRIES` tetap lengkap (penyaringan hanya di tampilan), dan aturan ini dicatat di komentar file untuk rilis berikutnya
+- **2 test baru** (total 43); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.062`
+
+**Pengujian**: 43 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP
+
+## v1.1.061 — 29 Sep 2026
+
+**Diperbaiki**
+- **Versi app tampil 2 kali di tab Profil** (`12-render-utama.js`, `index.html`, `style.css`): kartu "Keuangan Pribadi" di atas (v1.1.058) dan teks footer di bawah. Sekarang hanya kartu di atas yang menampilkan versi (isi lewat `renderProfilTab`). `#app-footer` tetap ada tapi kosong, karena dipakai `14-sync.js` sebagai jangkar status sinkron (`syncSetStatus`); `.app-footer:empty` merapatkan jaraknya
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.061; entri v1.1.053 dibuang supaya tetap 8 rilis)
+- `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.061`
+
+**Pengujian**: 41 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP (posisi status sinkron di bawah tab Profil)
+
+## v1.1.060 — 29 Sep 2026
+
+**Diubah**
+- **Riwayat perubahan di tombol `?` ditulis ulang dengan bahasa pengguna akhir** (`10d-changelog.js`): tanpa nama file, fungsi, atau istilah teknis; perubahan internal (event delegation, kelas utilitas) diringkas jadi satu kalimat "perbaikan di balik layar". Ketentuan ini dicatat di komentar file untuk rilis berikutnya. Isi `CHANGELOG.md` ini tetap teknis
+- `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.060`
+
+**Pengujian**: 41 test unit lulus; semua file lolos cek sintaks
+
+## v1.1.059 — 29 Sep 2026
+
+**Ditambah**
+- **Dana darurat** (`10e-dana-darurat.js` baru, `index.html`, `02-navigasi.js`, `09-grafik.js`, `13-import-export.js`): kartu "Dana darurat" di tab Ringkasan (di bawah Langganan berulang). Tombol **Atur** membuka sheet untuk target dalam bulan (1–24). Target = rata-rata pengeluaran bulanan × bulan; rata-rata dihitung dari 90 hari terakhir tanpa arus utang/cicilan (data kurang dari 3 bulan dibagi umur data, minimal 1 bulan). Dana = saldo kas + bank + e-wallet (`computeLiquidFunds`). Kartu menampilkan dana, target, bar progres, persen, cukup berapa bulan, dan kekurangan. Warna: hijau ≥100%, kuning ≥50%, merah di bawahnya. Tanpa pengeluaran 90 hari, kartu meminta pengeluaran dicatat dulu (target belum bisa dihitung)
+- **Data**: `data.emergencyMonths` (opsional; data lama tetap valid), dirapikan lewat `sanitizeEmergencyMonths`. Ikut sinkron cloud (sinkron mengirim seluruh data), ekspor JSON, dan cadangan otomatis. Import gabung hanya mengisi target kalau di sini belum diatur; import ganti-semua memakai target dari file
+- Kartu bisa disembunyikan lewat Profil > Tampilan Ringkasan (`RINGKASAN_CARDS`)
+- **6 test baru** (total 41)
+
+**Diubah**
+- `sw.js`: `10e-dana-darurat.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.059`
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.059)
+
+**Pengujian**: 41 test unit lulus; semua file lolos cek sintaks. **Belum teruji:** tampilan di browser/HP, dan sinkron `emergencyMonths` antar perangkat
+
 ## v1.1.058 — 29 Sep 2026
 
 **Ditambah**
