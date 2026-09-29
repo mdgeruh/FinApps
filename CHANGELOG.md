@@ -2,6 +2,19 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.051 — 29 Sep 2026
+
+**Diubah**
+- **`04-akun.js` (1.423 baris) dipecah jadi tiga file** dan **`11-laporan.js` (1.010 baris) jadi tiga file**, tanpa mengubah satu baris kode pun (isi gabungan diverifikasi identik dengan aslinya; hanya ditambah komentar judul di file lanjutan): `04-akun.js` (form, simpan, hapus akun), `04b-akun-detail.js` (modal detail akun), `04c-akun-aset-tagihan.js` (nilai aset, bayar kartu/PayLater, pembayaran pinjaman, `addTxn`); `11-laporan.js` (filter periode, breakdown), `11b-laporan-utang.js` (rincian utang, saran), `11c-laporan-proyeksi.js` (proyeksi kas, biaya utang, simulasi pelunasan). Tiap file kini 280–570 baris. Semua tetap skrip biasa yang berbagi scope global, jadi tidak ada perubahan cara kerja; urutan `<script>` di `index.html` dan `APP_SHELL` di `sw.js` diperbarui, `CACHE_VERSION` naik ke `kp-v1.1.051`. README (Struktur Kode, titik masuk, Cara rilis) disesuaikan
+
+## v1.1.050 — 29 Sep 2026
+
+**Ditambah**
+- **`manifest.json` dan ikon app masuk ke paket** (`manifest.json`, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`): sebelumnya tidak ikut di zip, jadi rujukan di `index.html` dan `sw.js` menunjuk file yang tidak ada di paket. Ikon `maskable` (192 dan 512 px) dipakai Android untuk bentuk ikon adaptif; ikon `any` untuk favicon/tab dan install biasa
+
+**Diubah**
+- **Service worker menyimpan ikon maskable di cache app shell** (`sw.js`), `CACHE_VERSION` naik ke `kp-v1.1.050`
+
 ## v1.1.049 — 29 Sep 2026
 
 **Diperbaiki**

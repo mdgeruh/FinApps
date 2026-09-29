@@ -1,6 +1,6 @@
 # Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Status per **v1.1.049** (29 Sep 2026). Centang `[x]` = sudah dikerjakan di v1.1.049, `[ ]` = belum.
+Status per **v1.1.051** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.051, `[ ]` = belum.
 Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
 ## 1. Gambaran singkat
@@ -54,7 +54,8 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - [ ] [K] Putuskan enkripsi data cloud. **Butuh keputusanmu**: enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan sinkron tidak bisa dibaca di dashboard
 - [ ] [E] E6: sinkron per-item (bukan satu blob)
 - [ ] [Q] Ganti `onclick` inline dengan event delegation (±90 tempat)
-- [ ] [Q] Pecah `04-akun.js` (1.422 baris) dan `11-laporan.js` (1.010 baris); namespace / ES modules
+- [x] [Q] Pecah `04-akun.js` (1.423 baris) jadi 3 file dan `11-laporan.js` (1.010 baris) jadi 3 file (v1.1.051; isi identik, tiap file 280–570 baris)
+- [ ] [Q] Namespace / ES modules (semua masih berbagi scope global; butuh perubahan besar di ratusan pemanggilan, terutama `onclick` inline, jadi sebaiknya dikerjakan bersama item event delegation di atas)
 - [ ] [Q] Kurangi 235 `style=""` inline dan 14 `!important`
 
 ### P4: fitur (butuh keputusan desain darimu, tidak dikerjakan)
@@ -70,11 +71,12 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - **Test unit:** 17 lulus, 0 gagal (`node tests/run.js`).
 - **Regresi pada data ekspor asli** (26 akun, 187 transaksi): saldo semua akun, tagihan jatuh tempo 365 hari, kalender tagihan 12 bulan, dan dana likuid **identik** antara kode lama dan baru.
 - **Browser (Chromium, layar 390 px):** app render dan semua 7 tab terbuka tanpa error JavaScript; tanpa scroll horizontal; footer `v1.1.049`; `runRecurringFees()` dijalankan lagi tidak menambah transaksi; service worker aktif. Satu-satunya error konsol adalah CDN dan font yang sengaja diblokir di sandbox. App tetap tampil, membuktikan lazy-load bekerja saat CDN tidak terjangkau.
+- **v1.1.051 (setelah pemecahan file):** 17 test unit lulus; semua file lolos cek sintaks; di Chromium 390 px semua tab terbuka, 12 fungsi yang berpindah file tetap terdefinisi, detail akun terbuka, tab Laporan terisi, tanpa scroll horizontal, tanpa error JavaScript.
 - **Belum teruji:** login/sinkron ke Supabase sungguhan, service worker di perangkat nyata (offline), dan dua perangkat bentrok.
 
 ## 5. Yang perlu kamu lakukan setelah memasang
 
-1. Timpa seluruh file kode lama dengan isi zip (paket lengkap, termasuk file baru `sw.js`, `supabase/setup.sql`, `tests/run.js`). `manifest.json` dan ikon tidak ada di unggahan, jadi tetap pakai yang lama.
+1. Timpa seluruh file kode lama dengan isi zip (paket lengkap, termasuk `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan keempat ikon).
 2. **Export JSON** dulu sebagai cadangan.
 3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
 4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.
