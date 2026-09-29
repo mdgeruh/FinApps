@@ -17,7 +17,7 @@
     card.style.display = 'block';
     const periodBtns = [7, 30, 90, 365].map(d => {
       const lbl = d === 7 ? '7H' : (d === 30 ? '30H' : (d === 90 ? '90H' : '1Th'));
-      return `<button type="button" class="type-btn${d === dueReminderPeriodDays ? ' active' : ''}" style="padding:6px 0; font-size:11px;" onclick="setDueReminderPeriod(${d})">${lbl}</button>`;
+      return `<button type="button" class="type-btn${d === dueReminderPeriodDays ? ' active' : ''}" style="padding:6px 0; font-size:11px;" data-act="setDueReminderPeriod" data-n0="${d}">${lbl}</button>`;
     }).join('');
     const dueTotal = items.reduce((s, it) => s + it.amount, 0);
     const header = `<div class="section-title-row" style="margin-bottom:6px;"><div class="section-title">Jatuh tempo</div>${items.length ? `<span class="txn-amount keluar" style="font-size:14px;">${formatRp(dueTotal)}</span>` : ''}</div>
@@ -31,7 +31,7 @@
       const when = late ? 'Lewat ' + (-it.days) + ' hari' : (it.days === 0 ? 'Hari ini' : (it.days === 1 ? 'Besok' : it.days + ' hari lagi'));
       const color = late ? 'var(--red)' : (it.days <= 3 ? 'var(--amber)' : 'var(--ink-soft)');
       return `
-        <div class="txn-row clickable" onclick="openAccountDetail('${it.id}')">
+        <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${it.id}">
           <div class="txn-left">
             <span class="dot keluar"></span>
             <div class="txn-text">
@@ -58,7 +58,7 @@
     wrap.innerHTML = months.map((mo, idx) => {
       const accCount = new Set(mo.items.map(it => it.accId)).size;
       return `
-        <div class="txn-row clickable" onclick="openTagihanBulanDetail(${idx})">
+        <div class="txn-row clickable" data-act="openTagihanBulanDetail" data-n0="${idx}">
           <div class="txn-left"><div class="txn-text">
             <div class="txn-desc">${escapeHtml(fmtBulanTahun(mo.items[0].due))}</div>
             <div class="txn-meta">${accCount} akun · ${mo.items.length} item</div>
@@ -199,7 +199,7 @@
         const metaBits = (it.metaExtra ? it.metaExtra.replace(/^ · /, '').split(' · ') : []);
         metaBits.push(it.txnCount + ' transaksi');
         return `
-          <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" onclick="openAccountDetail('${it.acc.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAccountDetail('${it.acc.id}');}">
+          <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${it.acc.id}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAccountDetail('${it.acc.id}');}">
             <div class="acc-name">${escapeHtml(it.acc.name)}</div>
             <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
             <div class="acc-tile-meta">${metaBits.map(escapeHtml).join(' · ')}</div>
@@ -209,7 +209,7 @@
       }).join('');
       return `
         <div class="acc-group${collapsed ? ' collapsed' : ''}" data-type="${type}">
-          <button class="acc-group-head" onclick="toggleAccGroup('${type}')" aria-expanded="${collapsed ? 'false' : 'true'}">
+          <button class="acc-group-head" data-act="toggleAccGroup" data-a0="${type}" aria-expanded="${collapsed ? 'false' : 'true'}">
             <span class="dot" style="background: var(${colorVar})"></span>
             <span class="acc-group-title">${TYPE_LABELS[type]}</span>
             <span class="acc-group-count">${group.length}</span>

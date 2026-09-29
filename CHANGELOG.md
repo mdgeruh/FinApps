@@ -2,6 +2,18 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.053 — 29 Sep 2026
+
+**Diubah**
+- **Event delegation menggantikan 131 handler inline** (`06-util-ui.js` `dispatchDelegated()`, plus `index.html`, `02-`, `04b-`, `04c-`, `07-`, `08-`, `09-`, `10-`, `11c-`, `12-`, `13-`): `onclick` (99), `oninput` (15), dan `onchange` (17) yang isinya satu panggilan fungsi sederhana diganti atribut `data-act` (klik), `data-input-act`, `data-change-act` dengan argumen `data-a<i>` (teks) / `data-n<i>` (angka). Tiga listener di `document` (click, input, change) memanggil fungsi global bernama itu; elemen bersarang dipanggil dari yang terdalam ke luar seperti bubbling biasa. Tidak ada `eval`/`new Function`. Sisa 29 handler inline sengaja dibiarkan karena butuh `event`/`this` (mis. `if(event.target===this)` untuk klik latar modal, `event.stopPropagation()`, `this.checked`) atau lebih dari satu perintah, atau berupa `${q(...)}` dinamis
+- **Perilaku tidak berubah**: dibandingkan otomatis di Chromium 390 px (data contoh; 131 elemen di 7 tab, nav bawah, dan modal statis; fungsi di-stub lalu tiap elemen diklik / diberi event input+change): urutan dan argumen panggilan fungsi identik antara v1.1.052 dan v1.1.053 (0 selisih), tanpa error JavaScript. Buka lalu tutup detail akun lewat klik nyata juga bekerja. `CACHE_VERSION` naik ke `kp-v1.1.053`
+
+## v1.1.052 — 29 Sep 2026
+
+**Diubah**
+- **119 `style=""` inline diganti kelas utilitas** (`style.css` bagian akhir, `index.html`, `04b-`, `04c-`, `07-`, `09-`, `11b-`, `11c-`, `13-`): gaya yang paling sering berulang (`width:100%`, `flex:1; min-width:0`, `flex:1`, `display:flex; gap:8px`, dan margin atas/bawah sederhana) kini kelas `u-w100`, `u-flex1-min0`, `u-flex1`, `u-flex-gap8`, `u-mt*`, `u-mb*`, `u-m0-0-4`. Jumlah `style="` di seluruh kode turun dari 393 ke 274 (di `index.html` dari 235 ke 132). Elemen `.section-title` sengaja tidak diubah karena margin-nya diatur aturan CSS yang lebih spesifik daripada kelas utilitas. `display:none` inline juga tidak disentuh karena JS mengubahnya lewat `element.style.display`. Tanpa `!important` baru
+- **Tampilan tidak berubah**: dibandingkan otomatis di Chromium 390 px (7 tab + 3 modal detail akun, data contoh): nilai CSS terhitung (lebar, margin, flex, display, gap) semua elemen identik antara v1.1.051 dan v1.1.052. `CACHE_VERSION` naik ke `kp-v1.1.052`
+
 ## v1.1.051 — 29 Sep 2026
 
 **Diubah**

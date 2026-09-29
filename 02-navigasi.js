@@ -22,14 +22,14 @@
       if (ci && ci.remaining > 0) {
         const remaining = Math.min(used, ci.remaining);
         const minPay = Math.min(remaining, ci.minRemaining);
-        if (minPay > 0) buttons += `<button type="button" class="io-btn" style="flex:1;" onclick="fillTransferAmount(${minPay}, 'Bayar KK - Minimal')">Minimal — ${formatRp(minPay)}</button>`;
-        if (remaining < used) buttons += `<button type="button" class="io-btn" style="flex:1;" onclick="fillTransferAmount(${remaining}, 'Bayar KK - Tagihan cetak')">Tagihan cetak — ${formatRp(remaining)}</button>`;
+        if (minPay > 0) buttons += `<button type="button" class="io-btn" style="flex:1;" data-act="fillTransferAmount" data-n0="${minPay}" data-a1="Bayar KK - Minimal">Minimal — ${formatRp(minPay)}</button>`;
+        if (remaining < used) buttons += `<button type="button" class="io-btn" style="flex:1;" data-act="fillTransferAmount" data-n0="${remaining}" data-a1="Bayar KK - Tagihan cetak">Tagihan cetak — ${formatRp(remaining)}</button>`;
       } else if (!ci) {
         const minPay = cardMinPayOf(toAcc, used);
-        buttons += `<button type="button" class="io-btn" style="flex:1;" onclick="fillTransferAmount(${minPay}, 'Bayar KK - Minimal')">Minimal — ${formatRp(minPay)}</button>`;
+        buttons += `<button type="button" class="io-btn" style="flex:1;" data-act="fillTransferAmount" data-n0="${minPay}" data-a1="Bayar KK - Minimal">Minimal — ${formatRp(minPay)}</button>`;
       }
     }
-    buttons += `<button type="button" class="io-btn" style="flex:1;" onclick="fillTransferAmount(${used}, 'Bayar ${TYPE_LABELS[toAcc.type] || toAcc.type} - Penuh')">Bayar penuh — ${formatRp(used)}</button>`;
+    buttons += `<button type="button" class="io-btn" style="flex:1;" data-act="fillTransferAmount" data-n0="${used}" data-a1="Bayar ${TYPE_LABELS[toAcc.type] || toAcc.type} - Penuh">Bayar penuh — ${formatRp(used)}</button>`;
     row.innerHTML = buttons;
     row.style.display = 'flex';
   }

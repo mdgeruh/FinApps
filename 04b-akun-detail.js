@@ -155,8 +155,8 @@
       if (opts) {
         const q = (k) => `payCardFromDetail('${acc.id}','${k}')`;
         let html = '<div class="section-title" style="margin-bottom:8px;">Bayar tagihan</div>';
-        if (opts.note) html += `<div class="acc-sub" style="margin-bottom:8px;">${escapeHtml(opts.note)}</div>`;
-        html += `<div class="acc-form-actions" style="margin-bottom:8px;"><button type="button" class="submit-btn" onclick="${q(opts.primary.kind)}">${escapeHtml(opts.primary.text)} — ${formatRp(opts.primary.amount)}</button></div>`;
+        if (opts.note) html += `<div class="acc-sub u-mb8">${escapeHtml(opts.note)}</div>`;
+        html += `<div class="acc-form-actions u-mb8"><button type="button" class="submit-btn" onclick="${q(opts.primary.kind)}">${escapeHtml(opts.primary.text)} — ${formatRp(opts.primary.amount)}</button></div>`;
         if (opts.others.length) {
           html += '<div class="acc-form-actions">' + opts.others.map(o => `<button type="button" class="io-btn" onclick="${q(o.kind)}">${escapeHtml(o.text)} — ${formatRp(o.amount)}</button>`).join('') + '</div>';
         }
@@ -212,7 +212,7 @@
               <div class="txn-desc">${escapeHtml(pl.desc)}</div>
               <div class="txn-meta">${formatRp(pl.monthly)}/bln × ${pl.tenor} bln · bunga flat ${pl.ratePercent}%/bln${pl.admin > 0 ? ' · admin ' + formatRp(pl.admin) : ''} · total ${formatRp(pl.total)}</div>
               <div class="txn-meta">${escapeHtml(jadwal)}</div>
-              ${sc ? `<div class="acc-bar" style="margin-top:6px;"><div class="acc-bar-fill" style="width:${pct}%; background:var(--amber);"></div></div>` : ''}
+              ${sc ? `<div class="acc-bar u-mt6"><div class="acc-bar-fill" style="width:${pct}%; background:var(--amber);"></div></div>` : ''}
             </div></div>
           </div>`;
       }).join('');
@@ -225,7 +225,7 @@
     if (monthlyGroups.length > 0) {
       monthlyWrap.style.display = 'block';
       $('acc-detail-monthly-list').innerHTML = monthlyGroups.map((g, idx) => `
-        <div class="txn-row clickable" onclick="openPaylaterMonthDetail('${acc.id}', ${idx})">
+        <div class="txn-row clickable" data-act="openPaylaterMonthDetail" data-a0="${acc.id}" data-n1="${idx}">
           <div class="txn-left"><div class="txn-text">
             <div class="txn-desc">${escapeHtml(fmtBulanTahun(g.due))}</div>
             <div class="txn-meta">Jatuh tempo ${formatDayLabel(g.due)} · ${g.items.length} item</div>
@@ -270,7 +270,7 @@
         }
         metaText += (metaText ? ' · ' : '') + formatDayLabel(t.date);
         return `
-          <div class="txn-row clickable" onclick="openTxnDetail('${t.id}')">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
             <div class="txn-left">
               <span class="dot ${t.type}"></span>
               <div class="txn-text">

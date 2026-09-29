@@ -37,10 +37,10 @@
     el.style.display = 'block';
     el.innerHTML = `
       <div class="section-title" style="margin-bottom:6px;">Cadangkan data</div>
-      <div class="acc-sub" style="margin-bottom:10px;">${days === null ? 'Kamu belum pernah mengekspor cadangan.' : 'Cadangan JSON terakhir ' + days + ' hari lalu.'} Data hanya tersimpan di browser ini, jadi ekspor berkala supaya aman kalau browser dibersihkan atau ganti perangkat.</div>
+      <div class="acc-sub u-mb10">${days === null ? 'Kamu belum pernah mengekspor cadangan.' : 'Cadangan JSON terakhir ' + days + ' hari lalu.'} Data hanya tersimpan di browser ini, jadi ekspor berkala supaya aman kalau browser dibersihkan atau ganti perangkat.</div>
       <div class="acc-form-actions">
-        <button type="button" class="submit-btn" onclick="exportJsonFromReminder()">Ekspor sekarang</button>
-        <button type="button" class="io-btn" onclick="snoozeBackupReminder()">Nanti</button>
+        <button type="button" class="submit-btn" data-act="exportJsonFromReminder">Ekspor sekarang</button>
+        <button type="button" class="io-btn" data-act="snoozeBackupReminder">Nanti</button>
       </div>`;
   }
   async function exportJsonFromReminder() { await exportJson(); renderBackupReminder(loadData()); }

@@ -36,7 +36,7 @@
       if (t.planId) metaText += ' · Cicilan'; else if (t.method === 'nanti') metaText += ' · Bayar nanti';
       metaText += ' · ' + formatDayLabel(t.date);
       return `
-        <div class="txn-row clickable" onclick="openTxnDetail('${t.id}')">
+        <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
           <div class="txn-left">
             <span class="dot ${t.type}"></span>
             <div class="txn-text">

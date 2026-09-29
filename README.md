@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi di footer app: **v1.1.051**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi di footer app: **v1.1.053**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
@@ -299,5 +299,9 @@ Nomor versi ada di konstanta `APP_VERSION` dan tampil di footer (`v1.1.NNN`). No
 2. Tambah entri di [CHANGELOG.md](CHANGELOG.md) dan centang item di [SUMMARY.md](SUMMARY.md).
 3. Jalankan `node tests/run.js` (semua test harus lulus) dan buka semua tab di browser.
 4. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
+
+Sejak v1.1.053 handler klik/input/change yang berupa satu panggilan fungsi sederhana memakai event delegation (`dispatchDelegated()` di `06-util-ui.js`): tulis `data-act="namaFungsi" data-a0="teks" data-n1="123"` (klik) atau `data-input-act` / `data-change-act` (argumen `data-input-a0`, `data-change-n0`, dst.), bukan `onclick="..."`. `data-a<i>` berarti argumen teks, `data-n<i>` argumen angka. Handler yang butuh `event`/`this` atau lebih dari satu perintah masih inline.
+
+Sejak v1.1.052 `style.css` punya kelas utilitas `u-*` (mis. `u-mb8`, `u-w100`, `u-flex1-min0`) di bagian paling bawah, dipakai menggantikan `style=""` inline yang berulang; pakai kelas ini untuk margin/lebar sederhana alih-alih menambah inline style baru. Kelas utilitas kalah oleh aturan yang lebih spesifik (mis. `#tab-laporan .section-title`), jadi jangan dipasang di elemen yang margin-nya diatur aturan seperti itu.
 
 File baru sejak v1.1.049: `sw.js`, `supabase/setup.sql`, `tests/run.js`. Sejak v1.1.050 paket juga menyertakan `manifest.json` dan ikon (`icon-192/512.png`, `icon-maskable-192/512.png`). Sejak v1.1.051 ada empat file JS baru hasil pemecahan (`04b-`, `04c-`, `11b-`, `11c-`); saat menimpa versi lama, salin semua file zip termasuk keempat file baru itu (`04-akun.js` dan `11-laporan.js` namanya tetap, isinya kini lebih pendek).

@@ -695,7 +695,7 @@
 
     if (legendEl) {
       const capNote = (showPerAccount && realAccounts.length > 3)
-        ? `<div class="acc-sub" style="margin-bottom:6px;">Top 3 akun (arus kas terbesar)</div>`
+        ? `<div class="acc-sub u-mb6">Top 3 akun (arus kas terbesar)</div>`
         : '';
       legendEl.innerHTML = showPerAccount ? capNote + accountSeries.map(s => {
         const val = s.values[s.values.length - 1];
@@ -825,7 +825,7 @@
         metaText += ' · ' + formatDayLabel(t.date);
         const sign = type === 'masuk' ? '+' : '−';
         return `
-          <div class="txn-row clickable" onclick="openTxnDetail('${t.id}')">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
             <div class="txn-left">
               <span class="dot ${t.type}"></span>
               <div class="txn-text">

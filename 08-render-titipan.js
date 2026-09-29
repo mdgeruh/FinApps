@@ -85,9 +85,9 @@
       if (people.length === 0) {
         container.innerHTML = '<div class="empty">Belum ada orang yang dititipi/menitip.</div>';
       } else if (state.titipanSearchQuery) {
-        container.innerHTML = '<div class="empty">Tidak ada nama yang cocok dengan pencarian.<br><button type="button" class="empty-reset-link" onclick="clearTitipanSearch()">Hapus pencarian</button></div>';
+        container.innerHTML = '<div class="empty">Tidak ada nama yang cocok dengan pencarian.<br><button type="button" class="empty-reset-link" data-act="clearTitipanSearch">Hapus pencarian</button></div>';
       } else {
-        container.innerHTML = '<div class="empty">Tidak ada orang yang cocok dengan filter ini.<br><button type="button" class="empty-reset-link" onclick="resetTitipanFilter()">Tampilkan semua</button></div>';
+        container.innerHTML = '<div class="empty">Tidak ada orang yang cocok dengan filter ini.<br><button type="button" class="empty-reset-link" data-act="resetTitipanFilter">Tampilkan semua</button></div>';
       }
       return;
     }
@@ -100,7 +100,7 @@
         ? txnCount + ' transaksi · terakhir ' + dayShortLabel(lastDate)
         : 'Belum ada transaksi';
       return `
-        <div class="txn-row clickable" onclick="openTitipanDetail('${acc.id}')">
+        <div class="txn-row clickable" data-act="openTitipanDetail" data-a0="${acc.id}">
           <div class="txn-left">
             <span class="dot" style="background: var(--green)"></span>
             <div class="txn-text">
@@ -166,7 +166,7 @@
         const fundName = accById[fundId] ? accById[fundId].name : '?';
         const desc = t.desc || (increasesDebt ? 'Titipan' : 'Terima titipan');
         return `
-          <div class="txn-row clickable" onclick="openTxnDetail('${t.id}')">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
             <div class="txn-left">
               <span class="dot ${cls}"></span>
               <div class="txn-text">
