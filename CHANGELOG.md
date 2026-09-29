@@ -6,6 +6,63 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.071 — 29 Sep 2026
+
+**Ditambah**
+- **Kartu rencana yang belum dipakai jadi satu kartu ajakan** (todo R7; `09-grafik.js`, `10j-perhatian.js`, `index.html`, `02-navigasi.js`): `computePlanUsage(data)` (murni) menilai apakah anggaran (`sanitizeBudgets` tidak kosong), langganan (`sanitizeSubscriptions` tidak kosong), dan dana darurat (`sanitizeEmergencyMonths` > 0) sudah dipakai. `computeRingkasanVisibility` menandai kartu yang belum dipakai sebagai kosong (`budget-card`, `sub-card`, `emergency-card` → `data-empty`, tersembunyi otomatis dan dilewati render lewat R5). Kartu baru `#plan-cta-card` (`renderPlanCta`, `PLAN_CTAS`) menampilkan satu baris per fitur yang belum dipakai dengan tombol "Atur ›" ke form yang sudah ada (`openBudgetForm`, `openSubForm`, `openEmergencyForm`; ketiganya sheet terpisah, bukan bagian kartu, jadi tetap terjangkau saat kartu tersembunyi); kartu hilang sendiri kalau ketiganya sudah dipakai. Setelah form disimpan, `render()` menghitung ulang: kartu fitur muncul dan barisnya hilang dari kartu ajakan
+- Kartu ajakan masuk `RINGKASAN_CARDS` (bisa disembunyikan lewat Profil, label "Ajakan mengatur rencana") dan `RINGKASAN_ORDER_UNITS` (bisa diurutkan; bawaan tepat setelah Dana darurat)
+- **5 test baru** (total 77; termasuk 1 test urutan lama)
+
+**Diubah**
+- `sanitizeRingkasanOrder`: unit yang belum ada di urutan tersimpan kini disisipkan tepat setelah unit pendahulunya menurut urutan bawaan, bukan ditaruh di ujung (supaya pengguna yang sudah mengatur urutan tidak mendapati kartu baru terlempar ke paling bawah). Test urutan diperbarui
+- **Perilaku yang berubah**: kartu Anggaran, Langganan, dan Dana darurat yang kosong sebelumnya tampil dengan teks "Belum ada …"; kini tersembunyi sampai dipakai. Teks itu masih ada di kode sebagai cadangan tetapi tidak terlihat
+- Riwayat perubahan di tombol `?` (v1.1.071); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.071`
+
+**Pengujian**: 77 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px: data tanpa rencana → 3 kartu tersembunyi + kartu ajakan 3 baris, klik "Atur" membuka form anggaran, mengisi anggaran memunculkan kartu Anggaran dan menyisakan 2 baris ajakan, semua dipakai → ajakan hilang, urutan lama tersimpan tanpa kartu ajakan → kartu masuk setelah posisi Dana darurat, menyembunyikan kartu ajakan lewat Profil berhasil, tanpa error JS. **Belum teruji:** sentuhan nyata di HP; tampilan kartu ajakan dengan tema gelap
+
+## v1.1.070 — 29 Sep 2026
+
+**Ditambah**
+- **Gabungkan kartu kecil ke "Bulan ini"** (todo R3; `index.html`, `10-render-beranda.js`, `09-grafik.js`, `02-navigasi.js`, `style.css`): kartu "Insight lain" (rata-rata pengeluaran/hari, pengeluaran terbesar) dan "Beban cicilan & bunga" tidak lagi berdiri sendiri; keduanya jadi blok `.month-extra` di dalam `#month-insight-card` dengan id lama dipertahankan (`more-insight-card`, `debt-burden-card`) sehingga `renderMonthInsights`/`renderDebtBurden` tidak berubah logikanya. Blok insight tampil hanya kalau ada pengeluaran bulan ini (sebelumnya lewat `data-empty`, kini `style.display` di `renderMonthInsights`); blok beban cicilan tetap tampil hanya kalau ada cicilan/bunga. Kedua id dihapus dari `RINGKASAN_CARDS` (id lama yang tersimpan di preferensi sembunyi diabaikan, tidak berbahaya), dan pengecekan render di `renderTabContent` disederhanakan jadi cukup `month-insight-card`
+- **Urutan kartu Ringkasan bisa diatur** (todo R4; `09-grafik.js`, `index.html`): di Profil > Tampilan Ringkasan tiap kartu punya tombol ▲ ▼ (dinonaktifkan di ujung). Urutan disimpan per perangkat di `keuangan-ringkasan-order-v1` (tidak ikut ekspor dan tidak disinkron), dijaga oleh `sanitizeRingkasanOrder` (id asing dan duplikat dibuang, unit yang belum tersimpan ditaruh di belakang) dan `moveInOrder` (keduanya fungsi murni). `applyRingkasanOrder()` hanya memindahkan elemen DOM yang sudah ada tepat setelah kartu backup, jadi isi kartu dan pendengar kejadian tidak tersentuh. Lima kartu grafik dibungkus `#chart-group` supaya bergerak sebagai satu unit "Grafik" (di layar lebar `break-inside: avoid`). Tombol reset kini berbunyi "Tampilkan semua & urutan awal" dan mengembalikan juga urutan
+- **Urutan bawaan** = usulan R4: Bulan ini → Anggaran → Langganan → Dana darurat → Nilai akun → Transaksi terbaru → Grafik. Urutan DOM sebelumnya sudah nyaris sama setelah R3, jadi tampilan awal hampir tidak berubah; yang baru adalah kemampuan mengurutkan
+- **Anggaran bulan ini dan Langganan berulang kini bisa disembunyikan** (`RINGKASAN_CARDS`), dan render keduanya dilewati kalau disembunyikan (R5). Efek samping yang disengaja: baris "Perlu perhatian" untuk anggaran tetap muncul walau kartu Anggaran disembunyikan (informasinya tetap berguna); ketuk barisnya tidak menggulir apa-apa karena kartu tidak tampil
+- **4 test baru** (total 72)
+
+**Diubah**
+- Judul blok di "Bulan ini" dipendekkan ("Rata-rata pengeluaran/hari", "Pengeluaran terbesar") karena konteks bulannya sudah dari judul kartu
+- Riwayat perubahan di tombol `?` (v1.1.070); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.070`
+
+**Pengujian**: 72 test unit lulus; semua file lolos cek sintaks; Chromium headless (390 px dan 1200 px, data contoh 13 transaksi): blok insight dan beban cicilan berada di dalam kartu Bulan ini, geser ▲▼ mengubah urutan di Ringkasan, urutan bertahan setelah reload, grup Grafik bisa dinaikkan dan tetap hanya menampilkan 1 segmen, menyembunyikan Anggaran lalu reset mengembalikan urutan awal dan isi kartu, data kosong menyembunyikan blok insight/beban, tanpa scroll horizontal di desktop, tanpa error JS. **Belum teruji:** sentuhan nyata di HP; pengalaman menggeser banyak kartu berkali-kali (tidak ada drag-and-drop, sengaja sederhana)
+
+## v1.1.069 — 29 Sep 2026
+
+**Ditambah**
+- **Satu kartu grafik dengan pilihan segmen** (todo R2; `09-grafik.js`, `index.html`, `style.css`): lima kartu grafik bertumpuk (Kekayaan bersih, Cashflow, Kategori, Tren pemasukan/pengeluaran, Tren utang) kini ditampilkan satu per satu lewat kartu "Grafik" (`#chart-period-card`) berisi tombol segmen `Kekayaan | Cashflow | Kategori | Tren | Utang`. Kartu-kartu lama dan semua id di dalamnya tidak diubah (renderer grafik tetap sama); yang ditambah hanya atribut `data-seg-off` (CSS: disembunyikan). Pilihan segmen disimpan per perangkat di `keuangan-ringkasan-segmen-v1`. Segmen yang disembunyikan pengguna atau kosong tidak muncul sebagai tombol; kalau segmen tersimpan tidak tersedia, jatuh ke segmen pertama yang tersedia; kalau semuanya mati, kartu Grafik hilang. Pemilih periode (1H–360H) pindah ke kartu ini dan hanya tampil untuk Kekayaan dan Cashflow (`CHART_SEGMENTS[].period`)
+- **Lewati render kartu yang tidak tampil** (todo R5; `02-navigasi.js`, `09-grafik.js`): `computeRingkasanVisibility(data)` (murni, tanpa DOM) dihitung SEBELUM render dan dioper ke `applyRingkasanVisibility(data, vis)`. Di `renderTabContent('ringkasan')` kini dilewati: `renderAccountValues`, `renderRecentTxns`, `renderEmergencyCard`, `renderMonthInsights` (hanya kalau ketiga kartunya, Bulan ini/Beban cicilan/Insight lain, mati), dan dari kartu grafik hanya segmen aktif yang digambar. Menampilkan kembali kartu lewat Profil (`toggleRingkasanCard`, `resetRingkasanCards`) kini memanggil `renderTabContent('ringkasan')` supaya kartu yang baru tampil langsung terisi
+- **5 test baru** (total 68)
+
+**Diubah**
+- `setChartPeriod` dan `toggleBalanceVisibility` hanya menggambar ulang kurva kalau segmennya sedang aktif; segmen lain digambar dengan periode/keadaan terbaru saat dipilih (selalu dari `loadData()`, jadi tidak ada data basi)
+- Riwayat perubahan di tombol `?` (v1.1.069); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.069`
+
+**Pengujian**: 68 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px dengan data contoh (48 transaksi, 1 kartu kredit): saat awal hanya kurva Kekayaan yang tergambar (4 grafik lain 0 elemen), tiap segmen baru digambar saat dipilih, periode tampil hanya di Kekayaan/Cashflow, pilihan bertahan setelah reload, menyembunyikan "Tren total utang" membuat segmen Utang hilang dan jatuh ke Kekayaan, reset mengembalikannya, data kosong menyembunyikan kartu Grafik, tanpa error JS. **Belum teruji:** sentuhan nyata di HP; tampilan 5 tombol segmen di layar sangat sempit (dibuat wrap ke baris kedua bila tidak muat); waktu render sebelum/sesudah tidak diukur ulang
+
+## v1.1.068 — 29 Sep 2026
+
+**Ditambah**
+- **Strip "Perlu perhatian" di puncak Ringkasan** (todo R1; `10j-perhatian.js` baru, `index.html`, `02-navigasi.js`): kartu `#attention-card` maksimal 3 baris, urut prioritas: (1) tagihan telat (merah, ▲), (2) tagihan jatuh tempo ≤7 hari (`computeUpcomingDues`), (3) anggaran bulan ini ≥80% atau terlampaui (`computeBudgetStatus`, merah kalau ada yang terlampaui, disertai "+N lainnya"), (4) dana darurat kurang (`computeEmergencyFund`, status `low`/`warn`). Kalau baris ke-4 ikut terpenuhi, yang terpotong adalah baris paling bawah (dana darurat)
+- Satu tagihan = ketuk membuka detail akun; lebih dari satu tagihan digabung jadi satu baris ("N tagihan …", total) yang membuka tab Tagihan; anggaran dan dana darurat menggulir ke kartunya (`scrollToRingkasanCard`, tidak berbuat apa-apa kalau kartu disembunyikan pengguna). Baris bisa dioperasikan keyboard (Enter/Spasi)
+- Kartu menghilang sendiri kalau tidak ada yang perlu diperhatikan. Fungsi hitung murni: `computeAttentionItems(data, balances, monthKey)`
+- **5 test baru** (total 63)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` diperbarui (v1.1.068); `sw.js`: `10j-perhatian.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.068`; `tests/run.js` memuat modul baru
+
+**Sengaja tidak dimasukkan**: pengingat cadangan (backup) yang disebut di usulan R1 tidak diulang di strip, karena sudah punya kartu sendiri dengan tombol "Ekspor sekarang"/"Nanti"; menaruhnya di dua tempat akan dobel
+
+**Pengujian**: 63 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px dengan data contoh: strip tampil 3 baris berurutan benar, ketuk baris pertama membuka detail akun, strip hilang saat data aman, tanpa error JS. **Belum teruji:** sentuhan nyata di HP, dan gulir ke kartu anggaran/dana darurat dengan data nyata
+
 ## v1.1.067 — 29 Sep 2026
 
 **Ditambah**

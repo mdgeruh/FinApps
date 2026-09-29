@@ -123,8 +123,10 @@
     const expenseTxns = rawExpenseTxns.filter(t => !isNonOperatingTxn(t));
     const labelEl = $('biggest-expense-label');
     const amountEl = $('biggest-expense-amount');
+    const moreEl = $('more-insight-card'); // blok di dalam kartu "Bulan ini" (R3); tampil hanya kalau ada pengeluaran
+    if (moreEl) moreEl.style.display = expenseTxns.length ? '' : 'none';
     if (expenseTxns.length === 0) {
-      if (labelEl) labelEl.textContent = 'Pengeluaran terbesar (bulan ini)';
+      if (labelEl) labelEl.textContent = 'Pengeluaran terbesar';
       if (amountEl) amountEl.textContent = '—';
     } else {
       const biggest = expenseTxns.reduce((max, t) => t.amount > max.amount ? t : max, expenseTxns[0]);

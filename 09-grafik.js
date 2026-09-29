@@ -342,19 +342,20 @@
     networthPeriodDays = days;
     cashflowPeriodDays = days;
     document.querySelectorAll('[data-chart-period]').forEach(b => b.classList.toggle('active', Number(b.dataset.chartPeriod) === days));
-    const data = loadData();
-    renderNetWorthChart(data);
-    renderCashflowChart(data);
+    // Hanya segmen aktif yang digambar; segmen lain menggambar dengan periode baru saat dipilih.
+    const cur = activeChartSegmentId();
+    if (cur === 'kekayaan' || cur === 'cashflow') renderChartSegment(cur, loadData());
   }
 
   // ---------- Tampilan kartu Ringkasan (tampil/sembunyi + sembunyi otomatis kalau kosong) ----------
   const RINGKASAN_CARDS = [
     { id: 'month-insight-card', label: 'Bulan ini' },
+    { id: 'budget-card', label: 'Anggaran bulan ini' },
+    { id: 'sub-card', label: 'Langganan berulang' },
+    { id: 'emergency-card', label: 'Dana darurat' },
+    { id: 'plan-cta-card', label: 'Ajakan mengatur rencana' },
     { id: 'account-values-card', label: 'Nilai akun' },
     { id: 'recent-txn-card', label: 'Transaksi terbaru' },
-    { id: 'emergency-card', label: 'Dana darurat' },
-    { id: 'debt-burden-card', label: 'Beban cicilan & bunga' },
-    { id: 'more-insight-card', label: 'Insight lain' },
     { id: 'networth-chart-card', label: 'Kurva kekayaan bersih' },
     { id: 'cashflow-chart-card', label: 'Kurva cashflow' },
     { id: 'category-chart-card', label: 'Kategori bulan ini' },
@@ -371,54 +372,206 @@
   function saveHiddenCards(list) {
     try { localStorage.setItem(RINGKASAN_HIDDEN_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
   }
-  function applyRingkasanVisibility(data) {
-    if (!data) data = loadData();
+  // Fungsi murni: fitur perencanaan mana yang sudah dipakai (v1.1.071, R7).
+  function computePlanUsage(data) {
+    return {
+      budget: Object.keys(sanitizeBudgets(data && data.budgets)).length > 0,
+      sub: sanitizeSubscriptions(data && data.subscriptions).length > 0,
+      emergency: sanitizeEmergencyMonths(data && data.emergencyMonths) > 0
+    };
+  }
+
+  // Hitung dulu (murni, tanpa menyentuh DOM): kartu mana yang disembunyikan pengguna / kosong.
+  // Dipakai sebelum render supaya kartu yang tidak tampil tidak ikut digambar (v1.1.069, R5).
+  function computeRingkasanVisibility(data) {
     const hidden = new Set(loadHiddenCards());
     const now = todayGmt8();
     const curKey = now.getFullYear() + '-' + padMonth(now.getMonth() + 1);
     const monthReal = data.txns.filter(t => monthKeyFromDate(t.date || '') === curKey && !isNonOperatingTxn(t));
     const sixKeys = new Set();
     for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); sixKeys.add(d.getFullYear() + '-' + padMonth(d.getMonth() + 1)); }
+    const plan = computePlanUsage(data);
     const empty = {
-      'more-insight-card': !monthReal.some(t => t.type === 'keluar'),
+      // R7: kartu rencana yang belum dipakai tidak tampil penuh; diganti satu kartu ajakan ringkas (plan-cta-card)
+      'budget-card': !plan.budget,
+      'sub-card': !plan.sub,
+      'emergency-card': !plan.emergency,
+      'plan-cta-card': plan.budget && plan.sub && plan.emergency,
       'category-chart-card': monthReal.length === 0,
       'trend-chart-card': !data.txns.some(t => sixKeys.has(monthKeyFromDate(t.date || '')) && !isNonOperatingTxn(t) && (t.type === 'masuk' || t.type === 'keluar')),
       'debt-trend-card': !data.accounts.some(a => TYPE_DEBT[a.type]),
       'networth-chart-card': data.txns.length === 0,
       'cashflow-chart-card': data.txns.length === 0
     };
+    const off = id => hidden.has(id) || !!empty[id];
+    return { hidden, empty, off };
+  }
+
+  function applyRingkasanVisibility(data, vis) {
+    if (!data) data = loadData();
+    if (!vis) vis = computeRingkasanVisibility(data);
     RINGKASAN_CARDS.forEach(c => {
       const el = $(c.id);
       if (!el) return;
-      el.dataset.userHidden = hidden.has(c.id) ? '1' : '0';
-      el.dataset.empty = empty[c.id] ? '1' : '0';
+      el.dataset.userHidden = vis.hidden.has(c.id) ? '1' : '0';
+      el.dataset.empty = vis.empty[c.id] ? '1' : '0';
     });
-    const pc = $('chart-period-card');
-    if (pc) {
-      const off = id => hidden.has(id) || empty[id];
-      pc.dataset.empty = (off('networth-chart-card') && off('cashflow-chart-card')) ? '1' : '0';
-    }
+    applyChartSegments(data, vis);
   }
+
+  // ---------- Satu kartu grafik dengan pilihan segmen (v1.1.069, R2) ----------
+  // Hanya segmen aktif yang digambar; segmen yang disembunyikan/kosong tidak muncul sebagai pilihan.
+  const CHART_SEGMENTS = [
+    { id: 'kekayaan', label: 'Kekayaan', card: 'networth-chart-card', period: true },
+    { id: 'cashflow', label: 'Cashflow', card: 'cashflow-chart-card', period: true },
+    { id: 'kategori', label: 'Kategori', card: 'category-chart-card' },
+    { id: 'tren', label: 'Tren', card: 'trend-chart-card' },
+    { id: 'utang', label: 'Utang', card: 'debt-trend-card' }
+  ];
+  const CHART_SEGMENT_KEY = 'keuangan-ringkasan-segmen-v1';
+  function loadChartSegment() {
+    try { const v = localStorage.getItem(CHART_SEGMENT_KEY); return CHART_SEGMENTS.some(s => s.id === v) ? v : 'kekayaan'; } catch (e) { return 'kekayaan'; }
+  }
+  let chartSegment = loadChartSegment();
+
+  // Fungsi murni: segmen yang tersedia (tidak disembunyikan, tidak kosong) dan segmen efektif.
+  function pickChartSegment(wanted, off) {
+    const avail = CHART_SEGMENTS.filter(s => !off(s.card));
+    const cur = avail.find(s => s.id === wanted) || avail[0] || null;
+    return { avail, cur };
+  }
+  function activeChartSegmentId() {
+    const vis = computeRingkasanVisibility(loadData());
+    const p = pickChartSegment(chartSegment, vis.off);
+    return p.cur ? p.cur.id : null;
+  }
+
+  function renderChartSegment(id, data) {
+    if (id === 'kekayaan') renderNetWorthChart(data);
+    else if (id === 'cashflow') renderCashflowChart(data);
+    else if (id === 'kategori') renderCategoryChart(data);
+    else if (id === 'tren') renderTrendChart(data);
+    else if (id === 'utang') renderDebtTrendChart(data);
+  }
+
+  function applyChartSegments(data, vis) {
+    const pc = $('chart-period-card'), row = $('chart-seg-row');
+    const p = pickChartSegment(chartSegment, vis.off);
+    CHART_SEGMENTS.forEach(s => { const el = $(s.card); if (el) el.dataset.segOff = (p.cur && p.cur.id === s.id) ? '0' : '1'; });
+    if (pc) pc.dataset.empty = p.cur ? '0' : '1';
+    if (row) {
+      row.innerHTML = p.avail.map(s => `<button type="button" class="type-btn${p.cur && p.cur.id === s.id ? ' active' : ''}" role="tab" aria-selected="${p.cur && p.cur.id === s.id}" data-act="setChartSegment" data-a0="${s.id}">${s.label}</button>`).join('');
+      row.style.display = p.avail.length > 1 ? 'flex' : 'none';
+    }
+    const pw = $('chart-period-wrap');
+    if (pw) pw.style.display = (p.cur && p.cur.period) ? 'block' : 'none';
+    return p.cur ? p.cur.id : null;
+  }
+
+  function setChartSegment(id) {
+    if (!CHART_SEGMENTS.some(s => s.id === id)) return;
+    chartSegment = id;
+    try { localStorage.setItem(CHART_SEGMENT_KEY, id); } catch (e) { /* preferensi tampilan, tidak kritis */ }
+    const data = loadData();
+    const vis = computeRingkasanVisibility(data);
+    const cur = applyChartSegments(data, vis);
+    if (cur) renderChartSegment(cur, data);
+  }
+
+  // ---------- Urutan kartu Ringkasan (v1.1.070, R4) ----------
+  // Unit yang bisa diurutkan = anak langsung tab Ringkasan di bawah kartu backup. Grup grafik (#chart-group)
+  // bergerak sebagai satu unit. "Bulan ini" sudah memuat rata-rata harian, pengeluaran terbesar, dan beban cicilan (R3).
+  const RINGKASAN_ORDER_UNITS = [
+    { id: 'month-insight-card', label: 'Bulan ini' },
+    { id: 'budget-card', label: 'Anggaran bulan ini' },
+    { id: 'sub-card', label: 'Langganan berulang' },
+    { id: 'emergency-card', label: 'Dana darurat' },
+    { id: 'plan-cta-card', label: 'Ajakan mengatur rencana' },
+    { id: 'account-values-card', label: 'Nilai akun' },
+    { id: 'recent-txn-card', label: 'Transaksi terbaru' },
+    { id: 'chart-group', label: 'Grafik' }
+  ];
+  const RINGKASAN_ORDER_KEY = 'keuangan-ringkasan-order-v1';
+  // Fungsi murni: id dikenal saja, tanpa duplikat, urutan tersimpan dipertahankan. Unit yang belum ada di daftar
+  // tersimpan (mis. unit baru dari versi lebih baru) disisipkan tepat setelah unit pendahulunya menurut urutan bawaan.
+  function sanitizeRingkasanOrder(saved) {
+    const known = RINGKASAN_ORDER_UNITS.map(u => u.id);
+    const out = [];
+    (Array.isArray(saved) ? saved : []).forEach(id => { if (known.includes(id) && !out.includes(id)) out.push(id); });
+    known.forEach((id, k) => {
+      if (out.includes(id)) return;
+      const at = k === 0 ? -1 : out.indexOf(known[k - 1]);
+      out.splice(at + 1, 0, id);
+    });
+    return out;
+  }
+  // Fungsi murni: geser id satu langkah (dir -1 = naik, +1 = turun); di ujung tidak berubah.
+  function moveInOrder(order, id, dir) {
+    const arr = order.slice(), i = arr.indexOf(id), j = i + (dir < 0 ? -1 : 1);
+    if (i < 0 || j < 0 || j >= arr.length) return arr;
+    arr[i] = arr[j]; arr[j] = id;
+    return arr;
+  }
+  function loadRingkasanOrder() {
+    try { return sanitizeRingkasanOrder(JSON.parse(localStorage.getItem(RINGKASAN_ORDER_KEY) || '[]')); } catch (e) { return sanitizeRingkasanOrder([]); }
+  }
+  function saveRingkasanOrder(list) {
+    try { localStorage.setItem(RINGKASAN_ORDER_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
+  }
+  // Hanya memindahkan elemen DOM yang sudah ada (isi kartu tidak diubah), tepat setelah kartu backup.
+  function applyRingkasanOrder() {
+    let prev = $('backup-reminder-card');
+    if (!prev) return;
+    loadRingkasanOrder().forEach(id => {
+      const el = $(id);
+      if (!el || el.parentNode !== prev.parentNode) return;
+      if (prev.nextElementSibling !== el) prev.after(el);
+      prev = el;
+    });
+  }
+  function moveRingkasanCard(id, dir) {
+    saveRingkasanOrder(moveInOrder(loadRingkasanOrder(), id, dir));
+    applyRingkasanOrder();
+    renderRingkasanConfig();
+  }
+
   function renderRingkasanConfig() {
     const el = $('ringkasan-cards-config');
     if (!el) return;
     const hidden = new Set(loadHiddenCards());
-    el.innerHTML = RINGKASAN_CARDS.map(c => `
-      <label class="txn-row" style="cursor:pointer; align-items:center;">
-        <div class="txn-left"><div class="txn-text"><div class="txn-desc txn-desc-wrap">${escapeHtml(c.label)}</div></div></div>
-        <div class="txn-right"><input type="checkbox" ${hidden.has(c.id) ? '' : 'checked'} data-change-act="toggleRingkasanCardFromEl" data-change-a0="${c.id}" style="width:20px; height:20px; accent-color:var(--green);" aria-label="Tampilkan ${escapeHtml(c.label)}"></div>
-      </label>`).join('');
+    const order = loadRingkasanOrder();
+    const label = id => (RINGKASAN_ORDER_UNITS.find(u => u.id === id) || {}).label || id;
+    const chk = (c, indent) => `<input type="checkbox" ${hidden.has(c.id) ? '' : 'checked'} data-change-act="toggleRingkasanCardFromEl" data-change-a0="${c.id}" style="width:20px; height:20px; accent-color:var(--green);" aria-label="Tampilkan ${escapeHtml(c.label)}">`;
+    const arrows = (id, i) => `<button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${id}" data-n1="-1" ${i === 0 ? 'disabled' : ''} aria-label="Naikkan ${escapeHtml(label(id))}">▲</button><button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${id}" data-n1="1" ${i === order.length - 1 ? 'disabled' : ''} aria-label="Turunkan ${escapeHtml(label(id))}">▼</button>`;
+    const chartIds = new Set(CHART_SEGMENTS.map(s => s.card));
+    el.innerHTML = order.map((id, i) => {
+      if (id === 'chart-group') {
+        const sub = RINGKASAN_CARDS.filter(c => chartIds.has(c.id)).map(c => `
+          <label class="txn-row" style="cursor:pointer; align-items:center; padding-left:18px;">
+            <div class="txn-left"><div class="txn-text"><div class="txn-desc txn-desc-wrap">${escapeHtml(c.label)}</div></div></div>
+            <div class="txn-right">${chk(c)}</div>
+          </label>`).join('');
+        return `<div class="txn-row" style="align-items:center;"><div class="txn-left"><div class="txn-text"><div class="txn-desc txn-desc-wrap">Grafik</div></div></div><div class="txn-right" style="gap:6px;">${arrows(id, i)}</div></div>${sub}`;
+      }
+      const c = RINGKASAN_CARDS.find(x => x.id === id);
+      if (!c) return '';
+      return `<div class="txn-row" style="align-items:center;">
+        <label class="txn-left" style="cursor:pointer; align-items:center; flex:1;"><div class="txn-text"><div class="txn-desc txn-desc-wrap">${escapeHtml(c.label)}</div></div></label>
+        <div class="txn-right" style="gap:6px;">${chk(c)}${arrows(id, i)}</div>
+      </div>`;
+    }).join('');
   }
   function toggleRingkasanCard(id, show) {
     const set = new Set(loadHiddenCards());
     if (show) set.delete(id); else set.add(id);
     saveHiddenCards(Array.from(set));
-    applyRingkasanVisibility(loadData());
+    renderTabContent('ringkasan', loadData());
   }
   function resetRingkasanCards() {
     saveHiddenCards([]);
+    saveRingkasanOrder(sanitizeRingkasanOrder([]));
     renderRingkasanConfig();
-    applyRingkasanVisibility(loadData());
+    renderTabContent('ringkasan', loadData());
   }
 
   let networthPeriodDays = 30;

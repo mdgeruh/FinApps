@@ -243,7 +243,8 @@
   .day-chevron { display: inline-block; font-size: 10px; transition: transform 0.15s; flex-shrink: 0; }
   .day-chevron.collapsed { transform: rotate(-90deg); }
 
-  [data-user-hidden="1"], [data-empty="1"] { display: none !important; }
+  [data-user-hidden="1"], [data-empty="1"], [data-seg-off="1"] { display: none !important; }
+  #chart-seg-row .type-btn { flex: 1 0 auto; padding: 8px 10px; font-size: 12px; white-space: nowrap; }
   .month-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .month-row select { flex: 1; min-width: 0; padding: 10px 12px; font-size: 14px; font-weight: 600; }
   .month-row .csel-trigger { font-size: 14px; font-weight: 600; }
@@ -353,6 +354,10 @@
 
   .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 10px; margin-top: 20px; }
   .chart-card svg { width: 100%; height: auto; display: block; }
+  .month-extra { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  #chart-group { break-inside: avoid; }
+  .order-btn { padding: 4px 9px; font-size: 12px; min-width: 32px; }
+  .order-btn:disabled { opacity: .35; }
   #tab-laporan .section-title { margin-bottom: 6px; }
   #tab-laporan .chart-card { padding: 12px 12px 8px; }
   #tab-laporan .acc-type { font-size: 11px; }

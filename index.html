@@ -55,6 +55,8 @@
   </header>
 
   <div class="tab-panel active" id="tab-ringkasan">
+    <div class="chart-card" id="attention-card" style="display:none;" aria-live="polite"></div>
+
     <div class="chart-card" id="backup-reminder-card" style="display:none;"></div>
 
     <div class="chart-card" id="month-insight-card">
@@ -73,6 +75,29 @@
       </div>
       <div class="acc-sub u-mt10">Selisih bulan ini: <strong id="month-net">Rp0</strong></div>
       <div class="acc-sub" id="month-debt-line" style="display:none; margin-top:8px; white-space:pre-line;"></div>
+      <div class="month-extra" id="more-insight-card">
+        <div class="txn-row" style="align-items:flex-start;">
+          <div class="txn-left">
+            <div class="txn-text"><div class="txn-desc txn-desc-wrap">Rata-rata pengeluaran/hari</div></div>
+          </div>
+          <div class="txn-right"><span class="txn-amount keluar" id="avg-daily-expense">Rp0</span></div>
+        </div>
+        <div class="txn-row" style="align-items:flex-start;">
+          <div class="txn-left">
+            <div class="txn-text"><div class="txn-desc txn-desc-wrap" id="biggest-expense-label">Pengeluaran terbesar</div></div>
+          </div>
+          <div class="txn-right"><span class="txn-amount keluar" id="biggest-expense-amount">—</span></div>
+        </div>
+      </div>
+      <div class="month-extra" id="debt-burden-card" style="display:none;">
+        <div class="acc-type" style="margin-bottom:6px;">Beban cicilan &amp; bunga</div>
+        <div class="balance-sub" style="justify-content:flex-start; gap:6px; align-items:baseline;">
+          <span class="acc-balance" id="debt-burden-amount" style="font-size:20px;">Rp0</span>
+          <span class="acc-sub" id="debt-burden-pct"></span>
+        </div>
+        <div class="acc-bar u-mt8"><div class="acc-bar-fill" id="debt-burden-bar"></div></div>
+        <div class="acc-sub u-mt6" id="debt-burden-note"></div>
+      </div>
     </div>
 
     <div class="chart-card" id="budget-card">
@@ -100,6 +125,8 @@
       <div id="emergency-list"></div>
     </div>
 
+    <div class="chart-card" id="plan-cta-card" data-empty="1"></div>
+
     <div class="chart-card" id="account-values-card">
       <div class="section-title-row">
         <div class="section-title">Nilai akun</div>
@@ -117,43 +144,19 @@
       <div class="list-section u-mt0" id="recent-txn-list"></div>
     </div>
 
-    <div class="chart-card" id="debt-burden-card" style="display:none;">
-      <div class="section-title" style="margin-bottom:8px;">Beban cicilan &amp; bunga bulan ini</div>
-      <div class="balance-sub" style="justify-content:flex-start; gap:6px; align-items:baseline;">
-        <span class="acc-balance" id="debt-burden-amount" style="font-size:20px;">Rp0</span>
-        <span class="acc-sub" id="debt-burden-pct"></span>
-      </div>
-      <div class="acc-bar u-mt8"><div class="acc-bar-fill" id="debt-burden-bar"></div></div>
-      <div class="acc-sub u-mt6" id="debt-burden-note"></div>
-    </div>
-
-    <div class="chart-card" id="more-insight-card">
-      <div class="section-title" style="margin-bottom:6px;">Insight lain</div>
-      <div class="txn-row" style="align-items:flex-start;">
-        <div class="txn-left">
-          <div class="txn-text"><div class="txn-desc txn-desc-wrap">Rata-rata pengeluaran/hari (bulan ini)</div></div>
-        </div>
-        <div class="txn-right"><span class="txn-amount keluar" id="avg-daily-expense">Rp0</span></div>
-      </div>
-      <div class="txn-row" style="align-items:flex-start;">
-        <div class="txn-left">
-          <div class="txn-text"><div class="txn-desc txn-desc-wrap" id="biggest-expense-label">Pengeluaran terbesar (bulan ini)</div></div>
-        </div>
-        <div class="txn-right"><span class="txn-amount keluar" id="biggest-expense-amount">—</span></div>
-      </div>
-    </div>
-
+    <div id="chart-group">
     <div class="chart-card" id="chart-period-card">
-      <div class="section-title-row" style="margin-bottom:8px;">
-        <div class="section-title">Grafik</div>
-        <span class="acc-sub">Periode kurva</span>
-      </div>
-      <div class="toggle-row">
-        <button class="type-btn" data-chart-period="1" data-act="setChartPeriod" data-n0="1" style="padding:8px 0; font-size:12px;">1H</button>
-        <button class="type-btn" data-chart-period="7" data-act="setChartPeriod" data-n0="7" style="padding:8px 0; font-size:12px;">7H</button>
-        <button class="type-btn active" data-chart-period="30" data-act="setChartPeriod" data-n0="30" style="padding:8px 0; font-size:12px;">30H</button>
-        <button class="type-btn" data-chart-period="180" data-act="setChartPeriod" data-n0="180" style="padding:8px 0; font-size:12px;">180H</button>
-        <button class="type-btn" data-chart-period="360" data-act="setChartPeriod" data-n0="360" style="padding:8px 0; font-size:12px;">360H</button>
+      <div class="section-title" style="margin-bottom:8px;">Grafik</div>
+      <div class="toggle-row" id="chart-seg-row" role="tablist" aria-label="Jenis grafik" style="flex-wrap:wrap; margin-bottom:0;"></div>
+      <div id="chart-period-wrap" style="margin-top:12px;">
+        <div class="acc-sub" style="margin:0 0 6px;">Periode kurva</div>
+        <div class="toggle-row" style="margin-bottom:0;">
+          <button class="type-btn" data-chart-period="1" data-act="setChartPeriod" data-n0="1" style="padding:8px 0; font-size:12px;">1H</button>
+          <button class="type-btn" data-chart-period="7" data-act="setChartPeriod" data-n0="7" style="padding:8px 0; font-size:12px;">7H</button>
+          <button class="type-btn active" data-chart-period="30" data-act="setChartPeriod" data-n0="30" style="padding:8px 0; font-size:12px;">30H</button>
+          <button class="type-btn" data-chart-period="180" data-act="setChartPeriod" data-n0="180" style="padding:8px 0; font-size:12px;">180H</button>
+          <button class="type-btn" data-chart-period="360" data-act="setChartPeriod" data-n0="360" style="padding:8px 0; font-size:12px;">360H</button>
+        </div>
       </div>
     </div>
 
@@ -200,6 +203,7 @@
       <div class="acc-sub u-mb6" id="debt-trend-summary"></div>
       <svg id="debt-trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="acc-sub u-mt4">Jumlah utang kartu kredit, PayLater, dan pinjaman di akhir tiap bulan, sesuai saldo yang tercatat.</div>
+    </div>
     </div>
   </div>
 
@@ -825,9 +829,9 @@
 
       <div class="set-block">
       <div class="section-title">Tampilan Ringkasan</div>
-      <div class="acc-sub u-mb6">Pilih kartu yang tampil di tab Ringkasan. Pengaturan ini tersimpan di browser ini saja dan tidak ikut ekspor JSON. Kartu tanpa data otomatis disembunyikan.</div>
+      <div class="acc-sub u-mb6">Pilih kartu yang tampil di tab Ringkasan dan atur urutannya dengan tombol ▲ ▼. Pengaturan ini tersimpan di browser ini saja dan tidak ikut ekspor JSON. Kartu tanpa data otomatis disembunyikan.</div>
       <div id="ringkasan-cards-config"></div>
-      <div class="io-row u-mt8"><button class="io-btn" data-act="resetRingkasanCards">Tampilkan semua kartu</button></div>
+      <div class="io-row u-mt8"><button class="io-btn" data-act="resetRingkasanCards">Tampilkan semua &amp; urutan awal</button></div>
       </div>
 
       <div class="set-block">
@@ -1040,6 +1044,7 @@
 <script src="10g-denda-telat.js"></script>
 <script src="10h-ics-tagihan.js"></script>
 <script src="10i-rekonsiliasi.js"></script>
+<script src="10j-perhatian.js"></script>
 <script src="11-laporan.js"></script>
 <script src="11b-laporan-utang.js"></script>
 <script src="11c-laporan-proyeksi.js"></script>

@@ -74,20 +74,23 @@
     if (!balances) balances = computeAllBalances(data);
     switch (name) {
       case 'ringkasan':
-        renderBackupReminder(data);
-        renderAccountsSummary(data, balances);
-        renderAccountValues(data, balances);
-        renderRecentTxns(data);
-        renderMonthInsights(data);
-        renderBudgetCard(data);
-        renderSubscriptionCard(data);
-        renderEmergencyCard(data, balances);
-        renderCategoryChart(data);
-        renderTrendChart(data);
-        renderDebtTrendChart(data);
-        renderCashflowChart(data);
-        renderNetWorthChart(data);
-        applyRingkasanVisibility(data);
+        // Visibilitas dihitung SEBELUM render: kartu yang disembunyikan/kosong dilewati (v1.1.069, R5),
+        // dan dari kartu grafik hanya segmen aktif yang digambar (R2).
+        { const vis = computeRingkasanVisibility(data);
+          applyRingkasanOrder();
+          renderBackupReminder(data);
+          renderAttentionStrip(data, balances);
+          renderAccountsSummary(data, balances);
+          if (!vis.off('account-values-card')) renderAccountValues(data, balances);
+          if (!vis.off('recent-txn-card')) renderRecentTxns(data);
+          if (!vis.off('month-insight-card')) renderMonthInsights(data);
+          if (!vis.off('budget-card')) renderBudgetCard(data);
+          if (!vis.off('sub-card')) renderSubscriptionCard(data);
+          if (!vis.off('emergency-card')) renderEmergencyCard(data, balances);
+          if (!vis.off('plan-cta-card')) renderPlanCta(data);
+          const curSeg = applyChartSegments(data, vis);
+          applyRingkasanVisibility(data, vis);
+          if (curSeg) renderChartSegment(curSeg, data); }
         break;
       case 'akun':
         renderAccounts(data, balances);
@@ -229,7 +232,7 @@
     $('balance-eye-icon').innerHTML = state.balanceHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
     const data = loadData();
     renderBalanceHeader(data);
-    renderNetWorthChart(data);
+    if (activeChartSegmentId() === 'kekayaan') renderNetWorthChart(data);
   }
 
   function renderBalanceHeader(data, balances) {

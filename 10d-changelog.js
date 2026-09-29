@@ -7,6 +7,19 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.071', d: '29 Sep 2026', items: [
+      'Anggaran, Langganan, dan Dana darurat yang belum kamu pakai tidak lagi tampil sebagai kartu kosong yang panjang; diganti satu kartu "Atur rencana keuanganmu" dengan satu baris dan tombol Atur untuk tiap fitur yang belum dipakai',
+      'Begitu sebuah fitur diatur, kartunya muncul otomatis dan barisnya hilang dari kartu ajakan; kalau semuanya sudah dipakai, kartu ajakan menghilang sendiri. Kartu ajakan juga bisa disembunyikan lewat Profil'] },
+    { v: 'v1.1.070', d: '29 Sep 2026', items: [
+      'Rata-rata pengeluaran harian, pengeluaran terbesar, dan beban cicilan & bunga kini menyatu di kartu "Bulan ini", jadi Ringkasan lebih ringkas',
+      'Urutan kartu di Ringkasan bisa diatur sendiri: buka Profil > Tampilan Ringkasan lalu pakai tombol naik/turun (▲ ▼). Grafik bergerak sebagai satu kelompok',
+      'Anggaran bulan ini dan Langganan berulang kini juga bisa disembunyikan lewat Profil'] },
+    { v: 'v1.1.069', d: '29 Sep 2026', items: [
+      'Lima grafik di Ringkasan digabung jadi satu kartu "Grafik" dengan pilihan Kekayaan, Cashflow, Kategori, Tren, dan Utang; halaman jadi jauh lebih pendek dan pilihan terakhirmu diingat',
+      'Pemilih periode (1H sampai 360H) ikut di kartu ini dan hanya muncul untuk Kekayaan dan Cashflow',
+      'Kartu yang kamu sembunyikan atau yang masih kosong tidak lagi dihitung, jadi Ringkasan terbuka lebih ringan'] },
+    { v: 'v1.1.068', d: '29 Sep 2026', items: [
+      'Di puncak Ringkasan ada kotak "Perlu perhatian" (maksimal 3 baris): tagihan yang telat atau jatuh tempo 7 hari ke depan, anggaran yang hampir habis atau terlampaui, dan dana darurat yang masih kurang. Ketuk barisnya untuk membuka akun atau bagian terkait; kotak hilang sendiri kalau semuanya aman'] },
     { v: 'v1.1.067', d: '29 Sep 2026', items: [
       'Di detail akun kas, bank, dan e-wallet ada bagian "Cocokkan saldo": isi saldo asli, lihat selisihnya dengan saldo di app, lalu catat sebagai penyesuaian kalau perlu',
       'Penyesuaian saldo tidak dihitung sebagai pemasukan atau pengeluaran di Ringkasan, grafik, anggaran, maupun Laporan',

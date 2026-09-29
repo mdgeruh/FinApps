@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.067** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.071** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
@@ -267,6 +267,9 @@ JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua b
 | `10b-anggaran`, `10c-langganan`, `10e-dana-darurat`, `10f-tren-utang` | Kartu Ringkasan: anggaran, langganan berulang, dana darurat, tren utang |
 | `10d-changelog` | Riwayat perubahan di tombol `?` (`CHANGELOG_ENTRIES`) |
 | `10g-denda-telat`, `10h-ics-tagihan`, `10i-rekonsiliasi` | Perkiraan denda telat, ekspor `.ics`, rekonsiliasi saldo |
+| `09-grafik` (urutan kartu) | `RINGKASAN_ORDER_UNITS`, `sanitizeRingkasanOrder`, `moveInOrder`, `applyRingkasanOrder`; pengaturan di Profil > Tampilan Ringkasan (▲ ▼, tersimpan per perangkat) |
+| `09-grafik` (segmen) | Kartu "Grafik" di Ringkasan: `CHART_SEGMENTS`, `pickChartSegment`, `setChartSegment`; `computeRingkasanVisibility` menentukan kartu mana yang dirender |
+| `10j-perhatian` | Strip "Perlu perhatian" di puncak Ringkasan (`computeAttentionItems`, `renderAttentionStrip`) dan kartu ajakan rencana (`renderPlanCta`; kartu Anggaran/Langganan/Dana darurat yang belum dipakai tersembunyi otomatis, `computePlanUsage`) |
 | `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
 | `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
 | `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
@@ -305,4 +308,4 @@ Nomor versi ada di `APP_VERSION` (`v1.1.NNN`) dan tampil di kartu atas tab Profi
 - **Kelas utilitas:** `style.css` punya `u-*` (mis. `u-mb8`, `u-w100`) di bagian bawah untuk margin/lebar sederhana; pakai itu alih-alih inline style baru. Kelas utilitas kalah oleh aturan yang lebih spesifik (mis. `#tab-laporan .section-title`).
 - **Transaksi non-operasional:** pembayaran utang, pencairan pinjaman, dan Penyesuaian saldo dikecualikan dari pemasukan/pengeluaran lewat `isNonOperatingTxn` (`01-data.js`); pakai helper itu untuk filter baru.
 
-**Memasang paket zip:** timpa file lama dengan isi zip. Zip parsial hanya berisi file yang berubah; paket lengkap juga berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan empat ikon. Salin semua file JS baru (mis. `04b-`, `04c-`, `11b-`, `11c-`, `10b-` s.d. `10i-`).
+**Memasang paket zip:** timpa file lama dengan isi zip. Zip parsial hanya berisi file yang berubah; paket lengkap juga berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan empat ikon. Salin semua file JS baru (mis. `04b-`, `04c-`, `11b-`, `11c-`, `10b-` s.d. `10j-`).
