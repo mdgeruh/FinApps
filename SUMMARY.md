@@ -1,6 +1,6 @@
 # Ringkasan & Todolist: Keuangan Pribadi
 
-Status per **v1.1.067** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
+Status per **v1.1.071** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
 Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
 
 ## 1. Gambaran singkat
@@ -28,17 +28,17 @@ Dasar temuan: Ringkasan menumpuk **14 kartu** dalam satu gulir panjang. **Tidak 
 
 Urut dari dampak terbesar ke terkecil:
 
-- [ ] **R1 [F] Strip "Perlu perhatian" di puncak Ringkasan.** Maksimal 3 baris, dari `computeUpcomingDues` (telat atau ≤7 hari), anggaran ≥80%, dana darurat kurang, backup lama. Ketuk membuka tab atau akun terkait; strip hilang sendiri kalau tidak ada apa-apa. Ini informasi paling penting bagi pemakai dengan banyak utang, dan sekarang harus pindah ke tab Tagihan dulu
-- [ ] **R2 [F] Satu kartu grafik dengan pilihan segmen** (Kekayaan | Cashflow | Kategori | Tren | Utang) menggantikan 5 kartu grafik bertumpuk. Hanya segmen aktif yang digambar, jadi gulir lebih pendek dan hitung lebih sedikit. Pemilih periode ikut ke kartu ini
-- [ ] **R3 [F] Gabungkan "Insight lain" dan "Beban cicilan & bunga" ke kartu "Bulan ini"** sebagai baris tambahan, supaya 3 kartu kecil jadi 1
-- [ ] **R4 [F] Susun ulang urutan default dan izinkan urut ulang.** Urutan usulan: Bulan ini → Rencana (anggaran, langganan, dana darurat) → Nilai akun → Transaksi terbaru → Grafik. Di Profil > Tampilan Ringkasan tambah tombol naik/turun selain sembunyikan (urutan disimpan per perangkat seperti `RINGKASAN_HIDDEN_KEY`)
-- [ ] **R5 [E] Lewati render kartu yang disembunyikan atau kosong.** Hitung visibilitas sebelum render, bukan sesudah (`renderTabContent` di `02-navigasi.js`)
+- [x] **R1 [F] (selesai v1.1.068; pengingat backup tidak diulang karena sudah punya kartu sendiri) Strip "Perlu perhatian" di puncak Ringkasan.** Maksimal 3 baris, dari `computeUpcomingDues` (telat atau ≤7 hari), anggaran ≥80%, dana darurat kurang, backup lama. Ketuk membuka tab atau akun terkait; strip hilang sendiri kalau tidak ada apa-apa. Ini informasi paling penting bagi pemakai dengan banyak utang, dan sekarang harus pindah ke tab Tagihan dulu
+- [x] **R2 [F] (selesai v1.1.069; kartu lama dipertahankan, hanya segmen aktif ditampilkan dan digambar) Satu kartu grafik dengan pilihan segmen** (Kekayaan | Cashflow | Kategori | Tren | Utang) menggantikan 5 kartu grafik bertumpuk. Hanya segmen aktif yang digambar, jadi gulir lebih pendek dan hitung lebih sedikit. Pemilih periode ikut ke kartu ini
+- [x] **R3 [F] (selesai v1.1.070) Gabungkan "Insight lain" dan "Beban cicilan & bunga" ke kartu "Bulan ini"** sebagai baris tambahan, supaya 3 kartu kecil jadi 1
+- [x] **R4 [F] (selesai v1.1.070; urutan bawaan sudah sesuai usulan setelah R3, tombol ▲ ▼ di Profil) Susun ulang urutan default dan izinkan urut ulang.** Urutan usulan: Bulan ini → Rencana (anggaran, langganan, dana darurat) → Nilai akun → Transaksi terbaru → Grafik. Di Profil > Tampilan Ringkasan tambah tombol naik/turun selain sembunyikan (urutan disimpan per perangkat seperti `RINGKASAN_HIDDEN_KEY`)
+- [x] **R5 [E] (selesai v1.1.069) Lewati render kartu yang disembunyikan atau kosong.** Hitung visibilitas sebelum render, bukan sesudah (`renderTabContent` di `02-navigasi.js`)
 - [ ] **R6 [Q] Aksesibilitas grafik:** `role="img"` + `aria-label` ringkasan tiap SVG, tooltip bisa lewat fokus keyboard, dan naik/turun tidak hanya dibedakan warna (tambah ▲/▼)
-- [ ] **R7 [F] Kartu Rencana yang belum dipakai** (anggaran, langganan, dana darurat kosong) tampil sebagai satu baris ajakan atau tersembunyi otomatis, bukan kartu kosong penuh
+- [x] **R7 [F] (selesai v1.1.071; kartu kosong tersembunyi otomatis, diganti satu kartu ajakan) Kartu Rencana yang belum dipakai** (anggaran, langganan, dana darurat kosong) tampil sebagai satu baris ajakan atau tersembunyi otomatis, bukan kartu kosong penuh
 - [ ] **R8 [F] Proyeksi akhir bulan di kartu "Bulan ini":** rata-rata pengeluaran harian × sisa hari, dibandingkan total anggaran kalau ada
 - [ ] **R9 [E] `computeDebtTrend` satu lintasan:** kelompokkan transaksi per akun per bulan sekali, bukan `accountBalanceAsOf` per akun per bulan (10–20x `computeAllBalances`). Baru perlu kalau R2 belum cukup atau data mencapai puluhan ribu transaksi
 
-Urutan kerja yang disarankan: R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
+Urutan kerja yang disarankan (R1–R5 dan R7 sudah selesai; berikutnya R6, lalu R8, R9): R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
 
 ### Perlu kamu jalankan (tidak bisa saya lakukan)
 - [ ] [K] Jalankan `supabase/setup.sql` di Supabase SQL Editor dan uji RLS dengan dua akun (langkah ada di akhir file SQL)
@@ -69,12 +69,13 @@ Urutan kerja yang disarankan: R1 → R2 + R5 (satu batch, saling terkait) → R3
 - [-] [E] E9 (jangan bangun ulang `<select>` tiap render): tidak dikerjakan, rebuild murah dan menahannya berisiko pilihan dropdown basi
 - [-] [K] Cache DOM `$()` basi: belum ada kasus nyata. Kalau elemen dibuat ulang lewat `innerHTML` dan dicari lewat `$()`, pakai `document.getElementById`
 - [x] [F] Anggaran per kategori (v1.1.056) · Langganan berulang (v1.1.057) · Dana darurat (v1.1.059) · Tren total utang (v1.1.064) · Denda keterlambatan pinjaman, hanya perkiraan (v1.1.065) · Ekspor kalender `.ics` (v1.1.066) · Rekonsiliasi saldo kas/bank/e-wallet (v1.1.067)
+- [x] [F] Strip "Perlu perhatian" di Ringkasan (R1, v1.1.068) · Kartu Grafik bersegmen (R2, v1.1.069) · Lewati render kartu tidak tampil (R5, v1.1.069) · Kartu kecil digabung ke Bulan ini (R3, v1.1.070) · Urutan kartu bisa diatur (R4, v1.1.070) · Kartu rencana kosong jadi satu ajakan (R7, v1.1.071)
 - [x] [F] Tombol `?` riwayat perubahan di tab Profil (v1.1.058)
 - [x] [Q] README dan CHANGELOG diperbarui; CHANGELOG dipadatkan dan riwayat lengkap versi lama dipindah ke `CHANGELOG-ARSIP.md`
 
 ## 4. Hasil pengujian
 
-**Unit:** 58 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+**Unit:** 77 test lulus (`node tests/run.js`); semua file lolos `node --check`.
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 
@@ -89,6 +90,10 @@ Urutan kerja yang disarankan: R1 → R2 + R5 (satu batch, saling terkait) → R3
 | 1.1.055 | 3 tab identik; klik hapus/baris terpisah benar; parse di `render()` 4 → 1 | lulus |
 | 1.1.056–057 | anggaran dan langganan dengan klik nyata (tambah, validasi, idempoten, reload, ekspor) | lulus |
 | 1.1.059, 1.1.064–067 | hanya unit test dan cek sintaks | tampilan belum diuji |
+| 1.1.071 | R7: kartu rencana kosong tersembunyi, kartu ajakan 3 baris, klik Atur membuka form, isi anggaran memunculkan kartunya, semua dipakai = ajakan hilang, urutan lama tersimpan tetap benar | tanpa error JS |
+| 1.1.070 | R3/R4: blok insight dan beban cicilan di dalam Bulan ini, urutan kartu bisa digeser dan bertahan setelah reload, grup Grafik bergerak utuh, reset, data kosong, desktop tanpa scroll horizontal | tanpa error JS |
+| 1.1.069 | kartu Grafik bersegmen: hanya segmen aktif tergambar, pilihan bertahan setelah reload, segmen mati jatuh ke yang tersedia, kartu hilang saat data kosong | tanpa error JS |
+| 1.1.068 | strip "Perlu perhatian": 3 baris berurutan, klik membuka detail akun, hilang saat data aman | tanpa error JS |
 
 **Belum teruji:** login/sinkron Supabase sungguhan, service worker di perangkat nyata (offline), dua perangkat bentrok, sinkron `budgets` / `emergencyMonths` antar perangkat, sentuhan nyata di HP, tampilan v1.1.059 dan v1.1.064–067 (dana darurat, grafik tren utang, denda telat, tombol `.ics`, Cocokkan saldo).
 
