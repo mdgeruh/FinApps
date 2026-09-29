@@ -135,13 +135,13 @@
     return {
       accounts: [{ id: accId, name: 'Kas / Dompet', type: 'kas', initialBalance: 0 }],
       txns: [
-        { id: 1, date: todayStr(), type: 'masuk', desc: 'Bawa kas', amount: 100000, accountId: accId, category: 'Lainnya' },
-        { id: 2, date: todayStr(), type: 'masuk', desc: 'Benerin laptop', amount: 300000, accountId: accId, category: 'Hasil usaha' },
-        { id: 3, date: todayStr(), type: 'keluar', desc: 'Belanja telor', amount: 20000, accountId: accId, category: 'Belanja harian' },
-        { id: 4, date: todayStr(), type: 'keluar', desc: 'Belanja bahan banten', amount: 25000, accountId: accId, category: 'Upacara/Ibadah' },
-        { id: 5, date: todayStr(), type: 'keluar', desc: 'Makan di luar', amount: 35000, accountId: accId, category: 'Makan & minum' },
-        { id: 6, date: todayStr(), type: 'keluar', desc: 'Take away makanan', amount: 30000, accountId: accId, category: 'Makan & minum' },
-        { id: 7, date: todayStr(), type: 'keluar', desc: 'Bensin', amount: 30000, accountId: accId, category: 'Transportasi' }
+        { id: 'contoh-1', date: todayStr(), type: 'masuk', desc: 'Bawa kas', amount: 100000, accountId: accId, category: 'Lainnya' },
+        { id: 'contoh-2', date: todayStr(), type: 'masuk', desc: 'Benerin laptop', amount: 300000, accountId: accId, category: 'Hasil usaha' },
+        { id: 'contoh-3', date: todayStr(), type: 'keluar', desc: 'Belanja telor', amount: 20000, accountId: accId, category: 'Belanja harian' },
+        { id: 'contoh-4', date: todayStr(), type: 'keluar', desc: 'Belanja bahan banten', amount: 25000, accountId: accId, category: 'Upacara/Ibadah' },
+        { id: 'contoh-5', date: todayStr(), type: 'keluar', desc: 'Makan di luar', amount: 35000, accountId: accId, category: 'Makan & minum' },
+        { id: 'contoh-6', date: todayStr(), type: 'keluar', desc: 'Take away makanan', amount: 30000, accountId: accId, category: 'Makan & minum' },
+        { id: 'contoh-7', date: todayStr(), type: 'keluar', desc: 'Bensin', amount: 30000, accountId: accId, category: 'Transportasi' }
       ]
     };
   }

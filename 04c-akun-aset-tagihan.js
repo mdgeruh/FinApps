@@ -67,7 +67,7 @@
       <div class="txn-row">
         <div class="txn-left"><div class="txn-text"><div class="txn-desc txn-desc-wrap">${escapeHtml(r[0])}</div></div></div>
         <div class="txn-right"><span class="txn-amount" style="color:${r[2]};">${r[1]}</span></div>
-      </div>`).join('') + (hasValuations(acc) ? '' : '<div class="acc-sub" style="margin-top:6px;">Belum pernah diperbarui: nilai = nilai awal + transaksi.</div>');
+      </div>`).join('') + (hasValuations(acc) ? '' : '<div class="acc-sub u-mt6">Belum pernah diperbarui: nilai = nilai awal + transaksi.</div>');
     const dateEl = $('asset-val-date-input');
     dateEl.value = todayStr(); dateEl.max = todayStr();
     $('asset-val-price-row').style.display = qty > 0 ? 'flex' : 'none';
@@ -78,7 +78,7 @@
     $('asset-val-history').innerHTML = vals.length ? vals.map(v => `
       <div class="txn-row">
         <div class="txn-left"><div class="txn-text"><div class="txn-desc">${escapeHtml(fmtTgl(v.date))}</div>${v.price > 0 ? `<div class="txn-meta">${formatRp(v.price)} per ${escapeHtml(unit)}</div>` : ''}</div></div>
-        <div class="txn-right"><span class="txn-amount">${formatRp(v.value)}</span><button type="button" class="io-btn" style="padding:4px 10px;" onclick="deleteAssetValuation('${v.date}')" aria-label="Hapus penilaian ${escapeHtml(v.date)}">×</button></div>
+        <div class="txn-right"><span class="txn-amount">${formatRp(v.value)}</span><button type="button" class="io-btn" style="padding:4px 10px;" data-act="deleteAssetValuation" data-a0="${v.date}" aria-label="Hapus penilaian ${escapeHtml(v.date)}">×</button></div>
       </div>`).join('') : '<div class="acc-sub">Belum ada riwayat.</div>';
   }
   function onAssetPriceInput() {
@@ -268,7 +268,7 @@
         </div></div>
         <div class="txn-right"><span class="txn-amount"${it.no == null ? ' style="color:var(--rust);"' : ''}>${formatRp(it.amount)}</span></div>
       </div>`).join('')
-      + `<button type="button" class="submit-btn" style="margin-top:14px;" onclick="closePaylaterMonthDetail(); payMonthFromDetail('${accId}', ${groupIdx})">Bayar bulan ini</button>`;
+      + `<button type="button" class="submit-btn" style="margin-top:14px;" data-act="payMonthAndClose" data-a0="${accId}" data-n1="${groupIdx}">Bayar bulan ini</button>`;
 
     $('paylater-month-detail').classList.add('open');
   }

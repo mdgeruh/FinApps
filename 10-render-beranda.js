@@ -36,7 +36,7 @@
       if (t.planId) metaText += ' · Cicilan'; else if (t.method === 'nanti') metaText += ' · Bayar nanti';
       metaText += ' · ' + formatDayLabel(t.date);
       return `
-        <div class="txn-row clickable" onclick="openTxnDetail('${t.id}')">
+        <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
           <div class="txn-left">
             <span class="dot ${t.type}"></span>
             <div class="txn-text">
@@ -46,7 +46,7 @@
           </div>
           <div class="txn-right">
             <span class="txn-amount ${t.type}">${sign} ${formatRp(t.amount)}</span>
-            <button class="del-btn" onclick="event.stopPropagation(); deleteTxn('${t.id}')" aria-label="Hapus">×</button>
+            <button class="del-btn" data-act="deleteTxn" data-a0="${t.id}" data-stop="1" aria-label="Hapus">×</button>
           </div>
         </div>
       `;

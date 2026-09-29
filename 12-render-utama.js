@@ -3,7 +3,7 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.051';
+  const APP_VERSION = 'v1.1.054';
   const APP_BUILD = '29 Sep 2026';
   (function () { const f = document.getElementById('app-footer'); if (f) f.textContent = APP_NAME + ' · ' + APP_VERSION + ' · ' + APP_BUILD; })();
 
@@ -81,9 +81,9 @@
 
     if (txns.length === 0) {
       if (monthActive && !isFiltered) {
-        listEl.innerHTML = '<div class="empty">Belum ada transaksi di ' + escapeHtml(periodLabel) + '.<br><button type="button" class="empty-reset-link" onclick="setTxnMonth(\'all\')">Lihat semua waktu</button></div>';
+        listEl.innerHTML = '<div class="empty">Belum ada transaksi di ' + escapeHtml(periodLabel) + '.<br><button type="button" class="empty-reset-link" data-act="setTxnMonth" data-a0="all">Lihat semua waktu</button></div>';
       } else if (isFiltered) {
-        listEl.innerHTML = '<div class="empty">Tidak ada transaksi yang cocok' + (monthActive ? ' di ' + escapeHtml(periodLabel) : '') + '.<br><button type="button" class="empty-reset-link" onclick="resetFilters()">Hapus semua filter</button></div>';
+        listEl.innerHTML = '<div class="empty">Tidak ada transaksi yang cocok' + (monthActive ? ' di ' + escapeHtml(periodLabel) : '') + '.<br><button type="button" class="empty-reset-link" data-act="resetFilters">Hapus semua filter</button></div>';
       } else {
         listEl.innerHTML = '<div class="empty">Belum ada transaksi di sini. Tambahkan yang pertama di atas.</div>';
       }
