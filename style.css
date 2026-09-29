@@ -433,6 +433,7 @@
   }
 
   /* Desktop: sidebar kiri, kolom isi lebih lebar, Ringkasan dua kolom */
+  .set-block { margin-bottom: 22px; }   /* mobile; desktop menimpanya di media query di bawah */
   @media screen and (min-width: 1024px) {
     body { padding-left: 232px; }
     .wrap { max-width: 1120px; padding: 32px 40px 56px; }
@@ -663,3 +664,23 @@
   .sub-row { margin-top: 8px; align-items: center; }
   .sub-off { opacity: 0.6; }
   .sub-actions { display: flex; gap: 10px; flex: none; }
+
+/* ---- v1.1.058: tab Profil + riwayat perubahan ---- */
+.profil-about { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.u-m0 { margin: 0; }
+.u-mt4 { margin-top: 4px; }
+.u-mb14 { margin-bottom: 14px; }
+.io-btn-full { width: 100%; margin-top: 8px; }
+#sync-logout-btn { margin-top: 10px; width: 100%; }
+.profil-adv { border-top: 1px solid var(--line); padding-top: 14px; }
+.profil-adv .set-block { margin-top: 18px; margin-bottom: 0; }
+.adv-summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 0; }
+.title-danger { color: var(--rust); }
+.help-btn { background: var(--card); border: 1px solid var(--line); color: var(--ink-soft); font: 600 15px/1 inherit; width: 32px; height: 32px; min-width: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.help-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
+.help-btn:active { background: var(--paper-dim); }
+.cl-entry { padding: 10px 0; border-top: 1px solid var(--line); }
+.cl-entry:first-child { border-top: 0; padding-top: 0; }
+.cl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.cl-badge { font-size: 10.5px; font-weight: 600; color: var(--green); border: 1px solid var(--green); border-radius: 999px; padding: 1px 7px; }
+.cl-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink); line-height: 1.5; }
