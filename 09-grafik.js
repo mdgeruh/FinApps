@@ -157,8 +157,51 @@
     if (perm) perm.style.opacity = '1';
   }
 
+  // ---------- Aksesibilitas grafik (v1.1.072, R6) ----------
+  // Fungsi murni (tanpa DOM): teks untuk pembaca layar dan penanda arah yang tidak bergantung warna.
+  function trendArrow(delta) { return delta > 0 ? '▲ ' : (delta < 0 ? '▼ ' : ''); }
+
+  function describeChartPoint(geom, idx) {
+    if (!geom || !geom.days || geom.days[idx] === undefined) return '';
+    const when = geom.formatDate(geom.days[idx]);
+    if (geom.series) return when + ': ' + geom.series.map(s => s.label + ' ' + geom.formatValue(s.values[idx])).join(', ');
+    return when + ': ' + geom.formatValue(geom.points[idx]);
+  }
+
+  function chartAriaLabel(title, geom) {
+    if (!geom || !geom.days || !geom.days.length) return title + '. Belum ada data.';
+    const n = geom.days.length;
+    return title + '. ' + n + ' titik data, dari ' + geom.formatDate(geom.days[0]) + ' sampai ' + geom.formatDate(geom.days[n - 1]) +
+      '. Terakhir, ' + describeChartPoint(geom, n - 1) + '. Fokus lalu pakai panah kiri dan kanan untuk membaca tiap titik.';
+  }
+
+  const CATEGORY_TYPE_LABEL = { keluar: 'Pengeluaran', masuk: 'Pemasukan', transfer: 'Transfer' };
+  function describePieChart(items, total, typeLabel) {
+    if (!items || !items.length || !(total > 0)) return typeLabel + ' bulan ini: belum ada transaksi.';
+    const top = items.slice(0, 5).map(it => it.category + ' ' + Math.round(it.amount / total * 100) + ' persen').join(', ');
+    return typeLabel + ' bulan ini, total ' + formatRp(total) + '. ' + (items.length > 5 ? 'Lima terbesar: ' : '') + top + '.';
+  }
+
+  const elText = (id, fallback) => { const el = document.getElementById(id); return (el && el.textContent) || fallback; };
+  const CHART_TITLES = {
+    'networth-chart': () => elText('networth-title', 'Kurva kekayaan bersih'),
+    'cashflow-chart': () => elText('cashflow-title', 'Kurva cashflow'),
+    'trend-chart': 'Pemasukan dan pengeluaran, 6 bulan terakhir',
+    'debt-trend-chart': 'Tren total utang, 6 bulan terakhir',
+    'laporan-trend-chart': 'Pemasukan dan pengeluaran pada periode laporan'
+  };
+  function chartTitleFor(svgId) { const t = CHART_TITLES[svgId]; return typeof t === 'function' ? t() : (t || 'Grafik'); }
+
+  // Dipanggil tiap grafik digambar ulang, jadi label selalu mengikuti data terbaru.
+  function applyChartA11y(svg, svgId) {
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('tabindex', '0');
+    svg.setAttribute('aria-label', chartAriaLabel(chartTitleFor(svgId), chartGeom[svgId]));
+  }
+
   function bindChartInteraction(svgId) {
     const svg = $(svgId);
+    if (svg) applyChartA11y(svg, svgId);
     if (!svg || svg.dataset.interactiveBound) return;
     svg.dataset.interactiveBound = '1';
     svg.style.touchAction = 'none';
@@ -205,6 +248,40 @@
       if (touching) return;
       if (!svg.contains(e.target)) hideChartTooltip(svgId);
     };
+
+    // Keyboard (R6): fokus menampilkan titik terakhir; panah kiri/kanan, Home, End berpindah titik; Esc menutup.
+    // Isi titik dibacakan lewat wilayah aria-live #chart-live.
+    let kbIdx = null;
+    const announce = (idx) => { const live = document.getElementById('chart-live'); if (live) live.textContent = describeChartPoint(chartGeom[svgId], idx); };
+    const onKeyDown = (e) => {
+      const geom = chartGeom[svgId];
+      if (!geom || !geom.days || !geom.days.length) return;
+      const n = geom.days.length;
+      let idx = kbIdx === null ? n - 1 : Math.min(kbIdx, n - 1);
+      if (e.key === 'ArrowRight') idx = Math.min(n - 1, idx + 1);
+      else if (e.key === 'ArrowLeft') idx = Math.max(0, idx - 1);
+      else if (e.key === 'Home') idx = 0;
+      else if (e.key === 'End') idx = n - 1;
+      else if (e.key === 'Escape') { kbIdx = null; hideChartTooltip(svgId); return; }
+      else return;
+      e.preventDefault();
+      kbIdx = idx;
+      updateChartTooltip(svgId, idx);
+      announce(idx);
+    };
+    const onFocus = () => {
+      let visible = true;
+      try { visible = svg.matches(':focus-visible'); } catch (_) { /* browser lama: anggap keyboard */ }
+      const geom = chartGeom[svgId];
+      if (!visible || !geom || !geom.days || !geom.days.length) return; // klik mouse tidak perlu memaksa titik terakhir
+      kbIdx = geom.days.length - 1;
+      updateChartTooltip(svgId, kbIdx);
+      announce(kbIdx);
+    };
+    const onBlur = () => { kbIdx = null; hideChartTooltip(svgId); };
+    svg.addEventListener('keydown', onKeyDown);
+    svg.addEventListener('focus', onFocus);
+    svg.addEventListener('blur', onBlur);
 
     svg.addEventListener('mousemove', onMouseMove);
     svg.addEventListener('mouseleave', onMouseLeave);
@@ -689,7 +766,7 @@
         summaryEl.textContent = 'Perubahan periode ini: •••••••';
         summaryEl.style.color = 'var(--ink)';
       } else {
-        summaryEl.textContent = `Perubahan periode ini: ${sign}${formatRp(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(1)}%)`;
+        summaryEl.textContent = `Perubahan periode ini: ${trendArrow(delta)}${sign}${formatRp(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(1)}%)`;
         summaryEl.style.color = delta > 0 ? 'var(--green)' : (delta < 0 ? 'var(--red)' : 'var(--ink-soft)');
       }
     }
@@ -861,7 +938,7 @@
               <span class="pie-dot" style="background:var(${s.colorVar})"></span>
               <span>${escapeHtml(s.acc.name)}</span>
             </div>
-            <span class="pie-legend-amount" style="color:${val >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtSigned(val)}</span>
+            <span class="pie-legend-amount" style="color:${val >= 0 ? 'var(--green)' : 'var(--red)'}">${trendArrow(val)}${fmtSigned(val)}</span>
           </div>
         `;
       }).join('') : '';
@@ -869,7 +946,7 @@
 
     if (summaryEl) {
       const sign = lastVal > 0 ? '+' : (lastVal < 0 ? '−' : '');
-      summaryEl.textContent = `Arus kas bersih: ${sign}${formatRp(Math.abs(lastVal))}`;
+      summaryEl.textContent = `Arus kas bersih: ${trendArrow(lastVal)}${sign}${formatRp(Math.abs(lastVal))}`;
       summaryEl.style.color = lastVal > 0 ? 'var(--green)' : (lastVal < 0 ? 'var(--red)' : 'var(--ink-soft)');
     }
   }
@@ -900,6 +977,8 @@
 
     if (items.length === 0 || total <= 0) {
       svg.innerHTML = `<circle cx="60" cy="60" r="52" style="fill:var(--paper-dim)"></circle>`;
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', describePieChart([], 0, CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori'));
       legend.innerHTML = '<div class="empty" style="padding:0;">Belum ada transaksi bulan ini.</div>';
       return;
     }
@@ -924,12 +1003,14 @@
       });
     }
     svg.innerHTML = svgContent;
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', describePieChart(items, total, CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori'));
 
     legend.innerHTML = items.map((item, i) => {
       const colorVar = PIE_COLOR_VARS[i % PIE_COLOR_VARS.length];
       const pct = Math.round((item.amount / total) * 100);
       return `
-        <div class="pie-legend-row clickable" data-idx="${i}">
+        <div class="pie-legend-row clickable" data-idx="${i}" role="button" tabindex="0" aria-label="${escapeHtml(item.category)}, ${pct} persen, ${formatRp(item.amount)}. Buka rincian">
           <div class="pie-legend-left">
             <span class="pie-dot" style="background:var(${colorVar})"></span>
             <span>${escapeHtml(item.category)} · ${pct}%</span>
@@ -947,6 +1028,9 @@
     });
     legend.querySelectorAll('.pie-legend-row[data-idx]').forEach(el => {
       el.addEventListener('click', () => openCategoryDetail(items[+el.dataset.idx].category));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCategoryDetail(items[+el.dataset.idx].category); }
+      });
     });
   }
 

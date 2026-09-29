@@ -16,11 +16,31 @@
     for (let i = DEBT_TREND_MONTHS - 1; i >= 0; i--) {
       const d = new Date(y, m - 1 - i, 1);
       const key = d.getFullYear() + '-' + p2(d.getMonth() + 1);
-      const date = i === 0 ? today : key + '-' + p2(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate());
-      let total = 0;
-      debtAccs.forEach(a => { const bal = accountBalanceAsOf(data, a.id, date); if (bal < 0) total += -bal; });
-      out.push({ key, date, total: roundMoney(total) });
+      out.push({ key, date: i === 0 ? today : key + '-' + p2(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()), total: 0 });
     }
+    // Satu lintasan (v1.1.074, R9): saldo tiap akun utang pada tiap tanggal akhir bulan dihitung sekaligus, bukan
+    // accountBalanceAsOf per akun per bulan (yang menelusuri seluruh transaksi berulang-ulang). Hasil identik dengan
+    // cara lama (dijaga test). Akun dengan riwayat penilaian (hasValuations) tetap lewat accountBalanceAsOf.
+    const n = out.length, dates = out.map(o => o.date);
+    const perAcc = new Map(); // id akun -> saldo pada tiap tanggal
+    const totals = new Array(n).fill(0);
+    const addBal = (bal) => { for (let i = 0; i < n; i++) if (bal[i] < 0) totals[i] += -bal[i]; };
+    debtAccs.forEach(a => {
+      if (hasValuations(a)) { addBal(dates.map(dt => accountBalanceAsOf(data, a.id, dt))); return; }
+      if (!perAcc.has(a.id)) perAcc.set(a.id, new Array(n).fill(a.initialBalance || 0));
+    });
+    const bump = (id, date, delta) => {
+      const arr = perAcc.get(id);
+      if (!arr) return;
+      for (let i = 0; i < n; i++) if (date <= dates[i]) arr[i] += delta;
+    };
+    data.txns.forEach(t => {
+      if (t.type === 'masuk') bump(t.accountId, t.date, t.amount);
+      else if (t.type === 'keluar') bump(t.accountId, t.date, -t.amount);
+      else if (t.type === 'transfer') { bump(t.accountId, t.date, -t.amount); bump(t.toAccountId, t.date, t.amount); }
+    });
+    perAcc.forEach(addBal);
+    out.forEach((o, i) => { o.total = roundMoney(totals[i]); });
     return out;
   }
 
@@ -34,7 +54,7 @@
       if (trend.every(t => t.total === 0)) { sumEl.textContent = 'Tidak ada utang tercatat dalam ' + DEBT_TREND_MONTHS + ' bulan terakhir.'; sumEl.style.color = ''; }
       else {
         const delta = roundMoney(last.total - prev.total);
-        sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti akhir bulan lalu' : (delta > 0 ? ', naik ' : ', turun ') + formatRp(Math.abs(delta)) + ' dari akhir bulan lalu');
+        sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti akhir bulan lalu' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dari akhir bulan lalu');
         sumEl.style.color = delta > 0 ? 'var(--red)' : (delta < 0 ? 'var(--green)' : '');
       }
     }

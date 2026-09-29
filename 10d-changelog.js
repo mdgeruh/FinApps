@@ -7,6 +7,15 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.074', d: '29 Sep 2026', items: [
+      'Grafik \"Tren total utang\" kini dihitung lebih cepat (hasilnya tetap sama), terutama terasa kalau kamu punya banyak akun utang dan ribuan transaksi'] },
+    { v: 'v1.1.073', d: '29 Sep 2026', items: [
+      'Kartu "Bulan ini" kini menampilkan Proyeksi akhir bulan: perkiraan total pengeluaran sampai akhir bulan kalau kebiasaan belanjamu sama seperti hari-hari yang sudah lewat',
+      'Kalau kamu punya anggaran, di bawahnya tertulis apakah kategori beranggaran diperkirakan melewati batas (▲) atau masih tersisa (▼). Di awal bulan angkanya masih perkiraan kasar, dan proyeksi tidak tampil di hari terakhir bulan'] },
+    { v: 'v1.1.072', d: '29 Sep 2026', items: [
+      'Grafik kini bisa dibaca pembaca layar: tiap grafik punya deskripsi singkat (judul, rentang, nilai terakhir), dan lingkaran kategori dibacakan beserta persentasenya',
+      'Grafik bisa dijelajahi dengan keyboard: fokus ke grafik lalu tekan panah kiri atau kanan untuk berpindah titik, Home dan End untuk ke ujung, Esc untuk menutup',
+      'Naik dan turun tidak lagi hanya dibedakan warna: ringkasan grafik dan legenda memakai tanda ▲ dan ▼. Baris kategori di bawah lingkaran juga bisa dibuka dengan keyboard'] },
     { v: 'v1.1.071', d: '29 Sep 2026', items: [
       'Anggaran, Langganan, dan Dana darurat yang belum kamu pakai tidak lagi tampil sebagai kartu kosong yang panjang; diganti satu kartu "Atur rencana keuanganmu" dengan satu baris dan tombol Atur untuk tiap fitur yang belum dipakai',
       'Begitu sebuah fitur diatur, kartunya muncul otomatis dan barisnya hilang dari kartu ajakan; kalau semuanya sudah dipakai, kartu ajakan menghilang sendiri. Kartu ajakan juga bisa disembunyikan lewat Profil'] },

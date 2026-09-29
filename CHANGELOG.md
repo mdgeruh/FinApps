@@ -6,6 +6,41 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.074 — 29 Sep 2026
+
+**Diubah**
+- **`computeDebtTrend` satu lintasan** (todo R9; `10f-tren-utang.js`): saldo tiap akun utang pada 6 tanggal akhir bulan kini dihitung sekaligus dalam satu telusuran transaksi (tiap transaksi menambah saldo semua tanggal yang belum terlewati), bukan `accountBalanceAsOf` per akun per bulan. Akun dengan riwayat penilaian (`hasValuations`) tetap lewat `accountBalanceAsOf`. Hasil identik dengan cara lama; sebelumnya tren utang menelusuri seluruh transaksi sebanyak (jumlah akun utang × 6) kali
+- Ukur (Node, 20.000 transaksi, 12 akun, 4 akun utang, tiga kali ukur): cara lama 14–16 ms, cara baru 1–5 ms (±3–10x lebih cepat di komputer; HP lebih lambat, selisihnya lebih besar makin banyak akun utang)
+- **3 test baru** (total 93), termasuk perbandingan dengan cara lama pada 300 set data acak (akun kartu/PayLater/pinjaman/kas/bank, transfer, saldo awal, kelebihan bayar) yang harus identik
+- Riwayat perubahan di tombol `?` (v1.1.074); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.074`; README: jumlah test
+
+**Pengujian**: 93 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px (kartu kredit + transfer pembayaran): segmen Utang menampilkan total Rp800.000 (naik Rp300.000 dari akhir bulan lalu), 6 batang, label aksesibilitas benar, tanpa error JS. **Belum teruji:** waktu di HP nyata
+
+## v1.1.073 — 29 Sep 2026
+
+**Ditambah**
+- **Proyeksi akhir bulan di kartu "Bulan ini"** (todo R8; `10b-anggaran.js`, `10-render-beranda.js`, `index.html`): `computeMonthProjection(data, monthKey, day, daysInMonth)` (murni) = pengeluaran sungguhan bulan ini (tanpa bayar utang, `isNonOperatingTxn`) ÷ hari berjalan × jumlah hari sebulan (setara sudah keluar + rata-rata harian × sisa hari). `null` bila belum ada pengeluaran atau hari tidak valid. Bila ada anggaran, dibandingkan hanya untuk kategori yang dianggarkan (proyeksi pengeluaran kategori tsb vs jumlah batasnya; total semua pengeluaran vs batas sebagian kategori tidak sebanding), status `ok`/`warn` (ambang `BUDGET_WARN_PCT`)/`over`. `renderMonthProjection` menampilkan baris "Proyeksi akhir bulan" (≈ Rp…) di blok insight, catatan "Rata-rata harian × sisa N hari" (plus "perkiraan kasar" bila hari < 7), dan baris anggaran ("▲ diperkirakan lebih …" merah / "▼ diperkirakan sisa …"). Baris disembunyikan di hari terakhir bulan (sudah pasti) dan bersama blok insight bila belum ada pengeluaran
+- **6 test baru** (total 90)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` (v1.1.073); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.073`; README: jumlah test dan peta modul
+
+**Pengujian**: 90 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px (tanggal 29 Sep, 2 pengeluaran): tanpa anggaran hanya proyeksi tampil, anggaran terlampaui → baris merah "▲ diperkirakan lebih", anggaran longgar → "▼ diperkirakan sisa", data kosong menyembunyikan blok, tanpa scroll horizontal, tanpa error JS. **Belum teruji:** tampilan tema gelap; pengeluaran besar di awal bulan (mis. sewa) membuat proyeksi terlalu tinggi karena rata-rata tidak membedakan biaya tetap dan harian (sengaja sederhana, ditandai "perkiraan kasar" di awal bulan)
+
+## v1.1.072 — 29 Sep 2026
+
+**Ditambah**
+- **Aksesibilitas grafik** (todo R6; `09-grafik.js`, `10f-tren-utang.js`, `index.html`, `style.css`): fungsi murni `chartAriaLabel(title, geom)`, `describeChartPoint(geom, idx)`, `describePieChart(items, total, typeLabel)`, dan `trendArrow(delta)`. `bindChartInteraction` kini memanggil `applyChartA11y` tiap grafik digambar ulang: SVG mendapat `role="img"`, `tabindex="0"`, dan `aria-label` berisi judul, jumlah titik, rentang tanggal, nilai terakhir, dan petunjuk keyboard (label ikut data terbaru, termasuk penyamaran saldo). Lima grafik garis/batang (kekayaan, cashflow, tren, tren utang, tren Laporan) memakainya; judul diambil dari `CHART_TITLES` (kekayaan dan cashflow mengikuti judul kartu yang memuat periode)
+- **Tooltip lewat keyboard**: fokus keyboard (`:focus-visible`, klik mouse tidak dihitung) menampilkan titik terakhir; panah kiri/kanan berpindah titik, Home/End ke ujung, Esc menutup, blur menyembunyikan. Isi titik dibacakan lewat wilayah `#chart-live` (`role="status"`, `aria-live="polite"`, kelas baru `.sr-only`). Fokus diberi cincin `:focus-visible`
+- **Lingkaran kategori**: `role="img"` + `aria-label` (jenis, total, lima kategori terbesar dengan persen); baris legenda kini `role="button"` + `tabindex="0"` + `aria-label`, dan bisa dibuka dengan Enter/Spasi (sebelumnya hanya klik)
+- **Naik/turun tidak hanya warna**: ringkasan kekayaan ("▲ +Rp…"), arus kas bersih, nilai per akun di legenda cashflow, dan ringkasan tren utang ("▲ naik" / "▼ turun") memakai tanda ▲/▼; legenda grafik pemasukan vs pengeluaran menjadi "▲ Pemasukan" dan "▼ Pengeluaran" (Ringkasan dan Laporan)
+- **7 test baru** (total 84)
+
+**Diubah**
+- Riwayat perubahan di tombol `?` (v1.1.072); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.072`; README: jumlah test dan peta modul
+
+**Pengujian**: 84 test unit lulus; semua file lolos cek sintaks; Chromium headless 390 px (data contoh 3 akun, ±100 transaksi, 1 kartu kredit): kelima segmen grafik dan lingkaran kategori punya `role`/`aria-label` yang benar, fokus keyboard menampilkan titik terakhir, ArrowLeft, Home, Esc bekerja dan `#chart-live` terisi, Enter pada baris legenda membuka rincian kategori, tanda ▲ tampil di ringkasan, tanpa scroll horizontal, tanpa error JS. **Belum teruji:** pembaca layar sungguhan (TalkBack/VoiceOver/NVDA); tampilan cincin fokus di tema gelap; tooltip tetap hanya bisa dijelajahi per titik, belum per seri
+
 ## v1.1.071 — 29 Sep 2026
 
 **Ditambah**

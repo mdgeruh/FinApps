@@ -119,6 +119,8 @@
     const avgEl = $('avg-daily-expense');
     if (avgEl) avgEl.textContent = formatRp(avgDaily);
 
+    renderMonthProjection(data, curMonthKey, now);
+
     const rawExpenseTxns = monthTxns.filter(t => t.type === 'keluar');
     const expenseTxns = rawExpenseTxns.filter(t => !isNonOperatingTxn(t));
     const labelEl = $('biggest-expense-label');
@@ -135,6 +137,26 @@
     }
 
     renderDebtBurden(rawMonthOut, rawExpenseTxns); // kartu beban utang tetap dihitung dari seluruh pengeluaran
+  }
+
+  // Proyeksi akhir bulan (R8): baris di blok insight kartu "Bulan ini". Disembunyikan di hari terakhir (sudah pasti) dan tanpa pengeluaran.
+  function renderMonthProjection(data, monthKey, now) {
+    const row = $('month-projection-row');
+    if (!row) return;
+    const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const p = computeMonthProjection(data, monthKey, now.getDate(), dim);
+    if (!p || p.remaining <= 0) { row.style.display = 'none'; return; }
+    row.style.display = '';
+    $('month-projection').textContent = '≈ ' + formatRp(p.projected);
+    let note = 'Rata-rata harian × sisa ' + p.remaining + ' hari' + (p.rough ? ' (masih awal bulan, perkiraan kasar)' : '');
+    const noteEl = $('month-projection-note');
+    if (p.budget) {
+      const b = p.budget;
+      note += '\nKategori beranggaran: ' + (b.status === 'over' ? '▲ diperkirakan lebih ' + formatRp(b.diff) : '▼ diperkirakan sisa ' + formatRp(-b.diff)) + ' dari batas ' + formatRp(b.limit);
+      noteEl.style.color = b.status === 'over' ? 'var(--red)' : (b.status === 'warn' ? 'var(--amber)' : '');
+    } else noteEl.style.color = '';
+    noteEl.style.whiteSpace = 'pre-line';
+    noteEl.textContent = note;
   }
 
   function renderDebtBurden(monthOut, expenseTxns) {
