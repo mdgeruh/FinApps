@@ -1,6 +1,6 @@
 # Ringkasan, Efisiensi & Todolist: Keuangan Pribadi
 
-Status per **v1.1.057** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.057, `[ ]` = belum.
+Status per **v1.1.058** (29 Sep 2026). Centang `[x]` = sudah dikerjakan sampai v1.1.058, `[ ]` = belum.
 Detail perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
 ## 1. Gambaran singkat
@@ -64,6 +64,7 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 - [ ] [F] Dana darurat · tren total utang · denda keterlambatan pinjol · rekonsiliasi saldo · ekspor kalender `.ics` · desktop tahap 3
 
 ### P5: dokumentasi
+- [x] [F] Tombol `?` riwayat perubahan di tab Profil + rapikan tab Profil (v1.1.058; tiap rilis tambah entri di `CHANGELOG_ENTRIES`, `10d-changelog.js`)
 - [x] [Q] README diperbarui (versi, tab Tagihan/Profil, login Google, tanpa menu gear, service worker, cara rilis)
 - [x] [Q] CHANGELOG v1.1.049
 - [x] [Q] Rujukan `syncPullOwnerName` dihapus dari README

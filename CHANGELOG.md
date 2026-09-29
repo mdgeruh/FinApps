@@ -2,6 +2,17 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.058 — 29 Sep 2026
+
+**Ditambah**
+- **Tombol `?` riwayat perubahan** (`10d-changelog.js` baru, `index.html`, `style.css`): di bagian atas tab Profil ada kartu "Keuangan Pribadi" berisi versi + tanggal build dan tombol `?` yang membuka sheet "Riwayat perubahan" (8 rilis terakhir, yang terbaru diberi lencana). Datanya `CHANGELOG_ENTRIES` di `10d-changelog.js`, tanpa fetch, jadi jalan offline dan di `file://`. Riwayat lengkap tetap di `CHANGELOG.md`. Tiap rilis baru: tambah entri paling atas
+
+**Diubah (optimalisasi tab Profil)**
+- Jarak antarbagian seragam: margin-top inline yang tidak konsisten (hanya sebagian judul yang punya) diganti `margin-bottom` pada `.set-block`; judul di dalam "Pengaturan data lanjutan" mengikuti aturan yang sama
+- Gaya inline di tab Profil diganti kelas (`profil-adv`, `adv-summary`, `title-danger`, `io-btn-full`, `u-m0`, `u-mt4`, `u-mb14`); yang tersisa hanya `display:none` yang diubah JS
+- Tombol Enter: menyimpan nama pemilik, mengubah email, dan mengubah password (`data-keydown-act`, `enterkeyhint`)
+- `sw.js`: `10d-changelog.js` masuk `APP_SHELL`, `CACHE_VERSION` naik ke `kp-v1.1.058`
+
 ## v1.1.057 — 29 Sep 2026
 
 **Ditambah**

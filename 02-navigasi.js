@@ -119,6 +119,8 @@
   function renderProfilTab() {
     const el = $('profil-name-input');
     if (el) el.value = getOwnerName();
+    const ver = $('profil-version');
+    if (ver) ver.textContent = APP_VERSION + ' · ' + APP_BUILD;
 
     const active = !!(typeof sync !== 'undefined' && sync.ready);
     const noneEl = $('profil-sync-none');
