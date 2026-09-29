@@ -586,6 +586,33 @@
     if (logoutBtn && !sync.ready) logoutBtn.style.display = 'none';
   }
 
+  // Pustaka Supabase dimuat saat dibutuhkan (bukan <script> statis di index.html), supaya CDN yang
+  // lambat/offline tidak menahan pemuatan app. Mengembalikan true kalau window.supabase siap dipakai.
+  const SUPABASE_JS_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  let _syncLibPromise = null;
+  function syncLoadLib(timeoutMs) {
+    if (window.supabase && window.supabase.createClient) return Promise.resolve(true);
+    if (_syncLibPromise) return _syncLibPromise;
+    _syncLibPromise = new Promise(resolve => {
+      let done = false;
+      const s = document.createElement('script');
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        if (!ok) { _syncLibPromise = null; if (s.parentNode) s.parentNode.removeChild(s); }
+        resolve(ok);
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs || 8000);
+      s.src = SUPABASE_JS_URL;
+      s.async = true;
+      s.onload = () => finish(!!(window.supabase && window.supabase.createClient));
+      s.onerror = () => finish(false);
+      document.head.appendChild(s);
+    });
+    return _syncLibPromise;
+  }
+
   function syncInitClient() {
     if (sync.client) return true;
     if (!(window.supabase && window.supabase.createClient)) return false;   // pustaka gagal dimuat (offline)
@@ -656,16 +683,17 @@
   // Dipanggil dari tab Profil saat belum login (misalnya tadi memilih "Pakai mode lokal dulu").
   async function syncLoginFromMenu() {
     if (sync.ready || sync.loginBusy || !syncConfigured()) return;
-    if (!syncInitClient()) {
-      await syncAsk('Belum bisa masuk', 'Pustaka sinkron belum termuat. Periksa koneksi internet, lalu muat ulang halaman.', ['Tutup']);
-      return;
-    }
     sync.loginBusy = true;
     try {
+      if (!(await syncLoadLib()) || !syncInitClient()) {
+        await syncAsk('Belum bisa masuk', 'Pustaka sinkron belum termuat. Periksa koneksi internet, lalu coba lagi.', ['Tutup']);
+        return;
+      }
       const session = await syncShowLogin({ fromMenu: true });
       if (!session) return;                           // dibatalkan
       const replaced = await syncStartSession(session);
-      if (replaced) { populateCategorySelect(); render(); }
+      runRecurringFees();
+      populateCategorySelect(); render();
       if (typeof renderProfilTab === 'function') renderProfilTab();
     } finally {
       sync.loginBusy = false;
@@ -679,7 +707,7 @@
   }
   async function syncBootInner() {
     if (!syncConfigured()) return;                                        // mode lokal murni
-    if (!syncInitClient()) { syncSetStatus('local'); return; }            // pustaka gagal dimuat (offline)
+    if (!(await syncLoadLib()) || !syncInitClient()) { syncSetStatus('local'); return; }   // pustaka gagal dimuat (offline)
 
     let session = null;
     try {

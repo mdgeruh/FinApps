@@ -2,6 +2,25 @@
 
 Riwayat perubahan **Keuangan Pribadi**. Format: yang terbaru di atas. Nomor versi mengikuti `APP_VERSION` dan footer app (sebelumnya juga nama file `keuangan_pribadi-v1_1_NNN.html`).
 
+## v1.1.049 — 29 Sep 2026
+
+**Diperbaiki**
+- **Bunga/biaya bulanan otomatis tidak lagi ditulis dari dalam `render()`** (`01-data.js`, `12-render-utama.js`, `07-`/`08-`): `applyRecurringFees()` sebelumnya jalan di setiap render dan menulis transaksi baru. Kalau dua perangkat terbuka di awal bulan, keduanya bisa membuat transaksi biaya yang sama dengan ID acak berbeda. Sekarang transaksinya berID deterministik (`fee-<akun>-<bulan>-bunga|admin`) dan tidak dibuat ulang kalau ID-nya sudah ada, jadi dua perangkat menghasilkan transaksi yang sama persis. Fungsi baru `runRecurringFees()` dipanggil dari: startup (setelah sinkron), login dari tab Profil, saat tanggal berganti (tab dibiarkan terbuka lintas hari), dan setelah simpan akun / import / reset / data contoh
+- **CHANGELOG v1.1.041 dan kode kembali cocok** (`14-sync.js`, `02-navigasi.js`, `index.html`): `syncApplyOwnerNameFromSession` dan `syncSaveOwnerName` ternyata masih ada dan dipanggil walau v1.1.041 mencatat sudah dihapus. Keduanya dihapus sekarang; sapaan tab Ringkasan hanya "Selamat pagi/siang/sore/malam" tanpa nama, nama pemilik tidak lagi dikirim ke akun, dan teks keterangan di tab Profil sesuai fungsi aslinya (awalan nama file export/backup)
+- **`escapeHtml` sekarang meng-escape tanda kutip** (`06-util-ui.js`) sehingga aman dipakai di nilai atribut, dan memakai penggantian string alih-alih membuat elemen `<div>` tiap panggilan
+- **Sapaan memakai jam GMT+8** seperti semua tanggal lain di app (sebelumnya jam perangkat)
+
+**Diubah**
+- **Pustaka Supabase dimuat saat dibutuhkan** (`14-sync.js`, `syncLoadLib()`; `<script>` statis di `index.html` dihapus): CDN yang lambat atau offline tidak lagi menahan pemuatan app. Timeout 8 detik, dan kalau gagal app jalan dalam mode lokal seperti biasa
+- **Render pertama tidak menunggu sinkron kalau perangkat sudah punya data** (`15-startup.js`): app langsung menggambar dari data lokal, lalu menggambar ulang setelah sinkron selesai. Kalau belum ada data sama sekali, render pertama tetap menunggu sinkron supaya akun cloud tidak tertimpa data contoh
+- **Tab Laporan memakai saldo yang sudah dihitung `render()`** (`11-laporan.js`) alih-alih menghitung `computeAllBalances()` sekali lagi
+- **Import lebih ketat** (`13-import-export.js`): file maksimal 5 MB dan 100.000 transaksi, tanggal harus valid (`YYYY-MM-DD`, kalau tidak dipakai tanggal hari ini), nominal harus angka hingga dan dirapikan ke 2 desimal. `saveData()` juga merapikan nominal transaksi ke 2 desimal supaya tidak ada sisa floating point; nominal pecahan yang sah (mis. bunga bank Rp9.363,98) tetap utuh
+
+**Ditambah**
+- **Service worker** (`sw.js`, didaftarkan di `15-startup.js`): app shell tersimpan sehingga bisa dibuka tanpa internet. Strategi network-first (online selalu ambil versi terbaru, offline pakai salinan terakhir), hanya file app + jsdelivr + font Google; tidak pernah menyentuh `*.supabase.co`. Naikkan `CACHE_VERSION` di `sw.js` bersamaan dengan `APP_VERSION`. Tidak aktif kalau dibuka lewat `file://`
+- **`supabase/setup.sql`**: definisi tabel `app_data` + RLS (4 kebijakan `user_id = auth.uid()`, `anon` dicabut) beserta query verifikasinya
+- **`tests/run.js`**: 17 test unit tanpa dependensi (`node tests/run.js`) untuk `escapeHtml`, saldo akun, nominal, biaya bulanan (idempoten + tidak ganda antar perangkat), anuitas, cicilan flat, saldo aset, kalender tagihan
+
 ## v1.1.048 — 27 Sep 2026
 
 **Diubah**

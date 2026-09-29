@@ -536,6 +536,7 @@
     saveData(data);
     editingAccountId = null;
     $('acc-form').classList.remove('open');
+    runRecurringFees();   // akun baru/diubah bisa langsung kena bunga/biaya bulan ini
     render();
   }
 

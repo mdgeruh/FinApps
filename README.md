@@ -1,8 +1,8 @@
 # Keuangan Pribadi
 
-Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal dan offline.
+Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi di footer app: **v1.1.031**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi di footer app: **v1.1.049**. Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
 
@@ -51,7 +51,7 @@ Tidak ada proses instalasi. Tiga cara pakai:
 - Semua akun & transaksi disimpan di `localStorage` dengan key `keuangan-app-data-v2` (format JSON). localStorage selalu jadi penyimpanan utama, jadi app tetap cepat dan jalan offline.
 - **Tanpa sinkron cloud**, data 100% lokal. Kalau clear cache/data browser, uninstall browser, atau ganti perangkat, data akan hilang kecuali sudah di-**export** lebih dulu.
 - **Data rusak:** kalau isi localStorage tidak bisa dibaca, app tidak menimpanya. Salinan mentah diamankan di key `keuangan-app-data-v2-corrupt`, muncul peringatan merah, dan yang tampil hanya data contoh di memori. Jangan ubah apa pun sebelum memulihkan dari backup JSON.
-- Preferensi tampilan (tema, kartu ringkasan yang disembunyikan, grup akun yang di-collapse) dan nama pemilik (`kp_owner_name`) disimpan terpisah di localStorage dan **tidak ikut** ter-export ke JSON. Nama pemilik ikut tersinkron lewat metadata akun Supabase (lihat [Sinkron Cloud](#sinkron-cloud-supabase)); preferensi tampilan tetap per perangkat. Status sinkron ada di `kp_sync_meta`.
+- Preferensi tampilan (tema, kartu ringkasan yang disembunyikan, grup akun yang di-collapse) dan nama pemilik (`kp_owner_name`) disimpan terpisah di localStorage dan **tidak ikut** ter-export ke JSON. Nama pemilik cuma dipakai sebagai awalan nama file export/backup dan tidak ikut sinkron akun; preferensi tampilan tetap per perangkat. Status sinkron ada di `kp_sync_meta`.
 - **Wajib backup rutin** lewat menu Export JSON (lihat bagian [Export, Import & Backup](#export-import--backup)) — app akan mengingatkan otomatis kalau sudah lama tidak export.
 
 ---
@@ -60,7 +60,7 @@ Tidak ada proses instalasi. Tiga cara pakai:
 
 **Tampilan:** ponsel memakai satu kolom dengan navigasi bawah. Tablet (768px ke atas) memakai dialog di tengah layar. Desktop (1024px ke atas) memakai sidebar kiri, dan Ringkasan tampil dua kolom mulai 1280px. Mulai 1024px, Transaksi, Titipan, dan Laporan memakai dua panel (filter atau ringkasan menempel di kiri, isi di kanan). Mulai 1280px, Ringkasan, grup akun, dan kartu pengaturan (Data, Profil) tampil dua kolom, dan isi Laporan ikut dua kolom di Data & Profil. Di 1024–1279px tab-tab ini tetap satu kolom selebar maksimal 760px.
 
-Header menampilkan sapaan sesuai jam + nama pemilik, tanggal singkat, dan ikon pengaturan (Akun, Data & Export, Profil, tema tampilan). Footer di bawah semua tab menampilkan nama app, nomor versi, dan tanggal build.
+Header menampilkan sapaan sesuai jam (GMT+8), tanggal singkat, ikon tampilan (sistem/terang/gelap), dan ikon Profil. Footer di tab Profil menampilkan nama app, nomor versi, dan tanggal build.
 
 | Tab | Isi |
 |---|---|
@@ -69,8 +69,8 @@ Header menampilkan sapaan sesuai jam + nama pemilik, tanggal singkat, dan ikon p
 | **Transaksi** | Catat pemasukan/pengeluaran/transfer. Filter per akun, tipe, bulan, dan pencarian teks. Edit & hapus transaksi individual. Daftar dimuat bertahap (80 per halaman, tombol "Muat lebih banyak") supaya tetap ringan walau jurnalnya sudah panjang. |
 | **Titipan** | Catat uang yang dititipkan/dibelanjakan untuk orang lain, atau uang yang diterima dari orang lain — tanggalnya bisa diubah untuk catat titipan bulan yang sudah lewat. Ringkasan siapa berutang & siapa dititipi lebih. Tombol **Lunasi sekarang** untuk melunasi penuh dalam satu klik. |
 | **Laporan** | Ringkasan per periode (harian s.d. alltime/custom): total masuk-keluar, breakdown kategori, tren, perbandingan periode lalu, plus kartu utang: **Rincian utang, Proyeksi kas, Total biaya utang, Simulasi pelunasan, dan Saran**. Kartu utang berbentuk baris ringkas yang bisa diketuk untuk detail. Export ke PDF (print) otomatis membuka semua baris. Lihat [Tab Laporan](#tab-laporan-utang-proyeksi--simulasi). |
-| **Data** | Muat data contoh (dummy), export JSON/CSV, import JSON, reset semua data, reset & ganti dengan file lain — semuanya dengan backup otomatis sebelum aksi yang merusak data. |
-| **Profil** *(ikon pengaturan)* | Ubah nama pemilik untuk sapaan (ikut tersinkron ke semua perangkat kalau sudah login), toggle tema. Ringkasan kesehatan data (status sinkron, kapan terakhir backup JSON, tombol Backup sekarang). Kalau sinkron cloud aktif: lihat/ubah email, ubah kata sandi, Keluar, dan zona bahaya untuk hapus semua data akun ini. |
+| **Tagihan** | Pengingat jatuh tempo (kartu kredit, PayLater, pinjaman) dan kalender tagihan bulanan ke depan yang menggabungkan semua akun berutang. Ketuk satu bulan untuk rincian per akun. |
+| **Profil** *(ikon orang di header)* | Nama pemilik (awalan nama file export), akun sinkron (email, ubah email/kata sandi, masuk/keluar), dan **Pengaturan data lanjutan**: tampilan Ringkasan, data contoh, export/import JSON & CSV, reset (semua dengan backup otomatis sebelum aksi yang merusak data). |
 
 ---
 
@@ -200,15 +200,13 @@ Rincian utang, Proyeksi kas, Total biaya utang, Simulasi, dan Saran memakai bari
 
 | Aksi | Fungsi |
 |---|---|
-| **Export JSON** | Unduh seluruh akun & transaksi sebagai `keuangan-<prefix>-YYYY-MM-DD.json` — ini file backup utama kamu |
-| **Export CSV** | Unduh daftar transaksi (bukan akun) sebagai `keuangan-<prefix>-YYYY-MM-DD.csv`, untuk dibuka di Excel/Sheets |
+| **Export JSON** | Unduh seluruh akun & transaksi sebagai `keuangan-YYYY-MM-DD.json` — ini file backup utama kamu |
+| **Export CSV** | Unduh daftar transaksi (bukan akun) sebagai CSV, untuk dibuka di Excel/Sheets |
 | **Import JSON** | **Gabungkan** isi file JSON ke data yang sudah ada — akun dengan nama+tipe yang sama tidak diduplikasi, transaksi baru ditambahkan |
 | **Reset semua data** | Mengosongkan semua akun & transaksi (ada backup otomatis dulu sebelum dihapus) |
 | **Reset lalu isi dari file** | Menghapus **semua** data lama lalu menggantinya total dengan isi file JSON yang dipilih (ada backup otomatis dulu) |
 
 Semua field aset (Jenis, Jumlah, Satuan, Valuasi) dan field pinjol (termasuk cara bayar admin dan asuransi) ikut divalidasi & dinormalisasi konsisten di jalur Import maupun Reset-dari-file.
-
-**`<prefix>`** di nama file export/backup diambil dari bagian sebelum `@` email akun cloud (kalau sedang login), atau nama pemilik di tab Profil kalau belum login, atau `user` kalau keduanya kosong — memudahkan membedakan file backup dari akun yang berbeda di device yang sama.
 
 App juga akan menampilkan pengingat kalau kamu sudah lama tidak export (backup reminder), supaya tidak kehilangan data kalau tiba-tiba clear cache browser.
 
@@ -218,15 +216,14 @@ App juga akan menampilkan pengingat kalau kamu sudah lama tidak export (backup r
 
 Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config.js` terisi; kalau key dikosongkan, app 100% lokal tanpa login.
 
-- **Cara kerja:** login email + password (akun dibuat di dashboard Supabase). Setelah tiap perubahan, data dikirim ke tabel `app_data` di latar belakang (jeda 1,5 detik, coba ulang tiap 30 detik kalau gagal). Status kecil di bawah footer: Tersinkron, Menyimpan, Belum terkirim, Mode lokal, atau "Ada pembaruan dari perangkat lain" (tombol Muat ulang).
+- **Cara kerja:** login email + kata sandi atau **Google** (daftar akun langsung dari layar masuk). Setelah tiap perubahan, data dikirim ke tabel `app_data` di latar belakang (jeda 1,5 detik, coba ulang tiap 30 detik kalau gagal). Status kecil di bawah footer: Tersinkron, Menyimpan, Belum terkirim, Mode lokal, atau "Ada pembaruan dari perangkat lain" (tombol Muat ulang).
 - **Bentrok:** tiap baris cloud punya nomor versi. Kalau perangkat ini dan cloud sama-sama berubah, muncul dialog untuk memilih data cloud atau data perangkat ini; data yang tidak dipilih dibackup ke file JSON dulu.
-- **Mode lokal dulu:** di layar login bisa memilih "Pakai mode lokal dulu". Perubahan tetap ditandai belum terkirim dan dikirim setelah login berikutnya. Kapan saja, buka menu gear lalu pilih **Masuk untuk sinkron** untuk login (opsi ini hanya tampil kalau belum login).
-- **Nama pemilik:** disimpan di metadata akun (`user_metadata.owner_name`), bukan di tabel data. Saat login, nama dari akun dipakai; kalau akun belum punya nama dan perangkat ini pernah mengisinya, nama itu dikirim sebagai isi awal. Perubahan di perangkat lain terlihat saat login atau app dibuka ulang. Nama tidak ikut Export JSON.
+- **Mode lokal dulu:** di layar login bisa memilih "Pakai mode lokal dulu". Perubahan tetap ditandai belum terkirim dan dikirim setelah login berikutnya. Kapan saja, buka tab **Profil** lalu pilih **Masuk** (opsi ini hanya tampil kalau belum login).
+- **Pustaka Supabase** dimuat hanya saat dibutuhkan (`syncLoadLib()`), bukan `<script>` statis, jadi CDN yang lambat/offline tidak menahan app. Kalau perangkat sudah punya data, app langsung tampil dari data lokal lalu menyegarkan diri setelah sinkron selesai.
+- **Biaya bulanan otomatis** (bunga/admin kartu & pinjaman) berID deterministik `fee-<akun>-<bulan>-...`, jadi dua perangkat tidak membuat transaksi ganda.
 - **Lupa kata sandi / ganti email & kata sandi:** tersedia di layar login dan tab Profil.
-- **Keamanan:** anon/publishable key memang publik, tapi **Row Level Security wajib aktif** (lihat `supabase/setup.sql`) supaya tiap akun hanya bisa membaca barisnya sendiri. Jangan pernah menaruh key `service_role` atau kata sandi database di file ini. Data tersimpan sebagai JSON biasa (tidak dienkripsi di sisi klien) di project Supabase kamu.
-- **Keluar:** menghapus sesi login, tapi salinan data tetap ada di localStorage perangkat itu. Tersedia di menu gear maupun tab Profil.
-- **Hapus semua data akun ini** *(tab Profil, zona bahaya)*: menghapus baris data di cloud (tabel `app_data`) dan salinan localStorage perangkat ini (dengan backup otomatis ke JSON dulu). Akun login (email/password) sendiri **tidak** ikut terhapus — itu perlu Edge Function dengan `service_role` key, sengaja tidak ditaruh di app client ini.
-- **Ganti akun di device yang sama** (Keluar lalu Masuk/Daftar dengan akun cloud lain — misalnya pinjam HP): begitu login akun baru, app otomatis mendeteksi kalau localStorage masih berisi data akun cloud sebelumnya, membackupnya ke file JSON (`keuangan-backup-sebelum-reset-...`), lalu membersihkannya sebelum menarik data akun yang baru login — supaya data dua akun tidak tertukar atau saling menimpa. Alur "Pakai mode lokal dulu → baru Daftar" (migrasi data lokal jadi isi awal akun baru) tidak terpengaruh oleh proteksi ini.
+- **Keamanan:** anon/publishable key memang publik, tapi **Row Level Security wajib aktif** (jalankan `supabase/setup.sql` di SQL Editor Supabase; berisi tabel, kebijakan, dan query verifikasi) supaya tiap akun hanya bisa membaca barisnya sendiri. Jangan pernah menaruh key `service_role` atau kata sandi database di file ini. Data tersimpan sebagai JSON biasa (tidak dienkripsi di sisi klien) di project Supabase kamu.
+- **Keluar:** menghapus sesi login, tapi salinan data tetap ada di localStorage perangkat itu. Untuk perangkat bersama, reset data lokal setelah keluar.
 
 ---
 
@@ -285,10 +282,8 @@ Titik masuk yang sering dipakai saat memodifikasi:
 | Form akun pinjol | `updateAccFormFields`, `updateOnlineLoanEstimate`, `saveAccount` |
 | Kartu-kartu di Laporan | `renderLaporanExtra`, `laporanDebtDetailHtml`, `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate`, `laporanAdviceHtml` |
 | Nomor versi di footer | konstanta `APP_VERSION`, `APP_BUILD` (`12-render-utama.js`) |
-| Nama pemilik & sapaan | `getOwnerName`, `setOwnerName` (`01-data.js`), `updateGreeting` (`02-navigasi.js`), `syncSaveOwnerName`, `syncPullOwnerName` (`14-sync.js`) |
-| Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush`, `syncGuardAccountSwitch` (proteksi ganti akun di device yang sama), `syncDeleteCloudData` (`14-sync.js`), konfigurasi di `00-config.js` |
-| Nama file export/backup | `exportUserPrefix`, `exportJson`, `exportCsv`, `autoBackupBeforeReset`, `lastExportSummary` (`13-import-export.js`) |
-| Tab Profil | `renderProfilTab`, `applyTheme`, `cycleTheme`, `currentThemeMode` (`02-navigasi.js`), `profilBackupNow` (`13-import-export.js`) |
+| Nama pemilik (awalan file export) & sapaan | `getOwnerName`, `setOwnerName` (`01-data.js`), `updateGreeting` (`02-navigasi.js`), `saveOwnerNameFromInput` (`02-navigasi.js`) |
+| Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush` (`14-sync.js`), konfigurasi di `00-config.js` |
 | Penanganan data rusak | `loadData`, `handleCorruptData` (`01-data.js`) |
 | Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment`, `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11-laporan.js`) |
 
@@ -297,3 +292,12 @@ Titik masuk yang sering dipakai saat memodifikasi:
 ## Penomoran Versi
 
 Nomor versi ada di konstanta `APP_VERSION` dan tampil di footer (`v1.1.NNN`). Nomor `NNN` naik tiap ada revisi. Detail per versi ada di [CHANGELOG.md](CHANGELOG.md).
+
+### Cara rilis
+
+1. Naikkan `APP_VERSION` dan `APP_BUILD` (`12-render-utama.js`) **dan** `CACHE_VERSION` (`sw.js`) ke nomor yang sama.
+2. Tambah entri di [CHANGELOG.md](CHANGELOG.md) dan centang item di [SUMMARY.md](SUMMARY.md).
+3. Jalankan `node tests/run.js` (semua test harus lulus) dan buka semua tab di browser.
+4. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
+
+File baru sejak v1.1.049: `sw.js`, `supabase/setup.sql`, `tests/run.js`.

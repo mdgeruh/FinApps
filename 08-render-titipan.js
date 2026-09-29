@@ -52,8 +52,7 @@
   // Refresh ringan khusus daftar orang di tab Titipan: dipakai saat ganti
   // filter/urutan saja, tanpa render ulang seluruh tab lain.
   function refreshTitipanList() {
-    let data = loadData();
-    data = applyRecurringFees(data);
+    const data = loadData();
     renderTitipanFilters();
     renderTitipanList(data, computeAllBalances(data));
   }

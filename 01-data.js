@@ -217,8 +217,19 @@
     return seed;
   }
 
+  // Nominal transaksi boleh pecahan (mis. bunga bank Rp9.363,98), tapi dirapikan ke 2 desimal
+  // supaya tidak ada sisa artefak floating point (0.1+0.2) yang menumpuk di penjumlahan.
+  function roundMoney(n) { return Math.round(n * 100) / 100; }
+  function normalizeMoney(data) {
+    if (!data || !Array.isArray(data.txns)) return;
+    data.txns.forEach(t => {
+      if (t && typeof t.amount === 'number' && !Number.isInteger(t.amount)) t.amount = roundMoney(t.amount);
+    });
+  }
+
   function saveData(data) {
     try {
+      normalizeMoney(data);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       try { localStorage.removeItem(SEED_DEMO_KEY); } catch (e) { /* tidak kritis */ }
       if (typeof syncAfterSave === 'function') syncAfterSave();
@@ -920,6 +931,16 @@
   function applyRecurringFees(data) {
     let changed = false;
     const now = todayGmt8();
+    // ID deterministik per (akun, bulan, jenis): kalau dua perangkat sama-sama menerapkan biaya
+    // bulan yang sama, hasilnya transaksi berID sama (bukan dua transaksi berbeda), dan transaksi
+    // yang ID-nya sudah ada tidak dibuat lagi.
+    const existingIds = new Set(data.txns.map(t => t.id));
+    const pushFeeTxn = (txn) => {
+      if (existingIds.has(txn.id)) return false;
+      existingIds.add(txn.id);
+      data.txns.push(txn);
+      return true;
+    };
     data.accounts.forEach(acc => {
       if (!TYPE_DEBT[acc.type]) return;
       if (acc.type === 'paylater') return; // PayLater: bunga/admin hanya lewat transaksi cicilan
@@ -964,12 +985,11 @@
         if (interestPct > 0 && sisaBelumLunas > 0) {
           const bunga = Math.round(sisaBelumLunas * interestPct / 100);
           if (bunga > 0) {
-            data.txns.push({
-              id: generateId('txn'), date: dueDateStr, type: 'keluar',
+            if (pushFeeTxn({
+              id: 'fee-' + acc.id + '-' + monthKey + '-bunga', date: dueDateStr, type: 'keluar',
               desc: `Bunga ${interestPct}% dari sisa belum lunas (${formatRp(sisaBelumLunas)})`,
               amount: bunga, accountId: acc.id, category: 'Bunga & biaya bank'
-            });
-            changed = true;
+            })) changed = true;
           }
         }
 
@@ -987,11 +1007,10 @@
               feeDesc += ` (${feeVal}% dari ${feePeriod === 'tahunan' ? 'limit' : 'sisa belum lunas'})`;
             }
             if (feeCharged > 0) {
-              data.txns.push({
-                id: generateId('txn'), date: dueDateStr, type: 'keluar',
+              if (pushFeeTxn({
+                id: 'fee-' + acc.id + '-' + monthKey + '-admin', date: dueDateStr, type: 'keluar',
                 desc: feeDesc, amount: feeCharged, accountId: acc.id, category: 'Tagihan & langganan'
-              });
-              changed = true;
+              })) changed = true;
             }
           }
         }
@@ -1002,6 +1021,13 @@
     });
     if (changed) saveData(data);
     return data;
+  }
+
+  // Titik tunggal untuk menerapkan bunga/biaya bulanan otomatis. TIDAK lagi dipanggil dari render()
+  // (render tidak boleh menulis data). Dipanggil dari: startup setelah sinkron, setelah login dari
+  // tab Profil, saat tanggal berganti, dan setelah simpan akun / import / reset data.
+  function runRecurringFees() {
+    try { applyRecurringFees(loadData()); } catch (e) { console.error('biaya berulang gagal', e); }
   }
 
 

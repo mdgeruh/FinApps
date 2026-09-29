@@ -104,7 +104,7 @@
         renderTagihanCalendar(data, balances);
         break;
       case 'laporan':
-        renderLaporan(data);
+        renderLaporan(data, balances);
         break;
       case 'profil':
         renderProfilTab();
@@ -134,12 +134,14 @@
   }
 
   function updateGreeting() {
-    const h = new Date().getHours();
+    const h = nowGmt8().getUTCHours();   // jam GMT+8, konsisten dengan semua tanggal lain di app
     const sapa = h >= 4 && h < 11 ? 'Selamat pagi' : (h >= 11 && h < 15 ? 'Selamat siang' : (h >= 15 && h < 18 ? 'Selamat sore' : 'Selamat malam'));
     const g = $('greeting');
-    if (g) g.innerHTML = escapeHtml(sapa);
+    if (g) g.textContent = sapa;
   }
 
+  // Nama pemilik cuma dipakai sebagai awalan nama file export/backup (lihat exportUserPrefix()).
+  // Tersimpan lokal di browser ini, tidak dikirim ke akun sinkron dan tidak ada di sapaan.
   function saveOwnerNameFromInput() {
     const el = $('profil-name-input');
     const v = setOwnerName(el ? el.value : '');
@@ -163,13 +165,6 @@
 
   const THEME_KEY = 'kp_theme';
   const THEME_LABELS = { system: 'Tampilan: Sistem', light: 'Tampilan: Terang', dark: 'Tampilan: Gelap' };
-  // Ikon tombol tampilan di header (sebelahan ikon Profil): matahari = terang, bulan = gelap,
-  // monitor = ikut sistem. Isi innerHTML tombol (bukan teks) karena tombolnya cuma ikon.
-  const THEME_ICONS = {
-    system: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
-    light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/>',
-    dark: '<path d="M20 14.3A8 8 0 1 1 9.7 4a6.5 6.5 0 0 0 10.3 10.3Z"/>'
-  };
 
   function applyTheme(mode) {
     if (mode === 'light' || mode === 'dark') {
@@ -178,13 +173,7 @@
       document.documentElement.removeAttribute('data-theme');
     }
     const btn = $('theme-toggle-btn');
-    if (btn) {
-      const label = THEME_LABELS[mode] || THEME_LABELS.system;
-      const svg = btn.querySelector('svg');
-      if (svg) svg.innerHTML = THEME_ICONS[mode] || THEME_ICONS.system;
-      btn.setAttribute('aria-label', label);
-      btn.title = label;
-    }
+    if (btn) btn.textContent = THEME_LABELS[mode] || THEME_LABELS.system;
   }
 
   function cycleTheme() {

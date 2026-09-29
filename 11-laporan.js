@@ -287,7 +287,7 @@
     bindChartInteraction('laporan-trend-chart');
   }
 
-  function renderLaporan(data) {
+  function renderLaporan(data, balances) {
     if (!data) data = loadData();
     const labelEl = $('laporan-period-label');
     if (!labelEl) return;
@@ -343,7 +343,7 @@
     const dayCount = Math.max(1, Math.round((new Date(range.end + 'T00:00:00') - new Date(range.start + 'T00:00:00')) / 86400000) + 1);
     $('laporan-avg-daily-expense').textContent = formatRp(Math.round(totalOut / dayCount));
 
-    renderLaporanExtra(data, range, dayCount, txns, masukTxns, keluarTxns, totalIn, totalOut);
+    renderLaporanExtra(data, range, dayCount, txns, masukTxns, keluarTxns, totalIn, totalOut, balances);
   }
 
 
@@ -904,7 +904,7 @@
   // Informasi tambahan di Laporan: rasio tabungan, perbandingan periode lalu, hari terboros,
   // beban utang, posisi kekayaan saat ini, dan 5 pengeluaran terbesar.
   function renderLaporanExtra(...args) { return lapMemoScope(() => renderLaporanExtraInner(...args)); }
-  function renderLaporanExtraInner(data, range, dayCount, txns, masukTxns, keluarTxns, totalIn, totalOut) {
+  function renderLaporanExtraInner(data, range, dayCount, txns, masukTxns, keluarTxns, totalIn, totalOut, balancesIn) {
     const el = $('laporan-extra');
     if (!el) return;
     const net = totalIn - totalOut;
@@ -964,7 +964,7 @@
     }
 
     // 4. Posisi saat ini (semua akun, tidak terpengaruh periode)
-    const balances = computeAllBalances(data);
+    const balances = balancesIn || computeAllBalances(data);   // dibagikan dari render() kalau ada
     let aset = 0, utang = 0, sisaBunga = 0;
     data.accounts.forEach(acc => {
       const bal = balances[acc.id];
