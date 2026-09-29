@@ -1,152 +1,144 @@
-# Ringkasan & Todolist: Keuangan Pribadi
+# Ringkasan Proyek — Jurnal XAUUSD
 
-Status per **v1.1.078** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
-Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
+Riwayat per rilis/tema: `CHANGELOG.md`. Fitur & cara pakai: `README.md`. File ini hanya memuat status, arsitektur, jebakan bug, dan todo yang **belum selesai** (butir selesai dihapus; jejaknya ada di `CHANGELOG.md`).
 
-## 1. Gambaran singkat
+## Apa ini
+Dashboard trading journal (folder datar, tanpa build tool) untuk akun cent XAUUSD. Tab: Ringkasan, Analisis PNL, Performa, Laporan, Transaksi, Deposit + Setelan (⚙). Kalkulator lot berupa modal dari tombol di tab Transaksi. Navigasi desktop ≥ 1100px berupa sidebar kiri yang bisa diciutkan. File utama: `index.html`, `style.css`, `app.js`, `sync.js`, `config.js`, `pwa.js`, `sw.js`; Supabase: `schema.sql`, `query-user-supabase.sql`, `migrasi-catatan.sql`.
 
-App web statis (HTML + CSS + JS biasa, tanpa build tool), ±462 KB JS tanpa minify, 28 file JS modular + `sw.js`. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, anggaran, langganan, dana darurat, export/import.
+## Status (v1.1.134)
+- Semua fitur di README berjalan; tab Transaksi, Laporan (L1–L18, cetak PDF), Setelan → Tampilan (mode + 5 skema + aksen custom + mode buta warna), catatan bebas per transaksi, impor/ekspor CSV, sinkron Supabase manual, dan PWA sudah selesai. Tidak ada bug fungsional terbuka.
+- Rilis terakhir (v1.1.134): chip periode 7H·1B·3B·1T·All·Sesuaikan (Ringkasan, Analisis PNL default All; chip All di Transaksi), tombol mata uang tanpa border; belum diuji perangkat asli/mode terang/1280px. Sebelumnya v1.1.133: 10 perbaikan kurva ekuitas Ringkasan (lihat `CHANGELOG.md`; diuji Playwright, belum di perangkat sentuh asli/mode terang/cetak). Sebelumnya v1.1.132: optimalisasi P1 (font non-blocking, supabase-js dikunci `@2.45.4`, service worker cache-dulu, `Permissions-Policy`); belum diuji di browser/perangkat.
+- **Perlu tindakan manual:** jalankan `migrasi-catatan.sql` sekali di Supabase SQL Editor (tanpa itu sinkron tetap jalan, tapi catatan tidak ikut ke cloud dan aplikasi menampilkan peringatan).
+- Data aktif ada di localStorage (`jurnalXauusdData_v1`), bukan di file. File baru kosong (`kurs` = 0, mode Rp tampil Rp 0) sampai JSON diimpor lewat Setelan.
+- Belum diuji ke proyek Supabase asli dan belum dicek di perangkat asli (sentuhan, PWA, sidebar, mode Otomatis, cetak per skema); daftar cek ada di **Verifikasi manual**.
 
-## 2. Koreksi terhadap analisis awal
+## Arsitektur singkat
+- Folder datar; fallback data di `<script id="journal-data">`, data aktif di localStorage. Nominal internal dalam sen (¢); tampilan lewat `fmtMoney`, estimasi rupiah lewat `approxRp()`.
+- Sumber daya eksternal: Google Fonts (non-blocking; font cadangan saat offline) dan supabase-js `@2.45.4` dari jsDelivr. Service worker cache-dulu (stale-while-revalidate); respons Supabase tidak di-cache.
+- Periode ("Hari Ini", kalender, Laporan) berpatokan GMT+8 tetap; dropdown zona waktu hanya mengubah tampilan jam. `tanggal` = broker GMT+3; `tanggal_gmt8`/`waktu_buka` = GMT+8.
+- Ekspor/impor lewat Setelan (HTML & JSON); impor menimpa data aktif dengan konfirmasi. Tabel key penyimpanan ada di `README.md`.
+- Kurva ekuitas di-crop sesuai periode; sebelum data ada → seluruh riwayat, setelah transaksi terakhir → garis datar di saldo terakhir.
+- Tiap `<section>` jadi kartu; tooltip grafik lewat `ChartHover`; warna grafik memakai `var(--…)` agar ikut tema/cetak.
+- `period_ranges`/`periods` (selain "All Time") hanya snapshot fallback; halaman menghitung live dari `DATA.trades`.
 
-| Temuan lama | Yang sebenarnya |
-|---|---|
-| E1: skrip Supabase memblokir render | Skrip di akhir `<body>`; yang tertahan adalah startup app. Sudah diperbaiki lewat lazy-load |
-| E3: `computeAllBalances()` dihitung ulang di ≥10 tempat | Sebagian besar handler aksi terpisah. Duplikasi nyata hanya di tab Laporan (sudah diperbaiki) |
-| E7: pencarian tanpa debounce | Sudah ada (220 ms) |
-| E10: listener grafik menumpuk | Tidak; dijaga `svg.dataset.interactiveBound` |
-| Import menerima ID dari file | Tidak; ID selalu dibuat baru lewat `generateId()` |
-| Nominal pecahan = bug | Bukan; bunga/pajak bunga bank dengan sen yang sah. Hanya dirapikan ke 2 desimal |
+## Rawan bug
+**Umum**
+- **Alur rilis:** naikkan `APP_VERSION` (`app.js`, tampil di Setelan → Tentang aplikasi) dan `CACHE` (`sw.js`) bersama; tambah entri berbahasa pengguna di `USER_CHANGELOG` (tanggal ISO; tanggal sama = gabung) dan entri teknis di `CHANGELOG.md`; perbarui `README.md`/`SUMMARY.md`. Cek Playwright + Chromium 390/768/1280px, data kosong dan data sintetis (±445 transaksi); interaksi kompleks hanya bila ada dugaan bug.
+- **Urutan skrip:** modul `CS`/`DTP` harus didefinisikan sebelum render awal yang memakainya (blank page v1.1.64).
+- **Field turunan:** semua field hasil hitung dari `DATA.trades` harus ikut `recomputeAll()`.
+- **Format nominal:** tanda minus di depan simbol (`-$x`, `-Rp x`); pakai `fmtMoney`/`fmtRp`, jangan tulis `'Rp ' + n` sendiri.
+- **Setelan lokal:** `jurnalDayLimits`, `jurnalBigLossPct`, tema/skema/aksen, dst. sengaja tidak ikut `DATA`/ekspor JSON; ubah ekspor hati-hati agar impor lama tetap kompatibel. Id elemen Setelan dipakai `app.js` dan `sync.js`.
+- **Tombol berikon** (`.has-ic`, `.ic-only`, `.bi`): jangan timpa isinya dengan `textContent`; "Simpan & lanjut" sengaja tanpa ikon.
+- **Riwayat perubahan pengguna:** `#aboutSection` (lencana `#appVersionVal`, tombol `#changelogBtn`, modal `#changelogModalOverlay`) dirender dari `USER_CHANGELOG`, diurutkan menurut tanggal ISO saat dibuka. Butir memakai HTML sederhana (`<strong>`), jangan isi dari input pengguna.
+- **Zona waktu:** konversi server→GMT+8 memakai selisih tetap +5 jam (broker dianggap GMT+3 sepanjang tahun). Bila broker memakai jam DST AS, jam musim dingin bisa meleset 1 jam; cek dengan membandingkan satu transaksi dengan MT5.
+- **Kalender GMT+8:** bucketing bulanan/label hari harus membaca kalender GMT+8, bukan komponen UTC mentah (hang v1.1.46, label mundur v1.1.76). `gmt8DateKeyFromParts()` dinormalkan lewat `Date.UTC`.
 
-## 3. Todolist
+**Tampilan, tema, cetak**
+- **Cetak vs layar:** lebar A4 (~700px) memicu `@media (max-width:720px)`; grid `.stats` dan `.stat:last-child{grid-column:1/-1}` harus dinetralkan di `@media print`. Uji cetak pakai viewport 700px. Hover/tooltip disembunyikan saat cetak; cetak memakai tema terang tetap (`body.printing-laporan` mendefinisikan ulang variabel).
+- **Heatmap:** cetak: teks sel `position:absolute` + flex, jangan padding persen. Layar sempit: kolom grid `minmax(0,1fr)` dengan `min-width:0`; sel ber-`aspect-ratio` yang meregang memaksa lebar minimum kolom (v1.1.95).
+- **Tooltip kurva:** `.eq-tooltip` satu baris (`nowrap`); `ChartHover` mengecilkan font & meng-klem posisi berdasarkan rect kartu (v1.1.102). Dipakai ekuitas, drawdown, Tren, rolling (L12), distribusi (L14).
+- **Aksen custom & buta warna:** aksen ditulis inline di `<html>` (`--gold`/`--gold-dim`, kunci `jurnalAccent` per mode); buta warna lewat `html[data-cb="1"]` (`jurnalCB`); blok CSS `data-cb` harus tetap setelah blok skema terang. Skrip `<head>` menerapkan keduanya sebelum render. `theme_color` manifest tetap statis (batas teknis).
+- **Skema warna:** tiap skema punya blok gelap dan blok `html[data-theme="light"][data-scheme=…]`; tambah skema baru = dua blok + entri `SCHEMES`. Aksen sengaja bukan merah dan tidak boleh sama dengan warna untung. Uji tiap skema di 390/1280px dan cetak; `--loss` harus terbaca di atas `--ink-raised`.
 
-Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
+**Tab Transaksi**
+- Kolom baru = ubah header, `SORT_GETTERS`, `colspan` baris kosong (kini 10), CSV, kartu HP (`ledger-tx`/`data-meta`), dan style cetak.
+- `hasNote()` (catatan psikologi terstruktur) dipakai filter Catatan, antrean "Simpan & lanjut", kartu ajakan Ringkasan, dan L16; catatan bebas (`catatan`) sengaja tidak masuk.
+- Impor CSV tanpa tahun (`27 Sep 22:29`) menebak tahun terdekat; satu file harus mencakup ≤ 12 bulan.
 
-### PRIORITAS UTAMA SEKARANG: perbaikan tab Akun (A1 selesai v1.1.075, A2 selesai v1.1.076, A3 selesai v1.1.077, A5 + A6 selesai v1.1.078; A4 + A7 berikutnya)
+**Ringkasan & Laporan**
+- **Max DD %:** dari kurva ekuitas dengan deposit/penarikan menggeser puncak (Kompensasi MC bukan arus modal; saldo negatif dibatasi 100%). Max DD nominal (berbasis PNL) sengaja beda dasar hitung.
+- **Lencana DD Ringkasan:** basis All Time agar sama dengan Laporan L7; garis puncak dipotong (`clipPath`), sengaja di luar skala Y; puncak per titik lewat `series[].i` dari `computeLapDD`.
+- **Periode Laporan:** default `lap2Gran='all'`; `lap2GetRange('all')` mengabaikan offset dan tanpa periode pembanding (delta dimatikan).
+- **Drawdown (L7):** dihitung dari `DATA.equity` + `modal_kumulatif`, independen dari filter Arah. Grafik butuh lebar > 0, digambar ulang lewat `ResizeObserver`.
+- **Batas harian:** `jurnalDayLimits` di localStorage; "hari" = tanggal tutup GMT+8, urutan = waktu tutup.
+- **Sesi pasar (L9):** batas jam tetap di `LAP_SESSIONS` (GMT+8, tanpa DST); London–New York yang tumpang tindih masuk "New York". Perkiraan kasar.
+- **Silang psikologi (L16):** tampil bila ≥ 30% transaksi punya catatan (`LAP_MX_MIN_COVER`); data asli baru ±1%. Sel n < 5 (`HEAT_LOW_N`) ditandai; maks 8 baris/kolom.
+- **Bandingkan dua periode (L17):** independen dari periode utama (`lap2Gran`/`lap2Offset`), berbagi filter Arah/Sesi/Emosi/Trigger/Jenis.
+- **Ambang lot:** "lot naik" ≥ 1,25× lot sebelumnya; temuan otomatis rasio lot rata-rata muncul di ≥ 1,2×. Sengaja beda.
 
-Optimalisasi (bagian "Ditunda" di bawah) **dilewati dulu atas permintaanmu**; tidak dikerjakan sampai kamu minta. Fokus berikutnya adalah tab Akun.
+**Sinkron & PWA**
+- Perubahan `sw.js` selalu menaikkan `CACHE` bersama `APP_VERSION`; jangan cache respons Supabase; uji PWA terpasang (Android/iOS) karena cache lama bisa menahan versi (dengan cache-dulu, versi baru terbaca di pembukaan berikutnya).
+- `sync.js` bergantung pada `window.supabase`; kolom `catatan` opsional (retry tanpa kolom bila migrasi belum dijalankan).
 
-Dasar temuan (dibaca dari `07-render-akun-transaksi.js`, `04b-akun-detail.js`, `04-akun.js`, dan dicoba di Chromium 390 px dengan kartu kredit, PayLater, dan pinjaman bunga tetap):
-- **Angka tidak konsisten.** Contoh uji: pinjaman Rp10.000.000 bunga 1%/bln tenor 10 bulan. Header "Total utang" menampilkan **Rp10.700.000** (kartu Rp700.000 + pokok pinjaman Rp10.000.000), tetapi kelompok Pinjaman Bank dan kartunya menampilkan **Rp11.000.000** (pokok + sisa bunga tetap Rp1.000.000). Penyebabnya: `computeAssetDebt` (dipakai header dan kekayaan bersih) memakai saldo buku, sedangkan tampilan kartu memakai `computeLoanRemaining().total`
-- Akun tidak bisa dihapus kalau masih punya transaksi ("hapus transaksinya dulu", `deleteAccount`), dan tidak ada arsip. Kartu yang sudah ditutup atau pinjaman lunas menetap di daftar selamanya; data aslimu sudah 26 akun
-- Teks kecil di tiap kartu menyambung sampai 8 potongan (bunga, biaya admin, skema kartu, terbayar, angsuran, berikutnya, jumlah transaksi). Kartu kredit tidak menampilkan jatuh tempo dan sisa tagihan cetak padahal detailnya punya (`cardStatementInfo`)
-- Blok teks kartu (±25 baris `metaExtra`) ditulis dua kali, di `renderAccounts` dan `openAccountDetail`, dan sudah mulai berbeda: detail punya sisa pokok + bunga, estimasi bunga efektif, biaya awal, dan asuransi; kartu tidak
-- Ringkasan atas hanya dua angka (aset, utang). Satu-satunya aksi cepat di kartu adalah "Bayar tagihan" khusus kartu kredit. Urutan otomatis (nilai terbesar), tidak ada pencarian atau penyematan
+## Todo (hanya yang belum selesai)
+Kelompok berdasarkan area; prioritas P1 tinggi, P2 sedang, P3 rendah. Setiap butir yang mengubah kode mengikuti **Alur rilis**.
 
-Urut dari dampak terbesar ke terkecil:
+### 1. Ringkasan
+(Perbaikan kurva ekuitas P1 sudah selesai di v1.1.133 dan dihapus dari daftar.)
+**P1 — chip periode (sisa)**
+- [ ] Laporan: `#lapGranTabs` (Harian/Mingguan/Bulanan/3 Bulan/1 Tahun/All Time + navigator ‹ ›) sudah bergaya chip dengan All di ujung; keputusan: tetap per kalender (navigator dipakai Bandingkan dua periode, L17). Cek saja visual chip sama dengan Ringkasan di 390px, lalu hapus butir ini.
+- [ ] Performa dan Deposit belum punya filter periode: putuskan perlu/tidak; bila perlu, pakai `buildPeriodChips` dengan default All.
+- [ ] Cek 1280px, mode terang, dan keyboard (Tab/Enter) untuk chip; "Sesuaikan" di 390px saat date-picker terbuka.
+- Catatan: pilihan periode berdiri sendiri per tab (mulai dari All saat dibuka, tidak disimpan); Ringkasan tidak lagi punya pilihan kalender (Minggu/Bulan/Tahun Ini/Lalu), lihat P2 "PNL Bulan Ini".
+- Rawan bug: skala Y/area jangan mengubah skala garis puncak; cetak memakai variabel terang sendiri. Struktur kurva: `#chartBox` > `.eq-plot` (svg + tooltip + label) + `.eq-legend`; tooltip berada di strip `padding-top` `#chartBox`, jadi jangan ubah `top`/padding tanpa cek 390px. Chip Transaksi memakai selektor `.ledger-quick-range .quick-chip` (jangan global: `.quick-chip` juga dipakai Setelan → Tampilan).
 
-- [x] **A1 [K] (selesai v1.1.075, pilihan a: pokok saja) Samakan definisi "utang" di header, kelompok, kartu, dan kekayaan bersih.** Utang = pokok (saldo buku); bunga tetap yang belum jatuh tempo hanya keterangan "+ bunga terjadwal" di kartu dan "total sampai lunas" di detail. `loanDebtParts`/`loanBungaNote` dipakai bersama kartu dan detail. Laporan utang sengaja tetap pokok + bunga (label diperjelas). Sisa: PayLater berbunga (kartu memakai `paylaterCreditUsed`, header memakai saldo buku) bisa masih berbeda; ikut ditangani di A2/A3
-- [x] **A2 [Q] (selesai v1.1.076; tampilan sengaja tidak berubah, pemangkasan ada di A3) Satu fungsi bersama untuk teks kartu dan detail akun** (`accountDisplayInfo(data, acc, bal, { detail })` di `01-data.js`): kartu dan detail tidak bisa berbeda lagi; `sortVal`/`groupVal` berasal dari fungsi yang sama. Indentasi baris `feeAdminMetaText` ikut rapi
-- [x] **A3 [F] (selesai v1.1.077) Kartu akun lebih ringkas dan berguna:** maksimal dua baris prioritas lewat `accountPriorityLines` (kartu kredit: sisa tagihan cetak + jatuh tempo, lalu limit; pinjaman: angsuran berikutnya + tanggal, lalu terbayar/bunga terjadwal; PayLater: limit + jatuh tempo). Baris telat merah dengan "▲ Telat N hari", limit ≥ 90% juga ▲; keterangan panjang pindah ke detail (yang kini juga memuat jumlah transaksi). Belum teruji: tema gelap dan layar lebar
-- [ ] **A4 [F] Arsipkan akun** (pengganti "hapus dulu semua transaksi"): hanya untuk akun bersaldo 0 atau lunas; akun arsip hilang dari daftar dan dari pilihan transaksi baru, masuk bagian "Diarsipkan" yang terlipat; riwayat, laporan, dan saldo historis tetap utuh; bisa dipulihkan. Menambah field `archived` (perlu masuk sanitasi, ekspor/impor, dan sinkron cloud serta test)
-- [x] **A5 [F] (selesai v1.1.078) Ringkasan atas tab Akun:** kartu Kekayaan bersih (aset − utang, definisi A1) dan Limit kartu terpakai (`computeLimitUsage`: kartu kredit + PayLater berlimit; merah ▲ ≥90%, amber ≥70%; tersembunyi bila tidak ada limit)
-- [x] **A6 [F] (selesai v1.1.078) Aksi cepat di kartu/detail akun:** tombol Bayar di kartu kini juga untuk PayLater ("Bayar tagihan") dan pinjaman/pinjol ("Bayar angsuran") lewat alur `payDueFromRingkasan` yang sudah ada; detail akun punya "Catat transaksi" dan "Transfer dari sini" dengan akun terisi otomatis (`quickTxnForAccount`, aturan di `accountQuickActions`: akun utang tidak jadi sumber transfer, aset hanya Transfer, titipan tidak ada)
-- [ ] **A7 [F] Cari akun dan chip filter** (Semua | Ada tagihan | Lunas | Diarsipkan) untuk daftar panjang; pola sama dengan filter tab Transaksi
-- [ ] **A8 [F] Sematkan dan urutkan manual:** tombol ▲ ▼ per akun, tersimpan per perangkat (pola R4), akun yang disematkan tampil di puncak kelompoknya
-- [ ] **A9 [Q] Form tambah/edit akun** (satu sheet panjang dengan baris bergantung jenis akun): **belum ditelaah**; ditelaah dulu sebelum diusulkan perubahan apa pun
+**P2**
+- [ ] Toggle kurva Ekuitas / PNL kumulatif (tanpa deposit): lonjakan deposit/penarikan menyamarkan performa trading.
+- [ ] PNL Bulan Ini (opsional Minggu Ini, kalender GMT+8) di samping 7H/30H rolling.
+- [ ] Stat strip: streak saat ini, rata-rata menang/rugi dan rasionya; judul kecil "Periode: …" karena strip mengikuti pemilih periode sedangkan kartu hero tidak.
+- [ ] Keadaan kosong yang bisa ditindaklanjuti: tombol "Impor JSON" dan "Masuk & Pulihkan dari cloud" langsung di Ringkasan.
 
-Urutan kerja yang disarankan: A1 (selesai) → A2 (selesai) → A3 (selesai) → A5 + A6 (selesai) → A4 + A7 → A8 → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
+**P3**
+- [ ] Indikator sinkron Supabase di Ringkasan (terakhir dikirim/diambil; ada perubahan lokal belum dikirim).
+- [ ] Ganti kutipan acak dengan checklist/aturan trading pribadi yang bisa diedit (atau hapus kartunya).
+- [ ] Daftar 5 transaksi terakhir dengan hasil dan emosi.
 
-### Perbaikan tab Ringkasan (R1–R9 selesai semua; dicatat sebagai arsip)
+### 2. Setelan
+**P1**
+- [ ] **Bug: "Salinan dashboard (.html)" tidak lagi mandiri.** `buildFullHtmlString()` (`app.js` ±baris 3486) mengekspor `outerHTML`, sedangkan CSS/JS ada di berkas terpisah sejak v1.1.105, jadi hasil unduhan tanpa gaya di luar folder proyek. Pilihan: (a) inline `style.css`+`app.js` saat ekspor, atau (b) hapus tombolnya dan sediakan JSON saja. Sampai diputuskan, jangan andalkan HTML sebagai cadangan.
+- [ ] Kurs Rp tidak bisa diatur: `DATA.kurs` = 0 sampai JSON diimpor, jadi mode Rp/"≈ Rp" tampil Rp 0. Tambah "Kurs (Rp per USD)" di Setelan (validasi > 0, efek langsung; sudah ikut ekspor/sinkron).
+- [ ] Pengingat cadangan: "Terakhir dicadangkan: N hari lalu" (ekspor JSON/sinkron), peringatan bila > 7 hari atau ada perubahan setelah sinkron terakhir (`jurnalSyncInfo`), plus tombol pintas.
+- [ ] Kelola akun: "Lupa password" (`resetPasswordForEmail`) dan ganti password (`updateUser`) di kartu Sinkron; pesan bila konfirmasi email diperlukan. Jangan simpan password di localStorage.
 
-Dasar temuan: Ringkasan menumpuk **14 kartu** dalam satu gulir panjang. **Tidak ada peringatan tagihan** di sini (pengingat jatuh tempo ada di tab Tagihan). Semua kartu dihitung walau disembunyikan atau kosong, karena `applyRingkasanVisibility` baru jalan setelah render. Grafik tidak punya label aksesibilitas. Kartu hanya bisa disembunyikan, tidak bisa diurutkan. Performa hitung ternyata bukan masalah: pada 20.000 transaksi, `computeDebtTrend` ±19 ms, `computeBudgetStatus` ±10 ms, `emergencyMonthlyExpense` ±4 ms (native; ±4x lebih lambat di HP), jadi optimasi hitung ditaruh paling bawah.
+**P2**
+- [ ] Pindahkan/duplikasi mata uang (`jurnalHeroCurrency`), zona waktu (`jurnalTzOffset`), dan format tanggal ke Setelan ("Preferensi"); kontrol header/hero tetap sebagai pintasan, satu sumber kebenaran.
+- [ ] Kelompokkan Setelan dengan sub-navigasi/akordeon (Tampilan · Trading · Data · Akun · Tentang): Data = Ekspor + Impor + Reset; Akun = Sinkron.
+- [ ] Ekspor/impor pengaturan (`jurnalDayLimits`, `jurnalBigLossPct`, tema/skema/aksen, mata uang, zona waktu): opsi "Sertakan pengaturan" atau berkas terpisah; sinkron ke tabel `pengaturan` bila diinginkan.
+- [ ] Bersihkan penamaan: "Hapus data tersimpan" → "Reset ke bawaan"/"Hapus semua data di perangkat ini" dengan ringkasan yang terhapus; catatan GMT+8 di label Batas harian.
+- [ ] Ukuran lot/kontrak & parameter akun (nilai pip, ukuran kontrak) dan default risiko kalkulator (`mm.risk` 1%, `sl` 150 pips) sebagai isian (kini tertanam di `DATA.dashboard.mm`).
+- [ ] Data & privasi: ringkasan penyimpanan (jumlah transaksi, ukuran localStorage, batas ±5 MB), "Ekspor lalu hapus riwayat lama", mode sembunyi angka default.
 
-Urut dari dampak terbesar ke terkecil:
+**P3**
+- [ ] Tentang: tautan README/panduan, info PWA terpasang (Instal aplikasi), "Periksa pembaruan" (paksa `sw.js` update + muat ulang), tanggal build.
+- [ ] Bahasa & format angka (Indonesia/Inggris), ukuran font (kecil/normal/besar).
+- [ ] Notifikasi pengingat isi catatan psikologi atau batas harian (izin Notification; PWA saja).
 
-- [x] **R1 [F] (selesai v1.1.068; pengingat backup tidak diulang karena sudah punya kartu sendiri) Strip "Perlu perhatian" di puncak Ringkasan.** Maksimal 3 baris, dari `computeUpcomingDues` (telat atau ≤7 hari), anggaran ≥80%, dana darurat kurang, backup lama. Ketuk membuka tab atau akun terkait; strip hilang sendiri kalau tidak ada apa-apa. Ini informasi paling penting bagi pemakai dengan banyak utang, dan sekarang harus pindah ke tab Tagihan dulu
-- [x] **R2 [F] (selesai v1.1.069; kartu lama dipertahankan, hanya segmen aktif ditampilkan dan digambar) Satu kartu grafik dengan pilihan segmen** (Kekayaan | Cashflow | Kategori | Tren | Utang) menggantikan 5 kartu grafik bertumpuk. Hanya segmen aktif yang digambar, jadi gulir lebih pendek dan hitung lebih sedikit. Pemilih periode ikut ke kartu ini
-- [x] **R3 [F] (selesai v1.1.070) Gabungkan "Insight lain" dan "Beban cicilan & bunga" ke kartu "Bulan ini"** sebagai baris tambahan, supaya 3 kartu kecil jadi 1
-- [x] **R4 [F] (selesai v1.1.070; urutan bawaan sudah sesuai usulan setelah R3, tombol ▲ ▼ di Profil) Susun ulang urutan default dan izinkan urut ulang.** Urutan usulan: Bulan ini → Rencana (anggaran, langganan, dana darurat) → Nilai akun → Transaksi terbaru → Grafik. Di Profil > Tampilan Ringkasan tambah tombol naik/turun selain sembunyikan (urutan disimpan per perangkat seperti `RINGKASAN_HIDDEN_KEY`)
-- [x] **R5 [E] (selesai v1.1.069) Lewati render kartu yang disembunyikan atau kosong.** Hitung visibilitas sebelum render, bukan sesudah (`renderTabContent` di `02-navigasi.js`)
-- [x] **R6 [Q] (selesai v1.1.072; pembaca layar sungguhan belum diuji) Aksesibilitas grafik:** `role="img"` + `aria-label` ringkasan tiap SVG (judul, rentang, nilai terakhir), tooltip bisa lewat fokus keyboard (panah, Home, End, Esc; isi titik dibacakan lewat `#chart-live`), lingkaran kategori berlabel dengan legenda yang bisa dibuka lewat Enter/Spasi, dan naik/turun tidak hanya dibedakan warna (▲/▼ di ringkasan dan legenda)
-- [x] **R7 [F] (selesai v1.1.071; kartu kosong tersembunyi otomatis, diganti satu kartu ajakan) Kartu Rencana yang belum dipakai** (anggaran, langganan, dana darurat kosong) tampil sebagai satu baris ajakan atau tersembunyi otomatis, bukan kartu kosong penuh
-- [x] **R8 [F] (selesai v1.1.073; dibandingkan hanya dengan kategori beranggaran) Proyeksi akhir bulan di kartu "Bulan ini":** pengeluaran sungguhan ÷ hari berjalan × jumlah hari sebulan; kalau ada anggaran, tampil apakah kategori beranggaran diperkirakan melewati batas (▲) atau sisa (▼). Tersembunyi di hari terakhir dan tanpa pengeluaran
-- [x] **R9 [E] (selesai v1.1.074; hasil identik dengan cara lama, dijaga test acak) `computeDebtTrend` satu lintasan:** saldo semua akun utang pada 6 tanggal akhir bulan dihitung dalam satu telusuran transaksi, bukan `accountBalanceAsOf` per akun per bulan. Ukur 20.000 transaksi: 14–16 ms → 1–5 ms
+**Tema (sisa)**
+- [ ] Skema rilis 2: Midnight Biru, Ungu Senja, Kertas Putih (tiap skema = blok gelap + terang + entri `SCHEMES`; `--paper-faint`, `--gold-dim`, `--line`, `--line-soft` diturunkan, jadi cukup 7 warna):
 
-Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas): R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9 (urutan R1–R9 sudah dijalankan). Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
+| Skema | `--ink` | `--ink-raised` | `--paper` | `--paper-dim` | Aksen (`--gold`) | `--gain` | `--loss` |
+|---|---|---|---|---|---|---|---|
+| **Midnight Biru** (abu-biru gelap ala terminal; mirip Blue Ocean, boleh dibuang bila dobel) | #0F1720 | #16212D | #E4EAF1 | #8FA0B3 | #5AA9E6 | #5FBF8F | #E0705F |
+| **Ungu Senja** (lembut untuk sesi panjang) | #17131F | #1F1A2B | #ECE8F5 | #9D95B0 | #B392F0 | #7BC49A | #E07A8B |
+| **Kertas Putih** (terang, siang hari/cetak layar) | #FAFAF8 | #F0EFEA | #1F1E1B | #5E5C55 | #8A5F12 | #2F7A45 | #A8402B |
 
-### Perlu kamu jalankan (tidak bisa saya lakukan)
-- [ ] [K] Jalankan `supabase/setup.sql` di Supabase SQL Editor dan uji RLS dengan dua akun (langkah ada di akhir file SQL)
-- [ ] [K] Uji sinkron sungguhan: login, push, bentrok dua perangkat, ganti akun di satu perangkat
-- [ ] [E] Ukur performa di HP nyata; kalau terasa lambat, hasilnya jadi dasar memilih E2 atau E5
+### 3. Laporan
+- [ ] Distribusi pips (L14 baru untuk PNL).
 
-### Butuh keputusanmu
-- [ ] [K] Enkripsi data cloud. Enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan data tidak bisa dibaca di dashboard Supabase
-- [ ] [F] Desktop tahap 3 (belum ada rinciannya di dokumen mana pun)
-- [ ] [F] Akun forex USD/cent dengan kurs (sekarang lewat aset + trik harga per satuan)
-- [ ] [K] Sapaan: kode dan CHANGELOG mengikuti v1.1.041 (sapaan tanpa nama). Kalau ingin sapaan dengan nama, bilang saja
+### 4. Optimalisasi (audit kode v1.1.131)
+Ukuran gzip: `app.js` 270 KB → ±79 KB, `style.css` 68 KB → ±14 KB, `index.html` 70 KB → ±13 KB. `app.js` memuat 11 `location.reload()` dan merender semua tab saat dibuka (mis. `renderLap2()` ±baris 1809).
 
-### Ditunda (hasil ukur: belum perlu; optimalisasi dilewati dulu atas permintaanmu)
-- [~] [E] E2 cache hasil parse `loadData()`: `render()` sudah parse 1x (bukan 4x, v1.1.055). Cache global ditunda: ±65 pemanggil, banyak yang memodifikasi hasilnya, butuh refactor dan test lebih lengkap. Manfaat terukur ±2x di 5.000 transaksi, tidak terasa di 187
-- [ ] [E] E5 indeks transaksi per bulan/akun: `render()` 16–42 ms di 187 transaksi, ±150 ms di 5.000 (lihat bagian 4)
-- [ ] [E] E8 build minify/gabung: tidak ada minifier di lingkungan ini dan butuh keputusan alur kerja (sumber modular tetap dijaga)
-- [ ] [E] E6 sinkron per-item (bukan satu blob)
-- [ ] [E] Hosting sendiri Supabase JS dan font (sekarang di-cache service worker setelah pemuatan online pertama)
-- [ ] [Q] Namespace / ES modules (semua berbagi scope global; perubahan besar di ratusan pemanggilan)
-- [ ] [Q] Kurangi `style=""` inline dan `!important` yang tersisa. Sudah 393 → 274 inline (v1.1.052) dan 2 `!important` dihapus (v1.1.055); sisanya sengaja dibiarkan: `display:none` yang diubah JS, warna SVG grafik, `.section-title`, blok `@media print`, `[data-user-hidden]`/`[data-empty]`, aturan desktop yang menimpa inline
+**P1**
+- [ ] Muat supabase-js hanya saat perlu (dinamis saat Setelan → Sinkron dibuka atau sesi tersimpan ada); versi sudah dikunci `@2.45.4` tapi masih sinkron di `index.html`. Cek `sync.js` tidak memanggil `supabase` sebelum siap.
+- [ ] Banner "Versi baru siap, muat ulang" untuk service worker cache-dulu (memakai `CACHE`).
+- [ ] Render tab secara malas: Laporan (heatmap, drawdown, silang psikologi, bandingkan) dihitung saat halaman dibuka walau tersembunyi; render saat tab dibuka (atau `requestIdleCallback`) dan ulang hanya bila data/filter berubah. Awas Drawdown (L7): lebar > 0 dan urutan skrip `CS`/`DTP`.
+- [ ] Opsional: host sendiri font (Fraunces, IBM Plex Mono) sebagai `woff2` subset Latin + tambah ke `SHELL` di `sw.js` (offline penuh, tanpa dependensi luar).
 
-### Sudah selesai
-- [x] [K] Sapaan/nama pemilik disamakan dengan CHANGELOG v1.1.041; `supabase/setup.sql` (tabel + RLS + 4 kebijakan + query verifikasi)
-- [x] [K] Biaya bulanan otomatis keluar dari `render()`, berID deterministik, tidak ganda antar perangkat
-- [x] [K] `escapeHtml` aman untuk atribut; import dibatasi 5 MB / 100.000 transaksi dengan validasi tanggal dan nominal; nominal dirapikan ke 2 desimal
-- [x] [E] Supabase JS lazy-load; Laporan memakai saldo dari `render()`; service worker `sw.js` (network-first, tidak menyentuh `*.supabase.co`)
-- [x] [Q] Sapaan memakai jam GMT+8; test unit `tests/run.js`; event delegation `data-act` (semua handler inline, v1.1.053–055); `04-akun.js` dan `11-laporan.js` dipecah (v1.1.051)
-- [-] [E] E9 (jangan bangun ulang `<select>` tiap render): tidak dikerjakan, rebuild murah dan menahannya berisiko pilihan dropdown basi
-- [-] [K] Cache DOM `$()` basi: belum ada kasus nyata. Kalau elemen dibuat ulang lewat `innerHTML` dan dicari lewat `$()`, pakai `document.getElementById`
-- [x] [F] Anggaran per kategori (v1.1.056) · Langganan berulang (v1.1.057) · Dana darurat (v1.1.059) · Tren total utang (v1.1.064) · Denda keterlambatan pinjaman, hanya perkiraan (v1.1.065) · Ekspor kalender `.ics` (v1.1.066) · Rekonsiliasi saldo kas/bank/e-wallet (v1.1.067)
-- [x] [F] Strip "Perlu perhatian" di Ringkasan (R1, v1.1.068) · Kartu Grafik bersegmen (R2, v1.1.069) · Lewati render kartu tidak tampil (R5, v1.1.069) · Kartu kecil digabung ke Bulan ini (R3, v1.1.070) · Urutan kartu bisa diatur (R4, v1.1.070) · Kartu rencana kosong jadi satu ajakan (R7, v1.1.071) · Aksesibilitas grafik (R6, v1.1.072) · Proyeksi akhir bulan (R8, v1.1.073) · Tren utang satu lintasan (R9, v1.1.074)
-- [x] [F] Tombol `?` riwayat perubahan di tab Profil (v1.1.058)
-- [x] [Q] README dan CHANGELOG diperbarui; CHANGELOG dipadatkan dan riwayat lengkap versi lama dipindah ke `CHANGELOG-ARSIP.md`
+**P2**
+- [ ] Kurangi `location.reload()` setelah simpan/hapus/impor (11 tempat): render ulang komponen terdampak saja. Prasyarat: `allTrades` (kini `const`) jadi sumber tunggal yang bisa dihitung ulang (`recomputeAll()` + `renderAll()`).
+- [ ] Virtualisasi/render bertahap buku transaksi (kini `innerHTML` dibangun ulang tiap `renderTrades()`); tinjau bila data > ±2.000 transaksi.
+- [ ] Memo hitung ulang berat (`computeLapDD`, `eqDrawdownAllTime`, agregat Laporan) per kunci (versi `DATA` + filter); ukur dulu dengan `performance.measure` (v1.1.81: muat ±175 ms, `renderLap2` 12 ms, 439 transaksi).
+- [ ] Pisah `app.js` per tab (ES module/beberapa berkas) bila `app.js` > ±400 KB; minify hanya build produksi terpisah, sumber tetap terbaca.
+- [ ] `Content-Security-Policy` di `vercel.json` (self, jsDelivr, Google Fonts, `*.supabase.co`; perlu `unsafe-inline` selama ada skrip inline di `<head>`/`journal-data`, atau pindahkan ke berkas). Wajib uji browser.
 
-## 4. Hasil pengujian
+**P3**
+- [ ] Ubah `journal-data` (fallback kosong sejak v1.1.15) jadi berkas kecil atau hapus (dipakai `buildFullHtmlString`; lihat Setelan P1).
+- [ ] Satu handler global `keydown` Escape yang menutup modal teratas (kini dipasang per modal di banyak IIFE).
+- [ ] Lighthouse (mobile, throttling 4G) sebelum/sesudah; catat LCP/TBT di file ini.
 
-**Unit:** 116 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+### 5. Verifikasi manual
+Cek ulang cetak PDF data asli (terakhir v1.1.83; baru diuji di Chromium; cek margin box nomor halaman), cetak per skema, tooltip kurva ekuitas (termasuk "Kustom…") dan grafik Tren (garis & bar), heatmap, blok sesi pasar dan KPI Max DD % dengan data asli, data kosong, mode terang dan Otomatis di perangkat asli, tampilan aksen custom di grafik/heatmap, kartu HP Transaksi (mode terang, mode Pilih), sinkron ke Supabase asli (termasuk kolom `catatan`), pembaruan PWA terpasang (Android/iOS), font tanpa kedip setelah v1.1.132.
 
-**Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
-
-**Browser (Chromium 390 px, perbandingan otomatis antar versi):**
-
-| Versi | Cakupan | Hasil |
-|---|---|---|
-| 1.1.049 | 7 tab, service worker, `runRecurringFees()` idempoten, lazy-load saat CDN diblokir | tanpa error JS, tanpa scroll horizontal |
-| 1.1.051 | pemecahan file: 12 fungsi berpindah file tetap terdefinisi, detail akun, Laporan | tanpa error JS |
-| 1.1.052 | kelas utilitas: 7 tab + 3 modal | CSS terhitung identik (0 selisih) |
-| 1.1.053–054 | event delegation: 131 lalu 182 elemen, urutan + argumen panggilan | identik (0 selisih) |
-| 1.1.055 | 3 tab identik; klik hapus/baris terpisah benar; parse di `render()` 4 → 1 | lulus |
-| 1.1.056–057 | anggaran dan langganan dengan klik nyata (tambah, validasi, idempoten, reload, ekspor) | lulus |
-| 1.1.059, 1.1.064–067 | hanya unit test dan cek sintaks | tampilan belum diuji |
-| 1.1.078 | A5 + A6: 7 akun (kas, aset, kartu kredit, PayLater, pinjaman, pinjol, titipan): Limit kartu terpakai 28% dan Kekayaan bersih tampil; tombol Bayar per jenis akun benar; Bayar angsuran membuka panel bayar nominal Rp1.100.000; Bayar PayLater membuka Transfer Rp950.000; Transfer dari sini dan Catat transaksi mengisi akun dengan benar; kartu kredit tanpa Transfer; titipan tanpa tombol; tanpa scroll horizontal; tema gelap dan mode samarkan saldo belum | tanpa error JS |
-| 1.1.077 | A3: 6 akun (kas, kartu kredit dengan tagihan cetak telat, PayLater limit 95%, pinjaman telat 90 hari, pinjol 2 hari lagi, titipan): kartu utang tepat 2 baris meta, ▲ Telat N hari dan ▲ limit tampil, tombol Bayar tagihan tetap, detail memuat jumlah transaksi, tanpa scroll horizontal; tema gelap dan layar lebar belum | tanpa error JS |
-| 1.1.076 | A1 + A2: 4 akun (kas, kartu kredit, pinjaman bunga tetap Rp10 juta, pinjol): header Total utang Rp12.700.000 = jumlah kelompok; kartu "Sisa pokok" + "+ bunga terjadwal"; detail "total sampai lunas" dan bunga efektif pinjol hanya di detail; tanpa scroll horizontal | tanpa error JS |
-| 1.1.075 | A1: unit test (pokok/bunga contoh Rp10 juta, header = jumlah pokok kartu + pinjaman); tampilannya diuji di 1.1.076 | unit + sintaks lulus |
-| 1.1.074 | R9: segmen Utang dengan kartu kredit + transfer pembayaran: total, kenaikan, 6 batang, label aksesibilitas benar; unit: identik dengan cara lama pada 300 data acak | tanpa error JS |
-| 1.1.073 | R8: proyeksi tanpa anggaran, anggaran terlampaui (▲ merah), anggaran longgar (▼), data kosong menyembunyikan blok, tanpa scroll horizontal | tanpa error JS |
-| 1.1.072 | R6: 5 segmen grafik + lingkaran kategori punya `role`/`aria-label`, fokus keyboard menampilkan titik terakhir, ArrowLeft/Home/Esc bekerja dan `#chart-live` terisi, Enter di legenda membuka rincian, tanda ▲ tampil, tanpa scroll horizontal | tanpa error JS |
-| 1.1.071 | R7: kartu rencana kosong tersembunyi, kartu ajakan 3 baris, klik Atur membuka form, isi anggaran memunculkan kartunya, semua dipakai = ajakan hilang, urutan lama tersimpan tetap benar | tanpa error JS |
-| 1.1.070 | R3/R4: blok insight dan beban cicilan di dalam Bulan ini, urutan kartu bisa digeser dan bertahan setelah reload, grup Grafik bergerak utuh, reset, data kosong, desktop tanpa scroll horizontal | tanpa error JS |
-| 1.1.069 | kartu Grafik bersegmen: hanya segmen aktif tergambar, pilihan bertahan setelah reload, segmen mati jatuh ke yang tersedia, kartu hilang saat data kosong | tanpa error JS |
-| 1.1.068 | strip "Perlu perhatian": 3 baris berurutan, klik membuka detail akun, hilang saat data aman | tanpa error JS |
-
-**Belum teruji:** login/sinkron Supabase sungguhan, pembaca layar sungguhan (TalkBack/VoiceOver/NVDA) untuk grafik v1.1.072, service worker di perangkat nyata (offline), dua perangkat bentrok, sinkron `budgets` / `emergencyMonths` antar perangkat, sentuhan nyata di HP, tampilan v1.1.059 dan v1.1.064–067 (dana darurat, grafik tren utang, denda telat, tombol `.ics`, Cocokkan saldo).
-
-### Ukur performa (v1.1.054)
-
-Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, bukan HP nyata), data dummy 7 akun. Milidetik, tiga kali ukur:
-
-| Operasi | 187 transaksi | 5.000 | 20.000 |
-|---|---|---|---|
-| `loadData()` (parse JSON) | ±0 | 21–26 | 43–64 |
-| `render()` lengkap | 16–42 | 140–157 | 626–795 |
-| `saveData()` | 3–10 | 35–89 | 203–240 |
-| buka tab Transaksi (pertama kali) | n/a | 99 | 179 |
-| buka tab Laporan (pertama kali) | 83 | 118 | 271 |
-
-`render()` memanggil `loadData()` 4x (kini 1x sejak v1.1.055) dan `computeAllBalances()` 1x. Aman sampai ribuan transaksi; baru terasa di puluhan ribu. Urutan optimasi berikutnya kalau perlu: E2, lalu E5.
-
-## 5. Setelah memasang
-
-1. Timpa file lama dengan isi zip. Zip v1.1.052 ke atas hanya berisi file yang berubah; paket lengkap juga berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan empat ikon.
-2. **Export JSON** dulu sebagai cadangan.
-3. Jalankan `setup.sql` di Supabase dan verifikasi RLS dengan dua akun.
-4. Buka app lewat `http(s)://` (bukan `file://`) agar service worker aktif; setelah pemuatan pertama coba mode pesawat.
-5. Tab yang sudah terbuka: tutup dan buka lagi sekali supaya service worker baru mengambil alih.
+### 6. Ide lanjutan (opsional)
+- **Impor CSV:** pratinjau baris, pilihan zona waktu, impor deposit, opsi perbarui transaksi ber-ID sama. **Indikator sinkron** di Ringkasan (lihat Ringkasan P3).
+- **Ukuran:** total sumber ±535 KB (v1.1.131: `app.js` ±270 KB, `style.css` ±68 KB, `index.html` ±70 KB; `CHANGELOG.md` tidak dimuat aplikasi). Minify hemat ±30–40% tapi menyulitkan edit; bila perlu, buat build minified terpisah. Tinjau ulang bila `app.js` > ~400 KB.
