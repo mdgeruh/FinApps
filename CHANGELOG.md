@@ -6,6 +6,18 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.100 — 2 Okt 2026
+
+**Ditambah**
+- **Pemilih tanggal kustom** menggantikan kalender bawaan browser untuk ketujuh `<input type="date">` (tanggal transaksi, tanggal pencairan pinjaman, tanggal penilaian aset, tanggal bayar pinjaman, tanggal titipan, dan rentang laporan kustom). `enhanceDate` di `06-util-ui.js` memakai pola yang sama dengan `enhanceSelect`: input asli tetap menjadi sumber nilai (`YYYY-MM-DD`), jadi kode lain tidak berubah. Mendukung `min`/`max` (hari di luar batas nonaktif), tombol "Hari ini", dan "Hapus" untuk rentang laporan. Minggu mulai Senin, nama bulan bahasa Indonesia.
+- Audit form: semua 21 `<select>` sudah kustom sejak sebelumnya; dialog konfirmasi sudah kustom (`showConfirm`). Yang tersisa bawaan browser hanya input file, email, dan password.
+- 4 test baru (193 total), termasuk penjaga agar input tanggal baru tidak lupa didaftarkan.
+
+## v1.1.099 — 2 Okt 2026
+
+**Diubah (kualitas kode, tampilan tidak berubah)**
+- 18 `style=""` inline di `index.html` diganti kelas utilitas (`u-mb8`, `u-mb6`, `u-mb12`, `u-mt14`, `u-flex1`, dan kelas baru `u-red`, `u-bb-line`, `u-py8-fs12`, `u-py8-ptr`, `u-fw5-fs115` di `style.css`). Diverifikasi dengan membandingkan gaya terhitung 1.034 elemen sebelum dan sesudah: 0 selisih. Tiga judul bagian (`.section-title`) tetap inline karena aturan kelasnya lebih kuat dari utilitas.
+
 ## v1.1.098 — 2 Okt 2026
 
 **Diubah**

@@ -723,3 +723,30 @@
 .acc-more > summary { cursor: pointer; padding: 11px 0; font-size: 13px; font-weight: 500; color: var(--ink-soft); list-style-position: inside; }
 .acc-more[open] > summary { border-bottom: 1px solid var(--paper-dim); margin-bottom: 10px; }
 .acc-more-body { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
+
+/* v1.1.099: pengganti style="" inline yang berulang */
+.u-red { color: var(--red); }
+.u-bb-line { border-bottom: 1px solid var(--line); }
+.u-py8-fs12 { padding: 8px 0; font-size: 12px; }
+.u-py8-ptr { padding: 8px 0; cursor: pointer; }
+.u-fw5-fs115 { font-weight: 500; font-size: 11.5px; }
+
+/* v1.1.100: pemilih tanggal kustom (pengganti kalender bawaan browser) */
+.cdate-trigger::after { display: none; }
+.cdate-trigger { padding-right: 12px; }
+.csel-label.cdate-empty { color: var(--ink-soft); }
+.cdate-panel { display: none; position: fixed; z-index: 950; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(8,18,15,0.22); padding: 10px; box-sizing: border-box; }
+.cdate-panel.open { display: block; }
+.cdate-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.cdate-title { font-weight: 700; font-size: 14px; color: var(--ink); }
+.cdate-nav { width: 34px; height: 34px; border: 0; border-radius: 8px; background: var(--paper-dim); color: var(--ink); font-size: 20px; line-height: 1; cursor: pointer; }
+.cdate-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cdate-dow { font-size: 11px; font-weight: 600; color: var(--ink-soft); padding: 4px 0; }
+.cdate-day { height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font-size: 13.5px; cursor: pointer; font-family: inherit; }
+.cdate-day:hover { background: var(--paper-dim); }
+.cdate-day.today { box-shadow: inset 0 0 0 1.5px var(--teal); }
+.cdate-day.sel { background: var(--teal); color: #fff; font-weight: 700; }
+.cdate-day:disabled { color: var(--ink-soft); opacity: .35; cursor: default; background: transparent; }
+.cdate-foot { display: flex; justify-content: space-between; margin-top: 6px; }
+.cdate-link { border: 0; background: transparent; color: var(--teal); font-weight: 600; font-size: 13px; padding: 6px 8px; cursor: pointer; font-family: inherit; }
+.cdate-link:disabled { opacity: .35; cursor: default; }
