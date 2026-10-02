@@ -22,6 +22,7 @@
 
   function openAccForm(mode, acc) {
     const form = $('acc-form');
+    showIoMsg('', '', 'acc-form-msg');
     const nameEl = $('acc-name-input');
     const typeEl = $('acc-type-input');
     const balEl = $('acc-balance-input');
@@ -105,6 +106,7 @@
       $('acc-submit-btn').textContent = 'Simpan akun';
       $('acc-cancel-btn').style.display = 'none';
     }
+    syncLoanMore(true);
     form.classList.add('open');
   }
 
@@ -166,7 +168,7 @@
     // Biaya admin diisi dalam persen dari pokok; angsuran dihitung otomatis dari pokok, tenor, dan bunga flat.
     $('acc-loan-type-wrap').style.display = isOnlineLoan ? 'none' : 'block';
     $('acc-loan-rate-label').textContent = isOnlineLoan ? 'Bunga flat' : 'Suku bunga';
-    $('acc-loan-rate-input').placeholder = isOnlineLoan ? '%, mis. 2.5' : '%, opsional';
+    $('acc-loan-rate-input').placeholder = isOnlineLoan ? '%, mis. 2.5' : '%';
     if (isOnlineLoan && accFormPrevType !== 'pinjaman_online' && !editingAccountId) $('acc-loan-rate-unit-input').value = 'bulan';
     accFormPrevType = type;
     $('acc-loan-savings-wrap').style.display = isOnlineLoan ? 'none' : 'block';
@@ -175,11 +177,13 @@
     $('acc-loan-admin-label').textContent = 'Biaya admin (sekali)';
     $('acc-loan-online-extra').style.display = isOnlineLoan ? 'flex' : 'none';
     $('acc-loan-installment-label').textContent = 'Angsuran per bulan (otomatis kalau tenor & bunga diisi, bisa diubah)';
-    $('acc-loan-installment-input').placeholder = 'Rp, terisi otomatis kalau pokok, tenor & bunga diisi';
+    $('acc-loan-installment-input').placeholder = 'Rp, otomatis';
     $('acc-loan-tenor-row').style.display = isLoan ? 'block' : 'none';
-    $('acc-balance-input').placeholder = isLoan
-      ? 'Sisa pokok belum dibayar SEKARANG (Rp), boleh 0'
-      : (isDebt ? 'Sudah terpakai saat ini (Rp), boleh 0' : (type === 'aset' ? 'Nilai awal / harga beli (Rp)' : 'Saldo awal (Rp), boleh 0'));
+    const balLabel = isLoan ? 'Sisa pokok sekarang'
+      : (isDebt ? 'Sudah terpakai saat ini' : (type === 'aset' ? 'Nilai awal / harga beli' : 'Saldo awal'));
+    $('acc-balance-label').textContent = balLabel;
+    $('acc-balance-input').placeholder = (isLoan || isDebt) ? 'Rp, boleh 0' : (type === 'aset' ? 'Rp' : 'Rp, boleh 0');
+    $('acc-balance-input').setAttribute('aria-label', balLabel + ' (Rp)');
     // Status pinjaman (baru cair vs sudah berjalan) cuma relevan pas BIKIN akun baru — sesudah akun ada,
     // pilihan ini tidak bisa diubah lagi (disbursement cuma sekali di awal), tapi "pokok awal" tetap bisa dikoreksi lewat Edit akun.
     const editing = !!editingAccountId;
@@ -192,7 +196,19 @@
     $('acc-loan-original-row').style.display = (isLoan && (editing || stage === 'berjalan')) ? 'block' : 'none';
     updateLoanDisburseRow();
     updateOnlineLoanEstimate();
+    syncLoanMore(false);
   }
+
+  // A9c: isian pinjaman yang jarang dipakai ada di <details id="acc-loan-more">. Terbuka otomatis bila ada isinya,
+  // untuk pinjaman online, atau saat validasi perlu memfokuskan salah satu isiannya.
+  const LOAN_MORE_IDS = ['acc-loan-admin-input', 'acc-loan-admin-pct-input', 'acc-loan-stamp-input', 'acc-loan-insurance-input', 'acc-loan-savings-input', 'acc-loan-latefee-input', 'acc-loan-latefee-cap-input'];
+  function syncLoanMore(reset) {
+    const d = $('acc-loan-more'); if (!d) return;
+    if (reset) d.open = false;
+    const online = $('acc-type-input').value === 'pinjaman_online';
+    if (online || LOAN_MORE_IDS.some(id => { const e = $(id); return e && String(e.value).trim() !== ''; })) d.open = true;
+  }
+  function openLoanMore() { const d = $('acc-loan-more'); if (d) d.open = true; }
 
   function onLoanStageChange() {
     updateAccFormFields();
@@ -332,12 +348,16 @@
     if (!show) return;
     const sel = $('acc-loan-disburse-input');
     const data = loadData();
-    const options = data.accounts.filter(a => !TYPE_DEBT[a.type] && a.type !== 'titipan');
+    const options = data.accounts.filter(a => !TYPE_DEBT[a.type] && a.type !== 'titipan' && !a.archived);
     sel.innerHTML = '<option value="">— Jangan catat otomatis —</option>' +
       options.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
   }
 
+  // Galat form akun: tampil di dalam sheet (persisten sampai pesan berikutnya), tidak lewat #io-msg tab lain.
+  function accFormMsg(text) { showIoMsg(text, 'error', 'acc-form-msg'); }
+
   function saveAccount() {
+    showIoMsg('', '', 'acc-form-msg');
     const nameEl = $('acc-name-input');
     const typeEl = $('acc-type-input');
     const balEl = $('acc-balance-input');
@@ -396,8 +416,8 @@
     // Stage cuma dibaca saat BIKIN akun baru (baris & selectnya disembunyikan/tidak berlaku pas edit).
     const loanStage = (isLoan && !editingAccountId) ? (loanStageEl.value === 'berjalan' ? 'berjalan' : 'baru') : 'baru';
     const loanDisburseId = (isLoan && !editingAccountId && loanStage === 'baru') ? (loanDisburseEl.value || '') : '';
-    if (!name) { nameEl.focus(); return; }
-    if (isOnlineLoan && loanInstallmentVal <= 0) { loanInstallmentEl.focus(); showIoMsg('Isi tenor dan bunga flat supaya angsuran terhitung otomatis, atau isi angsuran per bulan langsung.', 'error'); return; }
+    if (!name) { nameEl.focus(); accFormMsg('Isi nama akun dulu.'); return; }
+    if (isOnlineLoan && loanInstallmentVal <= 0) { loanInstallmentEl.focus(); accFormMsg('Isi tenor dan bunga flat supaya angsuran terhitung otomatis, atau isi angsuran per bulan langsung.'); return; }
     const data = loadData();
     if (isOnlineLoan && editingAccountId) {
       // Persen admin tidak diubah -> pertahankan nominal Rp yang sudah tersimpan (hindari geser karena pembulatan / pokok awal kosong).
@@ -405,19 +425,22 @@
       if (ex && ex.loanAdminFee && adminPctOf(ex) === loanAdminPctVal) loanAdminVal = ex.loanAdminFee;
     }
     const dup = data.accounts.find(a => a.id !== editingAccountId && a.name.toLowerCase() === name.toLowerCase());
-    if (dup) { showIoMsg(`Nama "${dup.name}" sudah dipakai akun lain.`, 'error'); nameEl.focus(); return; }
-    if (type === 'kartu_kredit' && cardStmtVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); showIoMsg('Isi tanggal jatuh tempo juga kalau tanggal cetak tagihan diisi.', 'error'); return; }
-    if (type === 'kartu_kredit' && cardMinValueVal > 0 && cardMinTypeVal === 'percent' && cardMinValueVal > 100) { $('acc-card-min-input').focus(); showIoMsg('Pembayaran minimum persen tidak boleh lebih dari 100%.', 'error'); return; }
-    if (isDebt && !isLoan && limitVal <= 0) { limitEl.focus(); showIoMsg('Isi limit untuk kartu kredit / paylater.', 'error'); return; }
-    if (isDebt && !isLoan && interestVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); showIoMsg('Isi tanggal jatuh tempo untuk bisa menghitung bunga bulanan.', 'error'); return; }
+    if (dup) { accFormMsg(`Nama "${dup.name}" sudah dipakai akun lain.`); nameEl.focus(); return; }
+    if (type === 'kartu_kredit' && cardStmtVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); accFormMsg('Isi tanggal jatuh tempo juga kalau tanggal cetak tagihan diisi.'); return; }
+    if (type === 'kartu_kredit' && cardMinValueVal > 0 && cardMinTypeVal === 'percent' && cardMinValueVal > 100) { $('acc-card-min-input').focus(); accFormMsg('Pembayaran minimum persen tidak boleh lebih dari 100%.'); return; }
+    if (isDebt && !isLoan && limitVal <= 0) { limitEl.focus(); accFormMsg('Isi limit untuk kartu kredit / paylater.'); return; }
+    if (isDebt && !isLoan && interestVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); accFormMsg('Isi tanggal jatuh tempo untuk bisa menghitung bunga bulanan.'); return; }
+    // Isian yang tadinya dibuang diam-diam kalau pasangannya kosong: sekarang diberi tahu.
+    if (isDebt && !isLoan && type !== 'paylater' && feeAmountVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); accFormMsg('Isi tanggal jatuh tempo juga supaya biaya admin disimpan.'); return; }
+    if (isLoan && loanLateCapVal > 0 && loanLateVal <= 0) { openLoanMore(); $('acc-loan-latefee-input').focus(); accFormMsg('Isi denda telat (%/hari) juga supaya batas maksimal denda disimpan.'); return; }
     if (loanDisburseId && ((loanAdminModeVal === 'cicil' ? 0 : loanAdminVal) + loanStampVal) > Math.abs(balVal)) {
-      loanAdminEl.focus();
-      showIoMsg('Total biaya admin + materai tidak boleh lebih besar dari pokok pinjaman.', 'error');
+      openLoanMore(); loanAdminEl.focus();
+      accFormMsg('Total biaya admin + materai tidak boleh lebih besar dari pokok pinjaman.');
       return;
     }
     if (isLoan && loanOriginalVal > 0 && loanOriginalVal < Math.abs(balVal)) {
       loanOriginalEl.focus();
-      showIoMsg('Pokok awal tidak boleh lebih kecil dari sisa pokok sekarang.', 'error');
+      accFormMsg('Pokok awal tidak boleh lebih kecil dari sisa pokok sekarang.');
       return;
     }
 
@@ -547,6 +570,25 @@
     $('acc-form').classList.remove('open');
     runRecurringFees();   // akun baru/diubah bisa langsung kena bunga/biaya bulan ini
     render();
+  }
+
+  // A4: arsipkan / pulihkan akun. Mengembalikan true kalau status berubah.
+  async function setAccountArchived(id, archived) {
+    const data = loadData();
+    const acc = data.accounts.find(a => a.id === id);
+    if (!acc) return false;
+    if (archived) {
+      const why = archiveBlockReason(data, acc);
+      if (why) { showIoMsg(why, 'error'); return false; }
+      const ok = await showConfirm(`Arsipkan "${acc.name}"? Akun hilang dari daftar utama dan pilihan transaksi baru. Riwayat dan laporan tetap utuh, dan akun bisa dipulihkan kapan saja.`);
+      if (!ok) return false;
+      acc.archived = true;
+    } else {
+      delete acc.archived;
+    }
+    saveData(data);
+    render();
+    return true;
   }
 
   async function deleteAccount(id) {

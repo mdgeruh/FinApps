@@ -537,7 +537,7 @@
     CHART_SEGMENTS.forEach(s => { const el = $(s.card); if (el) el.dataset.segOff = (p.cur && p.cur.id === s.id) ? '0' : '1'; });
     if (pc) pc.dataset.empty = p.cur ? '0' : '1';
     if (row) {
-      row.innerHTML = p.avail.map(s => `<button type="button" class="type-btn${p.cur && p.cur.id === s.id ? ' active' : ''}" role="tab" aria-selected="${p.cur && p.cur.id === s.id}" data-act="setChartSegment" data-a0="${s.id}">${s.label}</button>`).join('');
+      row.innerHTML = p.avail.map(s => `<button type="button" class="type-btn${p.cur && p.cur.id === s.id ? ' active' : ''}" role="tab" aria-selected="${p.cur && p.cur.id === s.id}" data-act="setChartSegment" data-a0="${escapeHtml(s.id)}">${s.label}</button>`).join('');
       row.style.display = p.avail.length > 1 ? 'flex' : 'none';
     }
     const pw = $('chart-period-wrap');
@@ -619,7 +619,7 @@
     const order = loadRingkasanOrder();
     const label = id => (RINGKASAN_ORDER_UNITS.find(u => u.id === id) || {}).label || id;
     const chk = (c, indent) => `<input type="checkbox" ${hidden.has(c.id) ? '' : 'checked'} data-change-act="toggleRingkasanCardFromEl" data-change-a0="${c.id}" style="width:20px; height:20px; accent-color:var(--green);" aria-label="Tampilkan ${escapeHtml(c.label)}">`;
-    const arrows = (id, i) => `<button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${id}" data-n1="-1" ${i === 0 ? 'disabled' : ''} aria-label="Naikkan ${escapeHtml(label(id))}">▲</button><button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${id}" data-n1="1" ${i === order.length - 1 ? 'disabled' : ''} aria-label="Turunkan ${escapeHtml(label(id))}">▼</button>`;
+    const arrows = (id, i) => `<button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${escapeHtml(id)}" data-n1="-1" ${i === 0 ? 'disabled' : ''} aria-label="Naikkan ${escapeHtml(label(id))}">▲</button><button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${escapeHtml(id)}" data-n1="1" ${i === order.length - 1 ? 'disabled' : ''} aria-label="Turunkan ${escapeHtml(label(id))}">▼</button>`;
     const chartIds = new Set(CHART_SEGMENTS.map(s => s.card));
     el.innerHTML = order.map((id, i) => {
       if (id === 'chart-group') {
@@ -1065,7 +1065,7 @@
         metaText += ' · ' + formatDayLabel(t.date);
         const sign = type === 'masuk' ? '+' : '−';
         return `
-          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${escapeHtml(t.id)}">
             <div class="txn-left">
               <span class="dot ${t.type}"></span>
               <div class="txn-text">

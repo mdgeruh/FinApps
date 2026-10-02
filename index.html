@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Keuangan Pribadi</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -219,7 +220,7 @@
 
   <div class="tab-panel" id="tab-akun">
     <div class="accounts-section">
-      <div class="section-title">Akun</div>
+      <div class="section-title-row"><div class="section-title">Akun</div><button type="button" class="see-all-btn" id="acc-order-toggle" data-act="toggleAccOrderMode">Atur urutan</button></div>
       <div style="display:flex; gap:10px; margin-bottom:14px;">
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Total aset</div>
@@ -241,6 +242,13 @@
           <div class="acc-tile-meta" id="akun-limit-sub"></div>
         </div>
       </div>
+      <div id="acc-filter-bar" style="display:none; margin-bottom:12px;">
+        <div class="search-row" style="margin-bottom:8px;">
+          <input type="text" id="acc-search-input" placeholder="Cari akun (nama atau jenis)..." data-input-act="onAccSearchInput" aria-label="Cari akun" autocomplete="off">
+          <button type="button" class="search-clear-btn" id="acc-search-clear" data-act="clearAccSearch" aria-label="Hapus pencarian">×</button>
+        </div>
+        <div class="filter-row" id="acc-chip-row" role="group" aria-label="Filter akun" style="margin:0;"></div>
+      </div>
       <div class="list-section u-mt0" id="accounts-scroll"></div>
       <div class="sheet-overlay" id="acc-form" data-backdrop="cancelAccForm">
         <div class="sheet-panel">
@@ -248,10 +256,12 @@
           <div class="sheet-title" id="acc-form-title">Tambah akun</div>
           <button class="sheet-close" data-act="cancelAccForm" aria-label="Tutup">×</button>
         </div>
-        <div class="field-row">
-          <input type="text" id="acc-name-input" placeholder="Nama akun, mis. BCA" aria-label="Nama akun">
+        <div class="field-row" style="flex-direction:column; align-items:stretch;">
+          <label class="field-label" for="acc-name-input">Nama akun</label>
+          <input type="text" id="acc-name-input" placeholder="mis. BCA" aria-label="Nama akun">
         </div>
-        <div class="field-row">
+        <div class="field-row" style="flex-direction:column; align-items:stretch;">
+          <label class="field-label" for="acc-type-input">Jenis akun</label>
           <select id="acc-type-input" data-change-act="updateAccFormFields">
             <option value="kas">Kas / Dompet</option>
             <option value="bank">Bank</option>
@@ -263,6 +273,10 @@
             <option value="pinjaman_online">Pinjaman Online</option>
             <option value="titipan">Titipan / Piutang orang</option>
           </select>
+        </div>
+        <div class="field-row" id="acc-balance-row" style="flex-direction:column; align-items:stretch;">
+          <label class="field-label" id="acc-balance-label" for="acc-balance-input">Saldo awal</label>
+          <input type="number" id="acc-balance-input" placeholder="Rp, boleh 0" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Saldo awal (Rp)">
         </div>
         <div class="field-row" id="acc-limit-row" style="display:none; flex-direction:column; align-items:stretch;">
           <span class="field-label">Limit kartu</span>
@@ -311,8 +325,8 @@
             <option value="Lainnya">Lainnya</option>
           </select>
           <div class="u-flex-gap8">
-            <input class="u-flex1-min0" type="number" id="acc-asset-qty-input" placeholder="Jumlah (opsional), mis. 10 / equity USD / USDT" inputmode="decimal" step="0.001" aria-label="Jumlah aset, opsional">
-            <input class="u-flex1-min0" type="text" id="acc-asset-unit-input" placeholder="Satuan, mis. gram / USD / USDT" maxlength="12" aria-label="Satuan aset">
+            <input class="u-flex1-min0" type="number" id="acc-asset-qty-input" placeholder="Jumlah, mis. 10" inputmode="decimal" step="0.001" aria-label="Jumlah aset, opsional">
+            <input class="u-flex1-min0" type="text" id="acc-asset-unit-input" placeholder="Satuan, mis. gram" maxlength="12" aria-label="Satuan aset">
           </div>
           <div class="acc-sub">Isi nilai awal (harga beli atau nilai sekarang) di kolom saldo. Sesudahnya perbarui nilainya lewat detail akun, dan nilai terbarunya ikut masuk kekayaan bersih. Kalau jumlah &amp; satuan diisi, kamu cukup memasukkan harga per satuan. Untuk akun forex cent: isi jumlah = equity dalam USD (saldo sen ÷ 100), satuan "USD", lalu harga per satuan = kurs USD/IDR. Untuk crypto futures: jumlah = equity dalam USDT, satuan "USDT", harga per satuan = kurs USDT/IDR.</div>
         </div>
@@ -344,29 +358,54 @@
             </select>
           </div>
           <div class="u-flex-gap8" id="acc-loan-rate-row">
-            <div class="u-flex1-min0" id="acc-loan-type-wrap">
+            <div class="u-flex1-min0" id="acc-loan-type-wrap" style="flex:0.8 1 0;">
               <span class="field-label">Jenis bunga</span>
               <select class="u-w100" id="acc-loan-type-input" data-change-act="updateOnlineLoanEstimate" aria-label="Jenis bunga pinjaman">
                 <option value="tetap">Tetap (flat)</option>
                 <option value="menurun">Menurun (anuitas)</option>
               </select>
             </div>
-            <div class="u-flex1-min0">
+            <div class="u-flex1-min0" style="flex:1.2 1 0;">
               <span class="field-label" id="acc-loan-rate-label">Suku bunga</span>
               <div style="display:flex; gap:4px;">
-                <input type="number" id="acc-loan-rate-input" placeholder="%, opsional" inputmode="decimal" step="0.01" data-input-act="updateOnlineLoanEstimate" aria-label="Suku bunga pinjaman, opsional" style="width:60%;">
-                <select id="acc-loan-rate-unit-input" data-change-act="updateOnlineLoanEstimate" style="width:40%;" aria-label="Satuan suku bunga">
-                  <option value="tahun">%/thn</option>
-                  <option value="bulan">%/bln</option>
+                <input type="number" id="acc-loan-rate-input" placeholder="%, opsional" inputmode="decimal" step="0.01" data-input-act="updateOnlineLoanEstimate" aria-label="Suku bunga pinjaman, opsional" style="flex:1 1 0;">
+                <select id="acc-loan-rate-unit-input" data-change-act="updateOnlineLoanEstimate" style="flex:0 0 84px;" aria-label="Satuan suku bunga">
+                  <option value="tahun">/thn</option>
+                  <option value="bulan">/bln</option>
                 </select>
               </div>
             </div>
           </div>
           <div id="acc-loan-original-row" style="display:none;">
             <span class="field-label">Pokok awal saat pertama cair (Rp)</span>
-            <input class="u-w100" type="number" id="acc-loan-original-input" placeholder="Isi kalau beda dari sisa sekarang" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Pokok awal pinjaman saat pertama kali cair, Rupiah">
-            <div class="acc-sub u-mt4">Dipakai buat hitung progres pelunasan & estimasi bunga yang benar — kalau kosong, sisa pokok di bawah dianggap juga pokok awal (0% terbayar).</div>
+            <input class="u-w100" type="number" id="acc-loan-original-input" placeholder="Rp, kalau beda dari sisa" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Pokok awal pinjaman saat pertama kali cair, Rupiah">
+            <div class="acc-sub u-mt4">Untuk hitung progres &amp; bunga. Kosong = sisa pokok dianggap pokok awal (0% terbayar).</div>
           </div>
+          <div id="acc-loan-tenor-row" style="display:none;">
+            <span class="field-label">Tenor (bulan)</span>
+            <input class="u-w100" type="number" id="acc-loan-tenor-input" placeholder="Jumlah bulan angsuran" inputmode="numeric" aria-label="Tenor pinjaman dalam bulan" data-input-act="updateOnlineLoanEstimate">
+          </div>
+          <div class="u-flex-gap8" id="acc-loan-schedule-row">
+            <div class="u-flex1-min0">
+              <span class="field-label">Tanggal pencairan</span>
+              <input class="u-w100" type="date" id="acc-loan-start-input" aria-label="Tanggal pinjaman cair, untuk jadwal angsuran, opsional">
+            </div>
+            <div style="flex:0 0 110px;">
+              <span class="field-label">Tgl jatuh tempo</span>
+              <input class="u-w100" type="number" id="acc-loan-dueday-input" placeholder="1-31" inputmode="numeric" aria-label="Tanggal jatuh tempo angsuran tiap bulan, 1 sampai 31, opsional">
+            </div>
+          </div>
+          <div class="acc-sub" style="margin-top:-2px;">Opsional, untuk jadwal & pengingat. Tgl jatuh tempo kosong = pakai tanggal pencairan.</div>
+          <div>
+            <span class="field-label" id="acc-loan-installment-label">Angsuran per bulan (pokok + bunga)</span>
+            <input class="u-w100" type="number" id="acc-loan-installment-input" placeholder="Rp, otomatis" inputmode="numeric" data-input-act="onInstallmentManualInput" aria-label="Angsuran per bulan, pokok ditambah bunga, Rupiah">
+            <div class="acc-sub u-mt4" id="acc-loan-installment-hint"></div>
+            <button type="button" class="io-btn" id="acc-loan-installment-auto-btn" style="display:none; margin-top:6px;" data-act="resetInstallmentAuto">Hitung otomatis lagi</button>
+            <div class="acc-sub u-mt4" id="acc-loan-tenor-hint"></div>
+          </div>
+          <details id="acc-loan-more" class="acc-more">
+            <summary>Lainnya (opsional): biaya, tabungan, denda</summary>
+            <div class="acc-more-body">
           <div class="u-flex-gap8">
             <div class="u-flex1-min0" id="acc-loan-admin-rp-wrap">
               <span class="field-label" id="acc-loan-admin-label">Biaya admin (sekali)</span>
@@ -399,46 +438,24 @@
             <span class="field-label">Tabungan wajib/bulan</span>
             <input class="u-w100" type="number" id="acc-loan-savings-input" placeholder="Rp, opsional, info saja" inputmode="numeric" aria-label="Tabungan wajib per bulan, Rupiah, opsional">
           </div>
-          <div id="acc-loan-tenor-row" style="display:none;">
-            <span class="field-label">Tenor (bulan)</span>
-            <input class="u-w100" type="number" id="acc-loan-tenor-input" placeholder="Jumlah bulan angsuran" inputmode="numeric" aria-label="Tenor pinjaman dalam bulan" data-input-act="updateOnlineLoanEstimate">
-          </div>
-          <div class="u-flex-gap8" id="acc-loan-schedule-row">
-            <div class="u-flex1-min0">
-              <span class="field-label">Tanggal pencairan</span>
-              <input class="u-w100" type="date" id="acc-loan-start-input" aria-label="Tanggal pinjaman cair, untuk jadwal angsuran, opsional">
-            </div>
-            <div style="flex:0 0 110px;">
-              <span class="field-label">Tgl jatuh tempo</span>
-              <input class="u-w100" type="number" id="acc-loan-dueday-input" placeholder="1-31" inputmode="numeric" aria-label="Tanggal jatuh tempo angsuran tiap bulan, 1 sampai 31, opsional">
-            </div>
-          </div>
-          <div class="acc-sub" style="margin-top:-2px;">Opsional: dipakai untuk jadwal angsuran & pengingat jatuh tempo. Kalau tgl jatuh tempo kosong, dipakai tanggal pencairan.</div>
           <div class="u-flex-gap8">
             <div class="u-flex1-min0"><span class="field-label">Denda telat (%/hari)</span>
               <input class="u-w100" type="number" id="acc-loan-latefee-input" placeholder="mis. 0,5" inputmode="decimal" step="any" min="0" aria-label="Denda keterlambatan, persen per hari dari angsuran, opsional"></div>
             <div class="u-flex1-min0"><span class="field-label">Maks denda (% angsuran)</span>
-              <input class="u-w100" type="number" id="acc-loan-latefee-cap-input" placeholder="kosong = tanpa batas" inputmode="decimal" step="any" min="0" aria-label="Batas total denda per angsuran dalam persen, opsional"></div>
+              <input class="u-w100" type="number" id="acc-loan-latefee-cap-input" placeholder="tanpa batas" inputmode="decimal" step="any" min="0" aria-label="Batas total denda per angsuran dalam persen, opsional"></div>
           </div>
-          <div class="acc-sub" style="margin-top:-2px;">Opsional: perkiraan denda = angsuran yang telat × persen × jumlah hari telat. Hanya perkiraan, tidak mengubah saldo.</div>
-          <div>
-            <span class="field-label" id="acc-loan-installment-label">Angsuran per bulan (pokok + bunga)</span>
-            <input class="u-w100" type="number" id="acc-loan-installment-input" placeholder="Rp, opsional, terisi otomatis saat catat angsuran" inputmode="numeric" data-input-act="onInstallmentManualInput" aria-label="Angsuran per bulan, pokok ditambah bunga, Rupiah">
-            <div class="acc-sub u-mt4" id="acc-loan-installment-hint"></div>
-            <button type="button" class="io-btn" id="acc-loan-installment-auto-btn" style="display:none; margin-top:6px;" data-act="resetInstallmentAuto">Hitung otomatis lagi</button>
-            <div class="acc-sub u-mt4" id="acc-loan-tenor-hint"></div>
-          </div>
+          <div class="acc-sub" style="margin-top:-2px;">Perkiraan saja: angsuran telat × % × hari telat. Saldo tidak berubah.</div>
+            </div>
+          </details>
           <div id="acc-loan-disburse-row" style="display:none;">
             <span class="field-label">Catat pencairan pinjaman ke akun</span>
             <select id="acc-loan-disburse-input" aria-label="Catat transaksi pencairan pokok dan potongan biaya ke akun ini, opsional">
               <option value="">— Jangan catat otomatis —</option>
             </select>
-            <div class="acc-sub u-mt4">Kalau dipilih: pokok penuh dicatat masuk ke akun ini, lalu biaya admin + materai langsung dicatat keluar dari akun ini juga (jadi saldo bersih yang kamu terima).</div>
+            <div class="acc-sub u-mt4">Pokok penuh dicatat masuk, lalu biaya admin + materai dicatat keluar (saldo bersih yang diterima).</div>
           </div>
         </div>
-        <div class="field-row">
-          <input type="number" id="acc-balance-input" placeholder="Saldo awal (Rp), boleh 0" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Saldo awal (Rp)">
-        </div>
+        <div class="io-msg" id="acc-form-msg" role="alert"></div>
         <div class="acc-form-actions">
           <button class="io-btn" id="acc-cancel-btn" style="display:none;" data-act="cancelAccForm">Batal</button>
           <button class="submit-btn" id="acc-submit-btn" data-act="saveAccount">Simpan akun</button>
@@ -496,10 +513,10 @@
     <div class="acc-sub">Dicatat otomatis sebagai pengeluaran (kategori Tagihan &amp; langganan) tiap bulan pada tanggalnya.</div>
     <div id="sub-manage-list"></div>
     <div class="section-title" style="margin-top:14px;">Tambah langganan</div>
-    <div class="field-row"><input type="text" id="sub-name-input" maxlength="60" placeholder="Nama, mis. Netflix" aria-label="Nama langganan"></div>
-    <div class="field-row"><input type="number" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Nominal per bulan (Rp)" aria-label="Nominal per bulan"></div>
-    <div class="field-row"><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="Tanggal tagih (1–31)" aria-label="Tanggal tagih"></div>
-    <div class="field-row"><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-name-input">Nama langganan</label><input type="text" id="sub-name-input" maxlength="60" placeholder="mis. Netflix" aria-label="Nama langganan"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-amount-input">Nominal per bulan</label><input type="number" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-day-input">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-account-input">Dibayar dari akun</label><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
     <div class="acc-sub" id="sub-form-msg" style="color:var(--red);"></div>
     <button type="button" class="submit-btn" data-act="saveSubForm">Tambah langganan</button>
     </div>
@@ -521,6 +538,7 @@
         <div id="asset-val-summary"></div>
         <div class="acc-sub" style="margin:12px 0 6px;">Perbarui nilai</div>
         <div class="field-row"><input class="u-w100" type="date" id="asset-val-date-input" aria-label="Tanggal penilaian"></div>
+        <div class="field-row" id="asset-val-qty-row" style="display:none; flex-direction:column; align-items:stretch;"><label class="field-label" id="asset-val-qty-label" for="asset-val-qty-input">Jumlah sekarang</label><input class="u-w100" type="number" id="asset-val-qty-input" inputmode="decimal" step="any" min="0" data-input-act="onAssetQtyInput" aria-label="Jumlah sekarang"></div>
         <div class="field-row" id="asset-val-price-row" style="display:none;"><input class="u-w100" type="number" id="asset-val-price-input" inputmode="decimal" placeholder="Harga per satuan (Rp)" data-input-act="onAssetPriceInput" aria-label="Harga per satuan"></div>
         <div class="field-row"><input class="u-w100" type="number" id="asset-val-total-input" inputmode="decimal" placeholder="Nilai total sekarang (Rp)" aria-label="Nilai total sekarang"></div>
         <div class="acc-form-actions"><button type="button" class="submit-btn" data-act="saveAssetValuation">Simpan nilai</button></div>
@@ -543,27 +561,33 @@
       </div>
       <div class="acc-form-actions" style="margin-bottom:18px;">
         <button class="io-btn" data-act="editAccountFromDetail">Edit akun</button>
+        <button class="io-btn" id="acc-detail-archive" data-act="toggleArchiveFromDetail">Arsipkan akun</button>
         <button class="io-btn danger" data-act="deleteAccountFromDetail">Hapus akun</button>
       </div>
+      <div class="acc-sub" id="acc-detail-archive-hint" style="display:none; margin:-10px 0 18px;"></div>
       <div id="acc-detail-loan-pay" style="display:none; margin-bottom:18px;">
         <div class="section-title">Catat pembayaran</div>
         <div class="acc-sub u-mb8" id="loan-interest-hint"></div>
-        <div class="field-row">
+        <div class="field-row has-label">
+          <label class="field-label" for="loan-pay-mode-input">Jenis pembayaran</label>
           <select id="loan-pay-mode-input" data-change-act="onLoanPayModeChange" aria-label="Jenis pembayaran pinjaman">
             <option value="bunga">Bayar bunga saja (sisa pokok tidak berkurang)</option>
             <option value="pokok_bunga">Bayar angsuran (terisi otomatis)</option>
             <option value="nominal">Bayar nominal bebas (bunga dulu, sisa ke pokok)</option>
           </select>
         </div>
-        <div class="field-row">
+        <div class="field-row has-label">
+          <label class="field-label" for="loan-pay-source-input">Dibayar dari akun</label>
           <select id="loan-pay-source-input" aria-label="Dibayar dari akun mana"></select>
         </div>
-        <div class="field-row">
+        <div class="field-row has-label">
+          <label class="field-label" for="loan-pay-date-input">Tanggal pembayaran</label>
           <input class="u-w100" type="date" id="loan-pay-date-input" aria-label="Tanggal pembayaran, bisa diubah untuk catat bulan yang sudah lewat" data-change-act="onLoanPayModeChange">
         </div>
         <div class="acc-sub" style="margin-top:-6px; margin-bottom:8px;">Ubah tanggal ini kalau mau catat angsuran bulan-bulan sebelumnya yang belum tercatat.</div>
-        <div class="field-row">
-          <input type="number" id="loan-pay-amount-input" placeholder="Nominal (Rp)" inputmode="numeric" aria-label="Nominal pembayaran (Rp)" data-input-act="updateLoanPaySplit">
+        <div class="field-row has-label">
+          <label class="field-label" for="loan-pay-amount-input">Nominal</label>
+          <input type="number" id="loan-pay-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Nominal pembayaran (Rp)" data-input-act="updateLoanPaySplit">
         </div>
         <div class="acc-sub u-mb8" id="loan-pay-split"></div>
         <div class="acc-form-actions">
@@ -654,25 +678,30 @@
         <button class="type-btn" data-titipan-mode="terima" data-act="setTitipanMode" data-a0="terima">Terima bayar</button>
       </div>
 
-      <div class="field-row">
+      <div class="field-row has-label">
+        <label class="field-label" for="titipan-person-select">Orang</label>
         <select id="titipan-person-select" data-change-act="onTitipanPersonChange"></select>
       </div>
       <div class="field-row" id="titipan-newperson-row" style="display:none;">
         <input type="text" id="titipan-newperson-input" placeholder="Nama orang baru" aria-label="Nama orang baru">
       </div>
 
-      <div class="field-row">
+      <div class="field-row has-label">
+        <label class="field-label" id="titipan-fund-label" for="titipan-fund-select">Dibayar dari akun</label>
         <select id="titipan-fund-select"></select>
       </div>
 
-      <div class="field-row" id="titipan-desc-row">
-        <input type="text" id="titipan-desc-input" placeholder="Keterangan, mis. Beli pulsa (boleh kosong)" aria-label="Keterangan, opsional">
+      <div class="field-row has-label" id="titipan-desc-row">
+        <label class="field-label" for="titipan-desc-input">Keterangan (boleh kosong)</label>
+        <input type="text" id="titipan-desc-input" placeholder="mis. Beli pulsa" aria-label="Keterangan, opsional">
       </div>
 
-      <div class="field-row">
-        <input type="number" id="titipan-amount-input" placeholder="Jumlah (Rp)" inputmode="numeric" aria-label="Jumlah (Rp)">
+      <div class="field-row has-label">
+        <label class="field-label" for="titipan-amount-input">Jumlah</label>
+        <input type="number" id="titipan-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Jumlah (Rp)">
       </div>
-      <div class="field-row">
+      <div class="field-row has-label">
+        <label class="field-label" for="titipan-date-input">Tanggal</label>
         <input class="u-w100" type="date" id="titipan-date-input" aria-label="Tanggal, bisa diubah untuk catat titipan bulan yang sudah lewat">
       </div>
       <button class="submit-btn" data-act="submitTitipan">Catat titipan</button>
@@ -927,24 +956,29 @@
     <button class="type-btn" data-type="transfer" data-act="setType" data-a0="transfer">Transfer</button>
   </div>
 
-  <div class="field-row" id="date-row">
+  <div class="field-row has-label" id="date-row">
+    <label class="field-label" for="date-input">Tanggal</label>
     <input type="date" id="date-input" aria-label="Tanggal transaksi">
   </div>
-  <div class="field-row" id="category-row">
+  <div class="field-row has-label" id="category-row">
+    <label class="field-label" for="category-select">Kategori</label>
     <select id="category-select" data-change-act="onCategoryChange"></select>
   </div>
   <div class="field-row" id="category-custom-row" style="display:none;">
     <input type="text" id="category-custom-input" placeholder="Nama kategori baru" aria-label="Nama kategori baru">
   </div>
-  <div class="field-row" id="desc-row">
-    <input type="text" id="desc-input" placeholder="Keterangan, mis. Belanja telor" aria-label="Keterangan transaksi">
+  <div class="field-row has-label" id="desc-row">
+    <label class="field-label" for="desc-input">Keterangan</label>
+    <input type="text" id="desc-input" placeholder="mis. Belanja telor" aria-label="Keterangan transaksi">
   </div>
-  <div class="field-row" id="account-row">
+  <div class="field-row has-label" id="account-row">
+    <label class="field-label" id="account-label" for="account-select">Akun</label>
     <select id="account-select" data-change-act="updateTypeAvailability"></select>
   </div>
   <div class="debt-hint" id="debt-hint" style="display:none;"></div>
   <div id="paylater-row" style="display:none;">
-    <div class="field-row">
+    <div class="field-row has-label">
+      <label class="field-label" for="paylater-method">Metode bayar</label>
       <select id="paylater-method" data-change-act="updatePaylaterUI" aria-label="Metode pembayaran PayLater">
         <option value="nanti">Bayar nanti (bunga 0%)</option>
         <option value="cicilan">Cicilan (bunga flat + admin)</option>
@@ -952,22 +986,25 @@
     </div>
     <div id="paylater-cicilan-fields" style="display:none;">
       <div class="field-row" style="gap:8px;">
-        <input class="u-flex1-min0" type="number" id="paylater-tenor" placeholder="Tenor (bulan)" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Tenor cicilan dalam bulan">
-        <input class="u-flex1-min0" type="number" id="paylater-rate" placeholder="Bunga flat %/bln" inputmode="decimal" step="0.01" data-input-act="updatePaylaterPreview" aria-label="Bunga flat per bulan, persen">
+        <div class="u-flex1-min0"><label class="field-label" for="paylater-tenor">Tenor (bulan)</label><input class="u-w100" type="number" id="paylater-tenor" placeholder="mis. 6" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Tenor cicilan dalam bulan"></div>
+        <div class="u-flex1-min0"><label class="field-label" for="paylater-rate">Bunga flat (%/bln)</label><input class="u-w100" type="number" id="paylater-rate" placeholder="mis. 2" inputmode="decimal" step="0.01" data-input-act="updatePaylaterPreview" aria-label="Bunga flat per bulan, persen"></div>
       </div>
-      <div class="field-row">
-        <input type="number" id="paylater-admin" placeholder="Admin (Rp), sekali bayar, opsional" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Biaya admin cicilan, Rupiah, opsional">
+      <div class="field-row has-label">
+        <label class="field-label" for="paylater-admin">Admin sekali bayar (opsional)</label>
+        <input type="number" id="paylater-admin" placeholder="Rp" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Biaya admin cicilan, Rupiah, opsional">
       </div>
       <div class="acc-sub u-mb8" id="paylater-preview"></div>
     </div>
   </div>
-  <div class="field-row" id="to-account-row" style="display:none;">
+  <div class="field-row has-label" id="to-account-row" style="display:none;">
+    <label class="field-label" for="to-account-select">Ke akun</label>
     <select id="to-account-select" data-change-act="onTransferTargetChange"></select>
   </div>
   <div class="debt-hint" id="asset-hint" style="display:none;"></div>
   <div class="field-row" id="quick-pay-row" style="display:none; gap:8px;"></div>
-  <div class="field-row">
-    <input type="number" id="amount-input" placeholder="Jumlah (Rp)" inputmode="numeric" data-input-act="onAmountInput" aria-label="Jumlah (Rp)">
+  <div class="field-row has-label">
+    <label class="field-label" for="amount-input">Jumlah</label>
+    <input type="number" id="amount-input" placeholder="Rp" inputmode="numeric" data-input-act="onAmountInput" aria-label="Jumlah (Rp)">
   </div>
   <div class="acc-form-actions">
     <button class="io-btn" id="txn-cancel-btn" style="display:none;" data-act="closeTxnForm">Batal</button>

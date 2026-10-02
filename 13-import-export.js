@@ -121,6 +121,7 @@
     if (typeof a.feeAmount === 'number') acc.feeAmount = a.feeAmount;
     if (typeof a.feeDay === 'number') acc.feeDay = a.feeDay;
     copyAssetFields(a, acc);
+    if (a.archived === true) acc.archived = true;   // A4
     if (acc.type === 'kartu_kredit') {
       if (typeof a.cardStatementDay === 'number' && a.cardStatementDay >= 1 && a.cardStatementDay <= 31) acc.cardStatementDay = Math.round(a.cardStatementDay);
       if (typeof a.cardMinValue === 'number' && a.cardMinValue > 0) { acc.cardMinValue = a.cardMinValue; acc.cardMinType = a.cardMinType === 'nominal' ? 'nominal' : 'percent'; }
@@ -164,8 +165,11 @@
   }
   function isValidDateStr(v) {
     if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
-    const d = new Date(v + 'T00:00:00');
-    return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+    // Dihitung murni di UTC supaya tidak bergantung zona waktu perangkat (sebelumnya new Date(...).toISOString() menolak
+    // semua tanggal di zona UTC+, termasuk WITA, karena tengah malam lokal jatuh di hari sebelumnya menurut UTC).
+    const y = +v.slice(0, 4), m = +v.slice(5, 7), day = +v.slice(8, 10);
+    const d = new Date(Date.UTC(y, m - 1, day));
+    return d.getUTCFullYear() === y && d.getUTCMonth() === m - 1 && d.getUTCDate() === day;
   }
 
   function buildTxnFromImport(t, idMap, fallbackAccId) {
@@ -176,7 +180,7 @@
       id: generateId('txn'),
       date: isValidDateStr(t.date) ? t.date : todayStr(),
       type, desc: typeof t.desc === 'string' ? t.desc : 'Transfer',
-      amount: roundMoney(Math.abs(t.amount)), accountId,
+      amount: roundMoney(Math.abs(Number.isFinite(+t.amount) ? +t.amount : 0)), accountId,
       ...(type === 'transfer' ? { toAccountId } : {}),
       ...(type === 'transfer' && Array.isArray(t.planPaymentIds) && t.planPaymentIds.length ? { planPaymentIds: t.planPaymentIds.map(cleanPlanId).filter(Boolean) } : {}),
       ...(type === 'transfer' && t.planPaymentThrough && typeof t.planPaymentThrough === 'object' ? { planPaymentThrough: Object.fromEntries(Object.entries(t.planPaymentThrough).map(([pid, no]) => [cleanPlanId(pid), no]).filter(([pid]) => pid)) } : {}),
@@ -311,9 +315,9 @@
     }
 
     const accounts = [
-      { id: 'dm-kas', name: 'Kas / Dompet', type: 'kas', initialBalance: 300000 },
+      { id: 'dm-kas', name: 'Kas / Dompet', type: 'kas', initialBalance: 3000000 },
       { id: 'dm-bank', name: 'BCA', type: 'bank', initialBalance: 2500000 },
-      { id: 'dm-ewallet', name: 'Gopay', type: 'ewallet', initialBalance: 180000 },
+      { id: 'dm-ewallet', name: 'Gopay', type: 'ewallet', initialBalance: 1200000 },
       { id: 'dm-kk', name: 'Kartu Kredit BCA', type: 'kartu_kredit', initialBalance: 0, limit: 10000000, feeDay: 25, interestPercent: 2.25 },
       { id: 'dm-paylater', name: 'Shopee PayLater', type: 'paylater', initialBalance: 0, limit: 5000000, feeDay: 5 },
       { id: 'dm-budi', name: 'Budi', type: 'titipan', initialBalance: 0 },
@@ -322,6 +326,33 @@
         loanInterestType: 'menurun', loanRatePercent: 12, loanRateUnit: 'tahun',
         loanAdminFee: 120000, loanMandatorySavings: 50000, loanInstallment: 1200000 }
     ];
+
+    // Data contoh tambahan (v1.1.092): aset berjumlah dengan riwayat penilaian, kredit bertenor, rekening arsip.
+    const valDay = Math.min(15, now.getDate());   // penilaian bulan ini tidak boleh di masa depan
+    accounts.push(
+      // Emas 10 gram: harga per gram naik tiap bulan
+      { id: 'dm-emas', name: 'Emas Antam', type: 'aset', assetKind: 'Emas', assetQty: 10, assetUnit: 'gram', initialBalance: 15000000,
+        valuations: [
+          { date: monthDate(2, 15), value: 15500000, price: 1550000, qty: 10 },
+          { date: monthDate(1, 15), value: 16000000, price: 1600000, qty: 10 },
+          { date: monthDate(0, valDay), value: 16500000, price: 1650000, qty: 10 } ] },
+      // Akun cent forex: equity (USD) dan kurs berubah tiap bulan, jadi tiap penilaian mencatat jumlah dan harga
+      { id: 'dm-forex', name: 'Exness Cent', type: 'aset', assetKind: 'Forex', assetQty: 100, assetUnit: 'USD', initialBalance: 1600000,
+        valuations: [
+          { date: monthDate(2, 15), value: 1600000, price: 16000, qty: 100 },
+          { date: monthDate(1, 15), value: 1808800, price: 16150, qty: 112 },
+          { date: monthDate(0, valDay), value: 2037500, price: 16300, qty: 125 } ] },
+      // Kendaraan: nilai menyusut
+      { id: 'dm-motor', name: 'Motor Beat', type: 'aset', assetKind: 'Kendaraan', initialBalance: 18000000,
+        valuations: [ { date: monthDate(2, 15), value: 17500000 }, { date: monthDate(0, valDay), value: 16800000 } ] },
+      // Kredit motor bertenor 12 bulan, bunga flat 0,8%/bln: angsuran Rp1.250.000 pokok + Rp120.000 bunga, jatuh tempo tiap tanggal 10.
+      // Dibayar 2 kali (2 dan 1 bulan lalu); bulan ini belum, jadi muncul sebagai jatuh tempo/telat sesuai tanggal hari ini.
+      { id: 'dm-kredit-motor', name: 'Kredit Motor FIF', type: 'pinjaman', initialBalance: -15000000, originalPrincipal: 15000000,
+        loanInterestType: 'tetap', loanRatePercent: 0.8, loanRateUnit: 'bulan', loanTenorMonths: 12, loanStartDate: monthDate(3, 10),
+        loanDueDay: 10, loanInstallment: 1370000, loanLateFeePercent: 0.5, loanLateFeeCapPercent: 10 },
+      // Rekening yang sudah tidak dipakai: saldo 0, diarsipkan (riwayat tetap ada)
+      { id: 'dm-lama', name: 'Rekening Lama', type: 'bank', initialBalance: 0, archived: true }
+    );
 
     const txns = [];
     let seq = 0;
@@ -390,7 +421,23 @@
     push(1, 10, { type: 'keluar', desc: 'Bunga pinjaman KUR BRI', category: 'Bunga & biaya bank', amount: bunga1, accountId: 'dm-bank', loanId: 'dm-pinjaman' });
     push(1, 20, { type: 'transfer', desc: 'Bayar pokok KUR BRI', amount: 500000, accountId: 'dm-bank', toAccountId: 'dm-pinjaman' });
 
-    return { accounts, txns };
+    // Angsuran kredit motor (bunga flat dicatat sebagai biaya, pokok sebagai transfer ke akun pinjaman)
+    [2, 1].forEach(m => {
+      push(m, 10, { type: 'keluar', desc: 'Bunga kredit motor FIF', category: 'Bunga & biaya bank', amount: 120000, accountId: 'dm-bank', loanId: 'dm-kredit-motor' });
+      push(m, 10, { type: 'transfer', desc: 'Angsuran pokok kredit motor FIF', amount: 1250000, accountId: 'dm-bank', toAccountId: 'dm-kredit-motor' });
+    });
+    // Riwayat rekening arsip (setoran lalu ditarik habis)
+    push(2, 3, { type: 'masuk', desc: 'Setoran awal', category: 'Lainnya', amount: 500000, accountId: 'dm-lama' });
+    push(2, 8, { type: 'keluar', desc: 'Tarik tunai', category: 'Lainnya', amount: 500000, accountId: 'dm-lama' });
+
+    // Langganan dan anggaran contoh
+    const subscriptions = [
+      { id: 'dm-sub-1', name: 'Netflix', amount: 54000, accountId: 'dm-ewallet', day: 12, active: true, lastAppliedMonth: '' },
+      { id: 'dm-sub-2', name: 'Spotify', amount: 55000, accountId: 'dm-kk', day: 20, active: true, lastAppliedMonth: '' }
+    ];
+    const budgets = { 'Makan & minum': 800000, 'Transportasi': 400000, 'Hiburan': 250000 };
+
+    return { accounts, txns, subscriptions, budgets };
   }
 
   async function resetAllData() {

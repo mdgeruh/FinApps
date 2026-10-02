@@ -1,11 +1,11 @@
 # Ringkasan & Todolist: Keuangan Pribadi
 
-Status per **v1.1.078** (29 Sep 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
+Status per **v1.1.084** (2 Okt 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
 Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
 
 ## 1. Gambaran singkat
 
-App web statis (HTML + CSS + JS biasa, tanpa build tool), ±462 KB JS tanpa minify, 28 file JS modular + `sw.js`. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, anggaran, langganan, dana darurat, export/import.
+App web statis (HTML + CSS + JS biasa, tanpa build tool), ±492 KB JS tanpa minify, 29 file JS modular + `sw.js`. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, anggaran, langganan, dana darurat, export/import.
 
 ## 2. Koreksi terhadap analisis awal
 
@@ -22,7 +22,7 @@ App web statis (HTML + CSS + JS biasa, tanpa build tool), ±462 KB JS tanpa mini
 
 Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
-### PRIORITAS UTAMA SEKARANG: perbaikan tab Akun (A1 selesai v1.1.075, A2 selesai v1.1.076, A3 selesai v1.1.077, A5 + A6 selesai v1.1.078; A4 + A7 berikutnya)
+### PRIORITAS UTAMA SEKARANG: perbaikan tab Akun (A1 selesai v1.1.075, A2 selesai v1.1.076, A3 selesai v1.1.077, A5 + A6 selesai v1.1.078, A4 selesai v1.1.080, A7 selesai v1.1.082, A8 selesai v1.1.083; A9 berikutnya)
 
 Optimalisasi (bagian "Ditunda" di bawah) **dilewati dulu atas permintaanmu**; tidak dikerjakan sampai kamu minta. Fokus berikutnya adalah tab Akun.
 
@@ -38,14 +38,37 @@ Urut dari dampak terbesar ke terkecil:
 - [x] **A1 [K] (selesai v1.1.075, pilihan a: pokok saja) Samakan definisi "utang" di header, kelompok, kartu, dan kekayaan bersih.** Utang = pokok (saldo buku); bunga tetap yang belum jatuh tempo hanya keterangan "+ bunga terjadwal" di kartu dan "total sampai lunas" di detail. `loanDebtParts`/`loanBungaNote` dipakai bersama kartu dan detail. Laporan utang sengaja tetap pokok + bunga (label diperjelas). Sisa: PayLater berbunga (kartu memakai `paylaterCreditUsed`, header memakai saldo buku) bisa masih berbeda; ikut ditangani di A2/A3
 - [x] **A2 [Q] (selesai v1.1.076; tampilan sengaja tidak berubah, pemangkasan ada di A3) Satu fungsi bersama untuk teks kartu dan detail akun** (`accountDisplayInfo(data, acc, bal, { detail })` di `01-data.js`): kartu dan detail tidak bisa berbeda lagi; `sortVal`/`groupVal` berasal dari fungsi yang sama. Indentasi baris `feeAdminMetaText` ikut rapi
 - [x] **A3 [F] (selesai v1.1.077) Kartu akun lebih ringkas dan berguna:** maksimal dua baris prioritas lewat `accountPriorityLines` (kartu kredit: sisa tagihan cetak + jatuh tempo, lalu limit; pinjaman: angsuran berikutnya + tanggal, lalu terbayar/bunga terjadwal; PayLater: limit + jatuh tempo). Baris telat merah dengan "▲ Telat N hari", limit ≥ 90% juga ▲; keterangan panjang pindah ke detail (yang kini juga memuat jumlah transaksi). Belum teruji: tema gelap dan layar lebar
-- [ ] **A4 [F] Arsipkan akun** (pengganti "hapus dulu semua transaksi"): hanya untuk akun bersaldo 0 atau lunas; akun arsip hilang dari daftar dan dari pilihan transaksi baru, masuk bagian "Diarsipkan" yang terlipat; riwayat, laporan, dan saldo historis tetap utuh; bisa dipulihkan. Menambah field `archived` (perlu masuk sanitasi, ekspor/impor, dan sinkron cloud serta test)
+- [x] **A4 [F] (selesai v1.1.080) Arsipkan akun** (pengganti "hapus dulu semua transaksi"): hanya untuk akun bersaldo 0 atau lunas; akun arsip hilang dari daftar dan dari pilihan transaksi baru, masuk bagian "Diarsipkan" yang terlipat; riwayat, laporan, dan saldo historis tetap utuh; bisa dipulihkan. Menambah field `archived` (perlu masuk sanitasi, ekspor/impor, dan sinkron cloud serta test)
 - [x] **A5 [F] (selesai v1.1.078) Ringkasan atas tab Akun:** kartu Kekayaan bersih (aset − utang, definisi A1) dan Limit kartu terpakai (`computeLimitUsage`: kartu kredit + PayLater berlimit; merah ▲ ≥90%, amber ≥70%; tersembunyi bila tidak ada limit)
 - [x] **A6 [F] (selesai v1.1.078) Aksi cepat di kartu/detail akun:** tombol Bayar di kartu kini juga untuk PayLater ("Bayar tagihan") dan pinjaman/pinjol ("Bayar angsuran") lewat alur `payDueFromRingkasan` yang sudah ada; detail akun punya "Catat transaksi" dan "Transfer dari sini" dengan akun terisi otomatis (`quickTxnForAccount`, aturan di `accountQuickActions`: akun utang tidak jadi sumber transfer, aset hanya Transfer, titipan tidak ada)
-- [ ] **A7 [F] Cari akun dan chip filter** (Semua | Ada tagihan | Lunas | Diarsipkan) untuk daftar panjang; pola sama dengan filter tab Transaksi
-- [ ] **A8 [F] Sematkan dan urutkan manual:** tombol ▲ ▼ per akun, tersimpan per perangkat (pola R4), akun yang disematkan tampil di puncak kelompoknya
-- [ ] **A9 [Q] Form tambah/edit akun** (satu sheet panjang dengan baris bergantung jenis akun): **belum ditelaah**; ditelaah dulu sebelum diusulkan perubahan apa pun
+- [x] **A7 [F] (selesai v1.1.082) Cari akun dan chip filter** (Semua | Ada tagihan | Lunas | Diarsipkan) untuk daftar panjang; pola sama dengan filter tab Transaksi
+- [x] **A8 [F] (selesai v1.1.083) Sematkan dan urutkan manual:** tombol ▲ ▼ per akun, tersimpan per perangkat (pola R4), akun yang disematkan tampil di puncak kelompoknya
+- [x] **A9 [Q] (telaah selesai 2 Okt 2026, hasil di bawah; perbaikan = A9a–A9c; A9a selesai v1.1.084, A9b selesai v1.1.085, A9c selesai v1.1.086) Form tambah/edit akun** (satu sheet panjang dengan baris bergantung jenis akun): **belum ditelaah**; ditelaah dulu sebelum diusulkan perubahan apa pun
 
-Urutan kerja yang disarankan: A1 (selesai) → A2 (selesai) → A3 (selesai) → A5 + A6 (selesai) → A4 + A7 → A8 → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
+**Hasil telaah form akun (A9)**, diukur di Chromium 390 px (tinggi panel sheet 743 px) dan dibaca dari `index.html` + `saveAccount` di `04-akun.js`:
+
+| Jenis akun | Kontrol tampil | Tinggi isi form | Catatan |
+|---|---|---|---|
+| Kas, Bank, E-wallet, Titipan | 2 | 274 px | cukup |
+| PayLater | 4 | 418 px | cukup |
+| Aset | 4 | 492 px | 1 blok bantuan 452 karakter |
+| Kartu kredit | 8 | 689 px | muat satu layar, padat |
+| Pinjaman bank / online | 12 | 1027 / 1092 px | ±1,4–1,5 layar, 5 blok bantuan ±494 karakter |
+
+Temuan, dari yang paling berdampak:
+- **[K] Pesan galat form tidak terlihat (terkonfirmasi di browser).** `saveAccount` memanggil `showIoMsg(...)` tanpa target, sehingga teks masuk ke `#io-msg` milik tab Data yang tidak tampil. Contoh: menyimpan dengan nama yang sudah dipakai ("Nama ... sudah dipakai akun lain") tidak menampilkan apa pun, hanya fokus pindah. Berlaku untuk semua ±8 validasi di form (nama ganda, limit kosong, tanggal jatuh tempo, persen minimum > 100, pokok awal, biaya admin > pokok, angsuran pinjol), dan nama kosong tidak diberi pesan sama sekali. Pesan galat `deleteAccount` ("hapus transaksinya dulu") dan alasan arsip yang diklik saat belum boleh memakai jalur yang sama.
+- **[K] Isian dibuang diam-diam.** Biaya admin kartu hanya disimpan bila tanggal jatuh tempo juga diisi, begitu pula bunga bulanan (`feeAmountVal > 0 && feeDayVal > 0`); kalau tanggal kosong, nominal yang diketik dibuang tanpa peringatan. Hal serupa untuk denda telat tanpa persen.
+- **[F] Saldo awal ada paling bawah dan tanpa label tampak.** Field terpenting bagi pinjaman (sisa pokok) berada setelah 11 kontrol lain, dan placeholder-nya terpotong di 390 px ("Sisa pokok belum dibayar SEKARANG (Rp), b…"). Nama akun, saldo, jumlah/satuan aset, pembayaran minimum, dan suku bunga hanya punya placeholder (ada `aria-label`, tapi tidak ada label tampak); beberapa placeholder terpotong ("%, opsic", "kosong = tanpa bat").
+- **[F] Pinjaman: semua isian opsional tampil sekaligus** (materai, tabungan wajib, denda telat + maksimum, tanggal jatuh tempo, admin, angsuran), ditambah 5 blok bantuan permanen. Bagian yang wajib hanya jenis, saldo/pokok, dan (untuk pinjol) bunga + tenor.
+- **[Q] Pengelompokan:** kartu kredit memisahkan dua tanggal yang saling bergantung (cetak dan jatuh tempo) oleh isian lain; aturan "diisi bersama" hanya diketahui lewat pesan galat (yang tidak terlihat, lihat atas).
+- Sudah baik: semua kontrol punya `aria-label`, dan label muncul/berubah sesuai jenis akun; tidak ada error JS saat berganti jenis akun.
+
+Usulan perbaikan (dikerjakan berurutan, tiap batch satu rilis dengan test):
+1. **A9a [K]** (selesai v1.1.084; A9b selesai v1.1.085, A9c selesai v1.1.086) Pesan galat tampil di dalam sheet (`acc-form-msg` di atas tombol Simpan, fokus ke field bermasalah, `role="alert"`), pesan untuk nama kosong, dan isian yang akan dibuang diberi peringatan atau pasangan wajibnya ditandai.
+2. **A9b [F]** Label tampak untuk Nama dan Saldo; Saldo awal dipindah ke tepat di bawah Jenis akun (sebelum isian khusus jenis); placeholder dipendekkan dan penjelasan panjang pindah ke teks bantu satu baris.
+3. **A9c [F]** Pinjaman: bagian "Lainnya (opsional)" terlipat untuk materai, tabungan wajib, denda telat, dan sejenisnya; blok bantuan menjadi satu baris atau terlipat. Perkiraan: tinggi pinjaman turun dari ±1.030 px mendekati satu layar (perkiraan, belum diukur).
+
+Urutan kerja yang disarankan: A1 (selesai) → A2 (selesai) → A3 (selesai) → A5 + A6 (selesai) → A4 (selesai) → A7 (selesai) → A8 (selesai) → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
 
 ### Perbaikan tab Ringkasan (R1–R9 selesai semua; dicatat sebagai arsip)
 
@@ -66,6 +89,7 @@ Urut dari dampak terbesar ke terkecil:
 Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas): R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9 (urutan R1–R9 sudah dijalankan). Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
 
 ### Perlu kamu jalankan (tidak bisa saya lakukan)
+- [-] [K] Kunci versi `supabase-js` + SRI (`node tools/pin-supabase.js`): sengaja dilewati dulu atas permintaanmu (2 Okt 2026); Supabase tetap `@2`. Begitu juga RLS/uji sinkron: fokus ke pengembangan fitur, lihat ROADMAP.md
 - [ ] [K] Jalankan `supabase/setup.sql` di Supabase SQL Editor dan uji RLS dengan dua akun (langkah ada di akhir file SQL)
 - [ ] [K] Uji sinkron sungguhan: login, push, bentrok dua perangkat, ganti akun di satu perangkat
 - [ ] [E] Ukur performa di HP nyata; kalau terasa lambat, hasilnya jadi dasar memilih E2 atau E5
@@ -78,7 +102,7 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 
 ### Ditunda (hasil ukur: belum perlu; optimalisasi dilewati dulu atas permintaanmu)
 - [~] [E] E2 cache hasil parse `loadData()`: `render()` sudah parse 1x (bukan 4x, v1.1.055). Cache global ditunda: ±65 pemanggil, banyak yang memodifikasi hasilnya, butuh refactor dan test lebih lengkap. Manfaat terukur ±2x di 5.000 transaksi, tidak terasa di 187
-- [ ] [E] E5 indeks transaksi per bulan/akun: `render()` 16–42 ms di 187 transaksi, ±150 ms di 5.000 (lihat bagian 4)
+- [-] [E] E5 indeks transaksi per bulan/akun: ukur ulang 2 Okt 2026 menunjukkan `render()` 30–88 ms di 5.000 transaksi (CPU 4x), tidak perlu sekarang (lihat bagian 4)
 - [ ] [E] E8 build minify/gabung: tidak ada minifier di lingkungan ini dan butuh keputusan alur kerja (sumber modular tetap dijaga)
 - [ ] [E] E6 sinkron per-item (bukan satu blob)
 - [ ] [E] Hosting sendiri Supabase JS dan font (sekarang di-cache service worker setelah pemuatan online pertama)
@@ -95,12 +119,14 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 - [-] [K] Cache DOM `$()` basi: belum ada kasus nyata. Kalau elemen dibuat ulang lewat `innerHTML` dan dicari lewat `$()`, pakai `document.getElementById`
 - [x] [F] Anggaran per kategori (v1.1.056) · Langganan berulang (v1.1.057) · Dana darurat (v1.1.059) · Tren total utang (v1.1.064) · Denda keterlambatan pinjaman, hanya perkiraan (v1.1.065) · Ekspor kalender `.ics` (v1.1.066) · Rekonsiliasi saldo kas/bank/e-wallet (v1.1.067)
 - [x] [F] Strip "Perlu perhatian" di Ringkasan (R1, v1.1.068) · Kartu Grafik bersegmen (R2, v1.1.069) · Lewati render kartu tidak tampil (R5, v1.1.069) · Kartu kecil digabung ke Bulan ini (R3, v1.1.070) · Urutan kartu bisa diatur (R4, v1.1.070) · Kartu rencana kosong jadi satu ajakan (R7, v1.1.071) · Aksesibilitas grafik (R6, v1.1.072) · Proyeksi akhir bulan (R8, v1.1.073) · Tren utang satu lintasan (R9, v1.1.074)
+- [x] [K] (v1.1.079) Content-Security-Policy, semua atribut `data-aN` di-escape, loader SRI siap pakai (hash menunggu `tools/pin-supabase.js`)
+- [x] [F] (v1.1.081) Kartu Grafik dan kartu grafiknya digabung menjadi satu kartu di Ringkasan (CSS saja)
 - [x] [F] Tombol `?` riwayat perubahan di tab Profil (v1.1.058)
 - [x] [Q] README dan CHANGELOG diperbarui; CHANGELOG dipadatkan dan riwayat lengkap versi lama dipindah ke `CHANGELOG-ARSIP.md`
 
 ## 4. Hasil pengujian
 
-**Unit:** 116 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+**Unit:** 189 test lulus (`node tests/run.js`); semua file lolos `node --check`.
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 
@@ -140,6 +166,18 @@ Chromium headless 390 px, CPU diperlambat 4x (perkiraan kasar HP menengah, bukan
 | `saveData()` | 3–10 | 35–89 | 203–240 |
 | buka tab Transaksi (pertama kali) | n/a | 99 | 179 |
 | buka tab Laporan (pertama kali) | 83 | 118 | 271 |
+
+**Ukur ulang 2 Okt 2026 (v1.1.092)**, cara sama (Chromium 390 px, CPU 4x, data tambahan transaksi acak), `render()` dengan tiap tab aktif, ms (3 kali ukur):
+
+| Tab aktif | 5.000 transaksi | 20.000 |
+|---|---|---|
+| Ringkasan | 55–88 | 202–275 |
+| Transaksi | 30–40 | 90–107 |
+| Laporan | 45–50 | 104–115 |
+| Akun | 28–40 | 93–107 |
+| `loadData()` / `saveData()` | 11 / 8 | 37 / 89 |
+
+Kesimpulan: jauh lebih cepat dari ukuran awal (5.000 transaksi: ±150 ms menjadi 30–88 ms). Ringkasan paling berat (±4x Akun) tapi tetap di bawah 100 ms pada 5.000 transaksi. Hasil ini simulasi di PC, belum HP nyata, jadi E2 dan E5 tidak perlu dikerjakan sekarang.
 
 `render()` memanggil `loadData()` 4x (kini 1x sejak v1.1.055) dan `computeAllBalances()` 1x. Aman sampai ribuan transaksi; baru terasa di puluhan ribu. Urutan optimasi berikutnya kalau perlu: E2, lalu E5.
 

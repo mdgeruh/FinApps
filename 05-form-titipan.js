@@ -15,6 +15,7 @@
     state.titipanMode = mode;
     document.querySelectorAll('#titipan-card .type-btn').forEach(b => b.classList.toggle('active', b.dataset.titipanMode === mode));
     $('titipan-desc-row').style.display = mode === 'belanja' ? 'flex' : 'none';
+    const fl = $('titipan-fund-label'); if (fl) fl.textContent = mode === 'belanja' ? 'Dibayar dari akun' : 'Diterima ke akun';
     populateTitipanSelects();
   }
 
@@ -31,7 +32,7 @@
     personSel.innerHTML = personOpts;
     if (Array.from(personSel.options).some(o => o.value === prevPerson)) personSel.value = prevPerson;
 
-    const funds = data.accounts.filter(a => a.type !== 'titipan');
+    const funds = data.accounts.filter(a => a.type !== 'titipan' && !a.archived);
     const fundLabel = state.titipanMode === 'belanja' ? 'Bayar pakai...' : 'Terima ke...';
     let fundOpts = `<option value="" disabled>${fundLabel}</option>`;
     fundOpts += funds.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');

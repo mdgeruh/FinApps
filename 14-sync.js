@@ -588,7 +588,11 @@
 
   // Pustaka Supabase dimuat saat dibutuhkan (bukan <script> statis di index.html), supaya CDN yang
   // lambat/offline tidak menahan pemuatan app. Mengembalikan true kalau window.supabase siap dipakai.
-  const SUPABASE_JS_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  // Untuk mengunci versi + hash (SRI): jalankan `node tools/pin-supabase.js` (butuh internet), yang mengisi dua konstanta ini.
+  // Selama SUPABASE_JS_SRI kosong, pustaka dimuat tanpa pengecekan hash (versi mengambang @2).
+  const SUPABASE_JS_VERSION = '2';
+  const SUPABASE_JS_SRI = '';
+  const SUPABASE_JS_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@' + SUPABASE_JS_VERSION + (SUPABASE_JS_SRI ? '/dist/umd/supabase.js' : '');
   let _syncLibPromise = null;
   function syncLoadLib(timeoutMs) {
     if (window.supabase && window.supabase.createClient) return Promise.resolve(true);
@@ -605,6 +609,7 @@
       };
       const timer = setTimeout(() => finish(false), timeoutMs || 8000);
       s.src = SUPABASE_JS_URL;
+      if (SUPABASE_JS_SRI) { s.integrity = SUPABASE_JS_SRI; s.crossOrigin = 'anonymous'; }
       s.async = true;
       s.onload = () => finish(!!(window.supabase && window.supabase.createClient));
       s.onerror = () => finish(false);

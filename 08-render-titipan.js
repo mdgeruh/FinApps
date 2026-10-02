@@ -100,7 +100,7 @@
         ? txnCount + ' transaksi · terakhir ' + dayShortLabel(lastDate)
         : 'Belum ada transaksi';
       return `
-        <div class="txn-row clickable" data-act="openTitipanDetail" data-a0="${acc.id}">
+        <div class="txn-row clickable" data-act="openTitipanDetail" data-a0="${escapeHtml(acc.id)}">
           <div class="txn-left">
             <span class="dot" style="background: var(--green)"></span>
             <div class="txn-text">
@@ -166,7 +166,7 @@
         const fundName = accById[fundId] ? accById[fundId].name : '?';
         const desc = t.desc || (increasesDebt ? 'Titipan' : 'Terima titipan');
         return `
-          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${escapeHtml(t.id)}">
             <div class="txn-left">
               <span class="dot ${cls}"></span>
               <div class="txn-text">

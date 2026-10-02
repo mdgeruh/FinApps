@@ -7,6 +7,61 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.098', d: '2 Okt 2026', items: [
+      'Rincian jadwal angsuran pinjaman kini menampilkan bulan yang hanya dibayar bunganya sebagai baris tersendiri, jadi terlihat jelas bulan mana yang bunganya sudah dibayar dan pokoknya digeser'] },
+    { v: 'v1.1.097', d: '2 Okt 2026', items: [
+      'Di detail akun pinjaman, tombol cepat kini bernama Catat pembayaran dan langsung membawa ke kolom pembayaran (bunga saja, pokok + bunga, atau nominal bebas), bukan membuka form pengeluaran. Pinjaman yang sudah lunas tetap memakai Catat transaksi'] },
+    { v: 'v1.1.096', d: '2 Okt 2026', items: [
+      'Pinjaman bank: kalau bulan ini kamu hanya membayar bunga, jadwal lanjut ke bulan berikutnya dan sisa pokok tetap. Angsuran pokok tidak lagi dianggap telat, jatuh temponya bergeser sebanyak bulan yang hanya bayar bunga, dan ada catatannya di kartu serta jadwal pinjaman'] },
+    { v: 'v1.1.095', d: '2 Okt 2026', items: [
+      'Pilihan akun di form tambah langganan kini tampil dengan gaya yang sama seperti pilihan akun di form lain, bukan lagi tampilan bawaan browser'] },
+    { v: 'v1.1.094', d: '2 Okt 2026', items: [
+      'Form catat titipan, tambah langganan, dan bayar pinjaman kini juga punya judul yang terlihat di atas tiap kolom. Pada titipan, judul akun menyesuaikan mode: Dibayar dari akun saat belanjakan dan Diterima ke akun saat terima bayar'] },
+    { v: 'v1.1.093', d: '2 Okt 2026', items: [
+      'Form tambah transaksi kini punya judul yang terlihat di atas tiap kolom (Tanggal, Kategori, Keterangan, Akun, Jumlah), tidak lagi hanya tulisan samar di dalam kolom',
+      'Judul akun menyesuaikan jenis transaksi: Masuk ke akun untuk pemasukan, Dibayar dari akun untuk pengeluaran, dan Dari akun serta Ke akun untuk transfer, sehingga tidak tertukar. Kolom cicilan PayLater juga berjudul jelas'] },
+    { v: 'v1.1.092', d: '2 Okt 2026', items: [
+      'Data contoh (tombol Isi data contoh di tab Data) diperluas supaya semua fitur terbaru bisa dicoba: akun Emas 10 gram, Forex cent dengan equity USD dan kurs yang berubah tiap bulan, Motor (nilai menyusut), Kredit Motor bertenor 12 bulan dengan angsuran dan jatuh tempo, Rekening Lama yang sudah diarsipkan, dua langganan, dan anggaran per kategori',
+      'Saldo awal Kas dan Gopay pada data contoh dinaikkan supaya tidak jadi minus'] },
+    { v: 'v1.1.091', d: '2 Okt 2026', items: [
+      'Aset yang punya jumlah dan satuan (misalnya akun forex/cent dengan equity dalam USD, atau emas dalam gram) kini bisa memperbarui jumlahnya sekaligus nilainya. Di Perbarui nilai ada kolom Jumlah sekarang: isi jumlah terbaru dan harga per satuan (kurs), nilai totalnya terhitung otomatis',
+      'Jumlah terbaru tampil di kartu dan detail akun, dan riwayat nilai mencatat jumlah serta harga pada tiap tanggal. Aset lama tanpa pembaruan jumlah tidak berubah'] },
+    { v: 'v1.1.090', d: '2 Okt 2026', items: [
+      'Pemeriksaan otomatis di balik layar diperluas supaya kesalahan seperti tombol tanpa fungsi atau berkas yang lupa dimasukkan ke cache offline cepat ketahuan. Tidak ada perubahan tampilan'] },
+    { v: 'v1.1.089', d: '2 Okt 2026', items: [
+      'Perbaikan penting impor data: di HP atau komputer dengan zona waktu di timur Greenwich (termasuk WIB, WITA, WIT), tanggal transaksi dari file cadangan salah dibaca sebagai tidak valid, sehingga semua transaksi yang diimpor tercatat bertanggal hari ini. Sekarang tanggalnya dibaca benar di zona waktu mana pun',
+      'Nominal transaksi di file impor yang bukan angka kini dibaca sebagai 0, tidak lagi merusak saldo'] },
+    { v: 'v1.1.088', d: '2 Okt 2026', items: [
+      'Tombol mata (sembunyikan saldo) kini juga berlaku di tab Akun: total aset, utang, kekayaan bersih, pemakaian limit, total tiap kelompok, dan nominal di kartu akun ikut tertutup. Sebelumnya hanya kartu saldo di Ringkasan dan grafik kekayaan yang tertutup'] },
+    { v: 'v1.1.087', d: '2 Okt 2026', items: [
+      'Form pinjaman: pilihan satuan suku bunga (/thn atau /bln) tidak lagi terpotong di layar HP, dan tulisan contoh "tanpa batas" pada maksimal denda muat penuh',
+      'Sudah diperiksa di tema gelap, layar lebar, dan mode atur urutan akun lewat keyboard; tampilan dan tombolnya berfungsi normal'] },
+    { v: 'v1.1.086', d: '2 Okt 2026', items: [
+      'Form pinjaman lebih pendek: biaya admin, materai, tabungan wajib, dan denda telat kini ada di bagian Lainnya (opsional) yang terlipat. Bagian ini terbuka sendiri kalau sudah ada isinya, untuk pinjaman online, atau kalau ada isian di dalamnya yang perlu diperbaiki',
+      'Teks bantuan di form pinjaman diringkas supaya tidak memenuhi layar'] },
+    { v: 'v1.1.085', d: '2 Okt 2026', items: [
+      'Form tambah/edit akun lebih jelas: kolom Nama akun, Jenis akun, dan Saldo awal kini punya judul yang terlihat, tidak lagi hanya tulisan samar di dalam kolom',
+      'Saldo awal dipindah tepat di bawah Jenis akun, jadi tidak perlu menggulir ke bawah dulu. Judulnya menyesuaikan jenis akun (misalnya Sisa pokok sekarang untuk pinjaman, Sudah terpakai saat ini untuk kartu kredit)',
+      'Tulisan contoh di dalam kolom dipendekkan supaya tidak terpotong di layar HP'] },
+    { v: 'v1.1.084', d: '2 Okt 2026', items: [
+      'Perbaikan: pesan kesalahan saat menyimpan akun (misalnya nama sudah dipakai, limit kosong, atau tanggal jatuh tempo belum diisi) sebelumnya tidak terlihat sama sekali. Sekarang pesannya muncul di dalam form, tepat di atas tombol Simpan, dan tetap terlihat walau formnya panjang. Nama akun yang kosong juga diberi pesan',
+      'Biaya admin kartu yang diisi tanpa tanggal jatuh tempo, dan batas maksimal denda tanpa persen denda, tidak lagi hilang diam-diam; kamu diminta melengkapinya dulu',
+      'Pesan hasil aksi yang tampil di tempat yang sedang tidak terlihat (misalnya "hapus transaksinya dulu" saat menghapus akun, atau galat dari form transaksi) kini muncul sebagai pesan kecil di bagian bawah layar'] },
+    { v: 'v1.1.083', d: '2 Okt 2026', items: [
+      'Di tab Akun ada tombol Atur urutan. Di mode ini setiap akun punya tombol ▲ ▼ untuk menggeser posisinya di kelompoknya, dan tombol Sematkan supaya akun selalu berada di puncak kelompok (diberi label Disematkan). Ketuk Selesai untuk kembali',
+      'Akun yang disematkan tetap di atas akun lain, dan urutan geseranmu dipakai menggantikan urutan otomatis (nilai terbesar). Pengaturan ini tersimpan per perangkat, jadi tidak ikut terkirim ke cloud atau file ekspor'] },
+    { v: 'v1.1.082', d: '2 Okt 2026', items: [
+      'Di tab Akun ada kotak pencarian dan pilihan filter: Semua, Ada tagihan, Lunas, dan Diarsipkan, masing-masing dengan jumlah akunnya. Pencarian cocok ke nama atau jenis akun (misalnya "bca" atau "kartu kredit")',
+      'Kotak pencarian dan filter muncul kalau kamu punya 5 akun atau lebih. Saat memfilter, semua kelompok akun otomatis terbuka, dan tombol Reset filter muncul kalau tidak ada akun yang cocok'] },
+    { v: 'v1.1.081', d: '2 Okt 2026', items: [
+      'Di tab Ringkasan, kartu Grafik (pilihan jenis dan periode) dan kartu grafiknya kini menjadi satu kartu. Pilih jenis grafik di bagian atas, grafiknya tampil tepat di bawahnya dalam kartu yang sama, jadi tidak perlu lagi menggulir antara dua kartu'] },
+    { v: 'v1.1.080', d: '2 Okt 2026', items: [
+      'Akun yang sudah tidak dipakai kini bisa diarsipkan, tanpa perlu menghapus semua transaksinya dulu. Buka akunnya lalu pilih Arsipkan akun. Syaratnya saldo Rp0 atau utang sudah lunas, dan tidak ada langganan aktif di akun itu',
+      'Akun arsip hilang dari daftar utama dan dari pilihan akun saat mencatat transaksi baru. Ia pindah ke bagian Diarsipkan di bawah daftar akun (terlipat, ketuk untuk membuka). Riwayat transaksi, laporan, dan saldo lama tetap utuh',
+      'Akun arsip bisa dipulihkan kapan saja lewat tombol Pulihkan akun di halamannya. Kartu yang diarsipkan tidak lagi dikenai biaya bulanan dan tidak dihitung di Limit kartu terpakai'] },
+    { v: 'v1.1.079', d: '2 Okt 2026', items: [
+      'Perlindungan keamanan tambahan: app kini membatasi dari mana saja skrip dan sambungan data boleh dimuat (hanya app ini, penyedia pustaka sinkron, font, dan server sinkron). Cara kerja dan tampilan app tidak berubah',
+      'Penanda internal di daftar akun, transaksi, dan titipan kini diamankan, jadi data yang aneh dari cloud atau file impor tidak bisa merusak tampilan'] },
     { v: 'v1.1.078', d: '29 Sep 2026', items: [
       'Bagian atas tab Akun kini menampilkan juga Kekayaan bersih (aset dikurangi utang) dan Limit kartu terpakai: total pemakaian semua kartu kredit dan PayLater yang punya limit dibagi total limitnya. Angka limit menjadi merah dengan tanda ▲ kalau sudah 90% ke atas',
       'Tombol Bayar kini ada di kartu PayLater (Bayar tagihan) dan kartu pinjaman (Bayar angsuran), tidak hanya di kartu kredit. Bayar angsuran membuka panel pembayaran dengan nominal angsuran terisi',
