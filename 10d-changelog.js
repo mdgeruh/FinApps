@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.100', d: '2 Okt 2026', items: [
+      'Semua kolom tanggal kini memakai kalender bawaan app yang tampilannya senada, bukan kalender bawaan browser. Ada tombol Hari ini, dan tanggal yang belum boleh dipilih (misalnya tanggal di masa depan saat catat pembayaran) tampil redup'] },
+    { v: 'v1.1.099', d: '2 Okt 2026', items: [
+      'Perapian di balik layar supaya app lebih mudah dirawat. Tampilan dan cara pakai tidak berubah'] },
     { v: 'v1.1.098', d: '2 Okt 2026', items: [
       'Rincian jadwal angsuran pinjaman kini menampilkan bulan yang hanya dibayar bunganya sebagai baris tersendiri, jadi terlihat jelas bulan mana yang bunganya sudah dibayar dan pokoknya digeser'] },
     { v: 'v1.1.097', d: '2 Okt 2026', items: [

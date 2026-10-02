@@ -126,7 +126,7 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 
 ## 4. Hasil pengujian
 
-**Unit:** 189 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+**Unit:** 193 test lulus (`node tests/run.js`); semua file lolos `node --check`.
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 
