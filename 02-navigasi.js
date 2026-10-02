@@ -233,6 +233,7 @@
     const data = loadData();
     renderBalanceHeader(data);
     if (activeChartSegmentId() === 'kekayaan') renderNetWorthChart(data);
+    if (typeof renderAccounts === 'function' && $('akun-total-aset')) { const bal = computeAllBalances(data); renderAccountsSummary(data, bal); renderAccounts(data, bal); }
   }
 
   function renderBalanceHeader(data, balances) {

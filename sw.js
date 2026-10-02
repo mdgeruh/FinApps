@@ -4,7 +4,7 @@
  * Hanya menangani file app sendiri + pustaka Supabase (jsdelivr) + font Google.
  * TIDAK PERNAH menyentuh API Supabase (*.supabase.co) atau permintaan non-GET.
  * Naikkan CACHE_VERSION bersamaan dengan APP_VERSION supaya cache lama dibersihkan. */
-const CACHE_VERSION = 'kp-v1.1.078';
+const CACHE_VERSION = 'kp-v1.1.098';
 const APP_SHELL = [
   './', 'index.html', 'style.css', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png',
   '00-config.js', '01-data.js', '02-navigasi.js', '03-form-transaksi.js', '04-akun.js', '04b-akun-detail.js', '04c-akun-aset-tagihan.js',

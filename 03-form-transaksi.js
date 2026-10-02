@@ -17,6 +17,14 @@
     $('txn-form').classList.add('open');
   }
 
+  // A4: transaksi lama milik akun arsip tetap bisa diedit; akunnya ditambahkan sementara ke pilihan.
+  function ensureArchivedOption(sel, data, accId) {
+    if (!accId || Array.from(sel.options).some(o => o.value === accId)) return;
+    const a = data.accounts.find(x => x.id === accId);
+    if (!a || !a.archived) return;
+    const o = document.createElement('option'); o.value = a.id; o.textContent = a.name + ' (arsip)'; sel.appendChild(o);
+  }
+
   function startEditTxn(id) {
     const data = loadData();
     const t = data.txns.find(x => x.id === id);
@@ -25,6 +33,7 @@
     state.editingTxnId = id;
 
     const accSel = $('account-select');
+    ensureArchivedOption(accSel, data, t.accountId);
     if (Array.from(accSel.options).some(o => o.value === t.accountId)) accSel.value = t.accountId;
     setType(t.type);
     updateTypeAvailability();
@@ -47,6 +56,7 @@
 
     if (t.type === 'transfer') {
       const toSel = $('to-account-select');
+      ensureArchivedOption(toSel, data, t.toAccountId);
       if (Array.from(toSel.options).some(o => o.value === t.toAccountId)) toSel.value = t.toAccountId;
       state.pendingTransferLabel = (t.desc && t.desc !== 'Transfer') ? t.desc : null;
       updateQuickPayButtons();
@@ -152,6 +162,7 @@
     state.currentType = t;
     document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
     $('to-account-row').style.display = t === 'transfer' ? 'flex' : 'none';
+    $('account-label').textContent = t === 'masuk' ? 'Masuk ke akun' : (t === 'keluar' ? 'Dibayar dari akun' : 'Dari akun');
     $('desc-row').style.display = t === 'transfer' ? 'none' : 'flex';
     populateCategorySelect();
     updateQuickPayButtons();
@@ -286,7 +297,8 @@
     const accSel = $('account-select');
     const toSel = $('to-account-select');
     const prevSelected = accSel.value;
-    const opts = accountOptionsHtml(data.accounts);
+    const keepArchived = a => !a.archived || a.id === prevSelected;   // A4: akun arsip tidak ditawarkan (kecuali yang sedang terpilih)
+    const opts = accountOptionsHtml(data.accounts.filter(keepArchived));
     accSel.innerHTML = opts;
     toSel.innerHTML = opts;
     if (data.accounts.some(a => a.id === prevSelected)) accSel.value = prevSelected;

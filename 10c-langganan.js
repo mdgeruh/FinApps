@@ -51,6 +51,7 @@
     let dirty = false;
     subs.forEach(s => {
       if (!s.active || !accIds.has(s.accountId)) return;
+      { const sa = data.accounts.find(a => a.id === s.accountId); if (sa && sa.archived) return; }   // A4
       let cursor;
       if (s.lastAppliedMonth) {
         const [y, m] = s.lastAppliedMonth.split('-').map(Number);
@@ -87,7 +88,7 @@
         <span class="acc-balance">${formatRp(s.amount)}</span></div>`).join('');
   }
 
-  function subAccountOptions(data) { return accountOptionsHtml(data.accounts.filter(a => SUB_ACCOUNT_TYPES.indexOf(a.type) >= 0)); }
+  function subAccountOptions(data) { return accountOptionsHtml(data.accounts.filter(a => !a.archived && SUB_ACCOUNT_TYPES.indexOf(a.type) >= 0)); }
 
   function renderSubManageList(data) {
     const subs = sanitizeSubscriptions(data.subscriptions);

@@ -18,8 +18,17 @@
     const { valueText, color, pct, barColor } = di;
     let metaExtra = di.metaExtra;
     { const q = accountQuickActions(acc), qWrap = $('acc-detail-quick');
-      if (qWrap) { qWrap.style.display = (q.catat || q.transfer) ? 'flex' : 'none'; $('acc-quick-catat').style.display = q.catat ? '' : 'none'; $('acc-quick-transfer').style.display = q.transfer ? '' : 'none'; } }
+      if (qWrap) { qWrap.style.display = (q.catat || q.transfer) ? 'flex' : 'none'; $('acc-quick-catat').style.display = q.catat ? '' : 'none';
+        { const lp = TYPE_LOAN[acc.type] && bal < 0, b = $('acc-quick-catat'); b.textContent = lp ? 'Catat pembayaran' : 'Catat transaksi'; b.setAttribute('data-a0', lp ? 'bayar' : 'catat'); } $('acc-quick-transfer').style.display = q.transfer ? '' : 'none'; } }
     { const st = computeAccountTxnStats(data)[id]; metaExtra += ' · ' + (st ? st.count : 0) + ' transaksi'; }
+    if (acc.archived) metaExtra += ' · Diarsipkan';
+    { const btn = $('acc-detail-archive'), hint = $('acc-detail-archive-hint');   // A4
+      if (btn) {
+        btn.textContent = acc.archived ? 'Pulihkan akun' : 'Arsipkan akun';
+        btn.style.display = acc.type === 'titipan' ? 'none' : '';
+        const why = (acc.archived || acc.type === 'titipan') ? '' : archiveBlockReason(data, acc, bal);
+        if (hint) { hint.textContent = why; hint.style.display = why ? '' : 'none'; }
+      } }
 
     // Jadwal angsuran (pinjaman bunga flat bertenor)
     const schedEl = $('acc-detail-schedule');
@@ -33,9 +42,19 @@
         const lf = computeLateFees(acc, sch), lfBy = {};
         if (lf) lf.items.forEach(x => { lfBy[x.no] = x; });
         const lfNote = lf && lf.total > 0 ? '<div class="acc-sub" style="color:var(--red); margin-bottom:8px;">Perkiraan denda telat ' + formatRp(lf.total) + ' (' + lf.items.length + ' angsuran, ' + escapeHtml(lateFeeRuleText(lf)) + '). Ini hanya perkiraan; catat sebagai pengeluaran kalau memang ditagih.</div>' : '';
+        const deferNote = sch.deferred > 0 ? '<div class="acc-sub" style="margin-bottom:8px;">Bayar bunga saja ' + sch.deferred + ' bulan: pokok tidak berkurang, jadwal angsuran pokok bergeser ' + sch.deferred + ' bulan.</div>' : '';
         schedEl.style.display = 'block';
-        schedEl.innerHTML = lfNote + '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
-          sch.rows.map(r => `
+        schedEl.innerHTML = deferNote + lfNote + '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
+          (sch.deferredYm || []).map(ym => `
+            <div class="txn-row">
+              <div class="txn-left">
+                <span style="color:var(--amber); font-weight:700; width:16px; text-align:center;">~</span>
+                <div class="txn-text">
+                  <div class="txn-desc">${escapeHtml(fmtBulanTahun(ym + '-01'))} · bunga saja</div>
+                  <div class="txn-meta">Bunga dibayar, pokok tidak berkurang (angsuran pokok digeser ke bulan berikutnya)</div>
+                </div>
+              </div>
+            </div>`).join('') + sch.rows.map(r => `
             <div class="txn-row" style="${r.no === nextNo ? 'background:var(--teal-soft); border-radius:10px;' : ''}">
               <div class="txn-left">
                 <span style="color:${colr[r.status]}; font-weight:700; width:16px; text-align:center;">${icon[r.status]}</span>
@@ -114,7 +133,7 @@
     if (payEl) {
       const opts = acc.type === 'kartu_kredit' ? cardPayOptions(data, acc, bal) : null;
       if (opts) {
-        const q = (k) => `data-act="payCardFromDetail" data-a0="${acc.id}" data-a1="${k}"`;
+        const q = (k) => `data-act="payCardFromDetail" data-a0="${escapeHtml(acc.id)}" data-a1="${escapeHtml(k)}"`;
         let html = '<div class="section-title" style="margin-bottom:8px;">Bayar tagihan</div>';
         if (opts.note) html += `<div class="acc-sub u-mb8">${escapeHtml(opts.note)}</div>`;
         html += `<div class="acc-form-actions u-mb8"><button type="button" class="submit-btn" ${q(opts.primary.kind)}>${escapeHtml(opts.primary.text)} — ${formatRp(opts.primary.amount)}</button></div>`;
@@ -186,7 +205,7 @@
     if (monthlyGroups.length > 0) {
       monthlyWrap.style.display = 'block';
       $('acc-detail-monthly-list').innerHTML = monthlyGroups.map((g, idx) => `
-        <div class="txn-row clickable" data-act="openPaylaterMonthDetail" data-a0="${acc.id}" data-n1="${idx}">
+        <div class="txn-row clickable" data-act="openPaylaterMonthDetail" data-a0="${escapeHtml(acc.id)}" data-n1="${idx}">
           <div class="txn-left"><div class="txn-text">
             <div class="txn-desc">${escapeHtml(fmtBulanTahun(g.due))}</div>
             <div class="txn-meta">Jatuh tempo ${formatDayLabel(g.due)} · ${g.items.length} item</div>
@@ -231,7 +250,7 @@
         }
         metaText += (metaText ? ' · ' : '') + formatDayLabel(t.date);
         return `
-          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${t.id}">
+          <div class="txn-row clickable" data-act="openTxnDetail" data-a0="${escapeHtml(t.id)}">
             <div class="txn-left">
               <span class="dot ${t.type}"></span>
               <div class="txn-text">

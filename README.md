@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.078** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.098** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
@@ -89,6 +89,10 @@ Header menampilkan sapaan sesuai jam (GMT+8), tanggal singkat, ikon tampilan (si
 Total **kekayaan bersih** otomatis menjumlahkan semua tipe di atas dengan tanda yang benar (piutang dihitung sebagai aset, sisa hutang & titipan lebih dihitung sebagai kewajiban).
 
 ---
+
+### Arsip akun (v1.1.080)
+
+Akun yang tidak dipakai lagi diarsipkan, bukan dihapus: detail akun > **Arsipkan akun**. Syarat: bukan titipan, saldo Rp0 (utang: lunas, tanpa bunga terjadwal tersisa), tidak ada langganan aktif di akun itu, dan masih ada minimal satu akun aktif lain. Akun arsip (`archived: true`) pindah ke bagian **Diarsipkan** (terlipat) di bawah daftar akun, hilang dari pilihan transaksi baru dan chip filter, tidak dikenai biaya bulanan, dan tidak dihitung di Limit kartu terpakai. Riwayat, laporan, dan saldo historis tetap utuh; transaksi lama milik akun arsip tetap bisa diedit. Pulihkan lewat **Pulihkan akun** di detailnya. Field ikut ekspor/impor dan sinkron cloud.
 
 ## Pinjaman Online (pinjol)
 
@@ -223,6 +227,8 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config
 - **Biaya bulanan otomatis** (bunga/admin kartu & pinjaman) berID deterministik `fee-<akun>-<bulan>-...`, jadi dua perangkat tidak membuat transaksi ganda.
 - **Lupa kata sandi / ganti email & kata sandi:** tersedia di layar login dan tab Profil.
 - **Keamanan:** anon/publishable key memang publik, tapi **Row Level Security wajib aktif** (jalankan `supabase/setup.sql` di SQL Editor Supabase; berisi tabel, kebijakan, dan query verifikasi) supaya tiap akun hanya bisa membaca barisnya sendiri. Jangan pernah menaruh key `service_role` atau kata sandi database di file ini. Data tersimpan sebagai JSON biasa (tidak dienkripsi di sisi klien) di project Supabase kamu.
+- **Content-Security-Policy (v1.1.079):** `index.html` punya meta CSP: skrip hanya dari app sendiri dan `cdn.jsdelivr.net`, sambungan data hanya ke app sendiri dan `*.supabase.co`, tanpa `unsafe-eval`, `object-src none`. Karena itu **jangan menambah `<script>` inline atau atribut `onclick=`**; pakai `data-act`. Kalau menambah layanan luar, tambahkan origin-nya di CSP.
+- **Kunci versi Supabase JS:** jalankan `node tools/pin-supabase.js` (butuh internet) sekali; hasilnya versi persis + hash SRI di `14-sync.js`. Selama belum dijalankan, pustaka dimuat dari `@2` tanpa cek hash.
 - **Keluar:** menghapus sesi login, tapi salinan data tetap ada di localStorage perangkat itu. Untuk perangkat bersama, reset data lokal setelah keluar.
 
 ---
@@ -275,7 +281,9 @@ JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua b
 | `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
 | `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
 | `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
-| `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 116 test unit |
+| `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 189 test unit |
+| `tools/build-preview.js` | `node tools/build-preview.js` membuat `preview/keuangan-pribadi.html`: app lengkap dalam satu halaman (CSS + semua JS, mode lokal, data contoh + satu akun terarsip) untuk dipublikasikan sebagai artefak pratinjau. Ekspor/unduh file tidak berfungsi di artefak |
+| `tools/pin-supabase.js` | Skrip sekali jalan (butuh internet): mengunci versi `supabase-js` dan mengisi hash SRI di `14-sync.js` |
 
 Titik masuk yang sering dipakai saat memodifikasi:
 

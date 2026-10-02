@@ -32,6 +32,7 @@
       seen.add(v.date);
       const e = { date: v.date, value: v.value };
       if (typeof v.price === 'number' && isFinite(v.price) && v.price >= 0) e.price = v.price;
+      if (typeof v.qty === 'number' && isFinite(v.qty) && v.qty > 0) e.qty = v.qty;
       out.push(e);
     });
     return out.sort((a, b) => a.date.localeCompare(b.date));
@@ -58,7 +59,7 @@
     });
     const modal = (acc.initialBalance || 0) + tin - tout;
     const pl = bal - modal;
-    const qty = acc.assetQty > 0 ? acc.assetQty : 0;
+    const qty = assetQtyNow(acc);
     const unit = acc.assetUnit || 'satuan';
     const rows = [['Nilai sekarang', formatRp(bal), 'var(--ink)'], ['Modal (nilai awal + beli − jual)', formatRp(modal), 'var(--ink-soft)'],
       ['Selisih nilai vs modal', (pl >= 0 ? '+' : '−') + formatRp(Math.abs(pl)), pl >= 0 ? 'var(--green)' : 'var(--red)']];
@@ -71,21 +72,32 @@
     const dateEl = $('asset-val-date-input');
     dateEl.value = todayStr(); dateEl.max = todayStr();
     $('asset-val-price-row').style.display = qty > 0 ? 'flex' : 'none';
-    $('asset-val-price-input').placeholder = 'Harga per ' + unit + ' (Rp), jumlah ' + (Math.round(qty * 1000) / 1000).toLocaleString('id-ID');
+    const qtyRow = $('asset-val-qty-row'); if (qtyRow) qtyRow.style.display = qty > 0 ? 'flex' : 'none';
+    $('asset-val-price-input').placeholder = 'Harga per ' + unit + ' (Rp)';
     $('asset-val-price-input').value = '';
+    const qtyEl = $('asset-val-qty-input');
+    if (qtyEl) { qtyEl.value = qty > 0 ? Math.round(qty * 1000) / 1000 : ''; qtyEl.setAttribute('aria-label', 'Jumlah ' + unit + ' sekarang'); }
+    const qtyLab = $('asset-val-qty-label'); if (qtyLab) qtyLab.textContent = 'Jumlah ' + unit + ' sekarang (ubah bila berubah)';
     $('asset-val-total-input').value = '';
     const vals = (acc.valuations || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
     $('asset-val-history').innerHTML = vals.length ? vals.map(v => `
       <div class="txn-row">
-        <div class="txn-left"><div class="txn-text"><div class="txn-desc">${escapeHtml(fmtTgl(v.date))}</div>${v.price > 0 ? `<div class="txn-meta">${formatRp(v.price)} per ${escapeHtml(unit)}</div>` : ''}</div></div>
-        <div class="txn-right"><span class="txn-amount">${formatRp(v.value)}</span><button type="button" class="io-btn" style="padding:4px 10px;" data-act="deleteAssetValuation" data-a0="${v.date}" aria-label="Hapus penilaian ${escapeHtml(v.date)}">×</button></div>
+        <div class="txn-left"><div class="txn-text"><div class="txn-desc">${escapeHtml(fmtTgl(v.date))}</div>${v.price > 0 ? `<div class="txn-meta">${formatRp(v.price)} per ${escapeHtml(unit)}${v.qty > 0 ? ' · ' + (Math.round(v.qty * 1000) / 1000).toLocaleString('id-ID') + ' ' + escapeHtml(unit) : ''}</div>` : ''}</div></div>
+        <div class="txn-right"><span class="txn-amount">${formatRp(v.value)}</span><button type="button" class="io-btn" style="padding:4px 10px;" data-act="deleteAssetValuation" data-a0="${escapeHtml(v.date)}" aria-label="Hapus penilaian ${escapeHtml(v.date)}">×</button></div>
       </div>`).join('') : '<div class="acc-sub">Belum ada riwayat.</div>';
   }
+  // Jumlah yang sedang diisi di form penilaian; kosong/tidak valid = jumlah saat ini.
+  function assetQtyInputValue(acc) {
+    const el = $('asset-val-qty-input'); const n = el ? parseFloat(el.value) : NaN;
+    return n > 0 ? n : (acc ? assetQtyNow(acc) : 0);
+  }
+  function onAssetQtyInput() { onAssetPriceInput(); }
   function onAssetPriceInput() {
     const data = loadData();
     const acc = data.accounts.find(a => a.id === detailAccountId);
     const price = parseFloat($('asset-val-price-input').value);
-    if (acc && acc.assetQty > 0 && price >= 0) $('asset-val-total-input').value = Math.round(price * acc.assetQty * 100) / 100;
+    const q = assetQtyInputValue(acc);
+    if (acc && q > 0 && price >= 0) $('asset-val-total-input').value = Math.round(price * q * 100) / 100;
   }
   function saveAssetValuation() {
     const id = detailAccountId;
@@ -96,11 +108,12 @@
     if (date > todayStr()) { showIoMsg('Tanggal penilaian tidak boleh di masa depan.', 'error', 'asset-val-msg'); return; }
     const totalStr = String($('asset-val-total-input').value).trim();
     const price = parseFloat($('asset-val-price-input').value);
-    let total = totalStr !== '' ? parseFloat(totalStr) : (acc.assetQty > 0 && price >= 0 ? price * acc.assetQty : NaN);
+    const qtyUse = assetQtyInputValue(acc);
+    let total = totalStr !== '' ? parseFloat(totalStr) : (qtyUse > 0 && price >= 0 ? price * qtyUse : NaN);
     if (!isFinite(total)) { $('asset-val-total-input').focus(); showIoMsg('Isi nilai total (atau harga per satuan).', 'error', 'asset-val-msg'); return; }
     total = Math.round(total * 100) / 100;
     const entry = { date, value: total };
-    if (acc.assetQty > 0) entry.price = price >= 0 && totalStr === '' ? price : Math.round((total / acc.assetQty) * 100) / 100;
+    if (qtyUse > 0) { entry.price = price >= 0 && totalStr === '' ? price : Math.round((total / qtyUse) * 100) / 100; entry.qty = qtyUse; }
     acc.valuations = (acc.valuations || []).filter(v => v.date !== date);
     acc.valuations.push(entry);
     acc.valuations.sort((a, b) => a.date.localeCompare(b.date));
@@ -191,7 +204,15 @@
     const form = $('txn-form');
     if (form && form.scrollIntoView) form.scrollIntoView({ block: 'start' });
   }
-  function quickTxnFromDetail(mode) { if (detailAccountId) quickTxnForAccount(detailAccountId, mode); }
+  function quickTxnFromDetail(mode) {
+    if (!detailAccountId) return;
+    if (mode === 'bayar') {   // pinjaman: tombol cepat membuka panel Catat pembayaran (bunga / pokok+bunga / nominal), bukan form pengeluaran
+      const wrap = $('acc-detail-loan-pay');
+      if (wrap && wrap.style.display !== 'none') { if (wrap.scrollIntoView) wrap.scrollIntoView({ block: 'center' }); const a = $('loan-pay-amount-input'); if (a && a.focus) a.focus(); return; }
+      mode = 'catat';
+    }
+    quickTxnForAccount(detailAccountId, mode);
+  }
 
   // Tombol "Bayar" di kartu Jatuh tempo (Ringkasan). Tiap jenis akun memakai alur bayarnya sendiri:
   //  - kartu kredit : form Transfer, nominal tagihan cetak
@@ -291,7 +312,7 @@
         </div></div>
         <div class="txn-right"><span class="txn-amount"${it.no == null ? ' style="color:var(--rust);"' : ''}>${formatRp(it.amount)}</span></div>
       </div>`).join('')
-      + `<button type="button" class="submit-btn" style="margin-top:14px;" data-act="payMonthAndClose" data-a0="${accId}" data-n1="${groupIdx}">Bayar bulan ini</button>`;
+      + `<button type="button" class="submit-btn" style="margin-top:14px;" data-act="payMonthAndClose" data-a0="${escapeHtml(accId)}" data-n1="${groupIdx}">Bayar bulan ini</button>`;
 
     $('paylater-month-detail').classList.add('open');
   }
@@ -472,6 +493,14 @@
     if (!id) return;
     closeAccountDetail();
     startEditAccount(id);
+  }
+
+  async function toggleArchiveFromDetail() {
+    const id = detailAccountId;
+    if (!id) return;
+    const acc = loadData().accounts.find(a => a.id === id);
+    if (!acc) return;
+    if (await setAccountArchived(id, !acc.archived)) closeAccountDetail();
   }
 
   async function deleteAccountFromDetail() {

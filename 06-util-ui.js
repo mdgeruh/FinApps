@@ -40,12 +40,35 @@
     });
   }
 
+  // Pesan hasil aksi. Tampil di elemen target (bawaan #io-msg di tab Profil) kalau elemen itu sedang terlihat;
+  // kalau tidak (mis. galat dari form di sheet, sementara #io-msg ada di tab lain), jatuh ke toast supaya pesan tidak hilang.
   function showIoMsg(text, kind, elId) {
     const el = $(elId || 'io-msg');
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'io-msg' + (kind ? ' ' + kind : '');
-    if (text) setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, 4000);
+    const visible = !!(el && el.offsetParent !== null);
+    if (!text) { if (el) { el.textContent = ''; el.className = 'io-msg'; } return; }
+    if (visible) {
+      el.textContent = text;
+      el.className = 'io-msg' + (kind ? ' ' + kind : '');
+      setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, kind === 'error' ? 8000 : 4000);
+    } else {
+      showToast(text, kind);
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(text, kind) {
+    let t = document.getElementById('app-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'app-toast';
+      t.setAttribute('aria-live', 'polite');
+      document.body.appendChild(t);
+    }
+    t.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    t.className = 'app-toast show' + (kind ? ' ' + kind : '');
+    t.textContent = text;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove('show'); }, kind === 'error' ? 6000 : 3000);
   }
 
   // ============================================================
@@ -207,6 +230,8 @@
     'titipan-person-select', 'titipan-fund-select',
     // PayLater (form transaksi)
     'paylater-method',
+    // Langganan berulang
+    'sub-account-input',
     // Filter bulan & urutkan (tab Transaksi)
     'txn-month-select', 'sort-select'
   ].forEach(enhanceSelect);

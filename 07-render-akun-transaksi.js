@@ -31,7 +31,7 @@
       const when = late ? 'Lewat ' + (-it.days) + ' hari' : (it.days === 0 ? 'Hari ini' : (it.days === 1 ? 'Besok' : it.days + ' hari lagi'));
       const color = late ? 'var(--red)' : (it.days <= 3 ? 'var(--amber)' : 'var(--ink-soft)');
       return `
-        <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${it.id}">
+        <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${escapeHtml(it.id)}">
           <div class="txn-left">
             <span class="dot keluar"></span>
             <div class="txn-text">
@@ -39,7 +39,7 @@
               <div class="txn-meta" style="color:${color}; font-weight:600;">${when} · ${escapeHtml(fmtTgl(it.due))}</div>
             </div>
           </div>
-          <div class="txn-right"><span class="txn-amount keluar">${formatRp(it.amount)}</span>${it.payKind ? `<button type="button" class="io-btn" style="padding:6px 12px; font-size:12px;" data-act="payDueFromRingkasan" data-a0="${it.id}" data-stop="1">Bayar</button>` : ''}</div>
+          <div class="txn-right"><span class="txn-amount keluar">${formatRp(it.amount)}</span>${it.payKind ? `<button type="button" class="io-btn" style="padding:6px 12px; font-size:12px;" data-act="payDueFromRingkasan" data-a0="${escapeHtml(it.id)}" data-stop="1">Bayar</button>` : ''}</div>
         </div>`;
     }).join('') + (() => {
       const liquid = computeLiquidFunds(data, balances || computeAllBalances(data));
@@ -79,7 +79,7 @@
     const accCount = new Set(mo.items.map(it => it.accId)).size;
     $('tagihan-bulan-detail-meta').textContent = accCount + ' akun · ' + mo.items.length + ' item';
     $('tagihan-bulan-detail-items').innerHTML = mo.items.map(it => `
-      <div class="txn-row clickable" data-act="openAccountFromTagihanBulan" data-a0="${it.accId}">
+      <div class="txn-row clickable" data-act="openAccountFromTagihanBulan" data-a0="${escapeHtml(it.accId)}">
         <div class="txn-left"><div class="txn-text">
           <div class="txn-desc">${escapeHtml(it.accName)}</div>
           <div class="txn-meta">${escapeHtml(it.label)} · jatuh tempo ${escapeHtml(fmtTgl(it.due))}</div>
@@ -99,11 +99,12 @@
     const utangEl = $('akun-total-utang');
     if (!asetEl || !utangEl) return;
     const { aset: totalAset, utang: totalUtang } = computeAssetDebt(data, balances);
-    asetEl.textContent = formatRp(totalAset);
-    utangEl.textContent = formatRp(totalUtang);
+    const hid = !!state.balanceHidden, R = n => hid ? HIDDEN_RP : formatRp(n);
+    asetEl.textContent = R(totalAset);
+    utangEl.textContent = R(totalUtang);
     // A5: kekayaan bersih (aset − utang, definisi utang sama dengan A1) dan pemakaian limit kartu
     const nwEl = $('akun-net-worth');
-    if (nwEl) { nwEl.textContent = formatRp(totalAset - totalUtang); nwEl.classList.toggle('neg', totalAset - totalUtang < 0); }
+    if (nwEl) { nwEl.textContent = R(totalAset - totalUtang); nwEl.classList.toggle('neg', totalAset - totalUtang < 0); }
     const lu = computeLimitUsage(data, balances);
     const luCard = $('akun-limit-card'), luEl = $('akun-limit-usage'), luSub = $('akun-limit-sub');
     if (luCard) luCard.style.display = lu ? '' : 'none';
@@ -111,7 +112,7 @@
       const tone = lu.pct >= 90 ? 'var(--red)' : (lu.pct >= 70 ? 'var(--amber)' : '');
       luEl.textContent = (lu.pct >= 90 ? '▲ ' : '') + lu.pct + '%';
       luEl.style.color = tone;
-      luSub.textContent = formatRp(lu.used) + ' dari ' + formatRp(lu.limit);
+      luSub.textContent = hid ? HIDDEN_RP : formatRp(lu.used) + ' dari ' + formatRp(lu.limit);
     }
   }
 
@@ -120,16 +121,44 @@
   const ACC_GROUP_KEY = 'kp_acc_collapsed';
   let accCollapsed = {};
   try { accCollapsed = JSON.parse(localStorage.getItem(ACC_GROUP_KEY) || '{}') || {}; } catch (e) { accCollapsed = {}; }
+  // A8: tata letak manual (sematan + urutan) per perangkat
+  const ACC_LAYOUT_KEY = 'kp_acc_layout';
+  function loadAccLayout(data) {
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(ACC_LAYOUT_KEY) || 'null'); } catch (e) { raw = null; }
+    return cleanAccountLayout(raw, data || loadData());
+  }
+  function saveAccLayout(layout) { try { localStorage.setItem(ACC_LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* preferensi tampilan, tidak kritis */ } }
+  function toggleAccOrderMode() {
+    state.accOrderMode = !state.accOrderMode;
+    if (state.accOrderMode) resetAccFilters(); else refreshAccounts();   // saat mengatur urutan, filter dimatikan supaya semua akun tampil
+    const btn = $('acc-order-toggle'); if (btn) btn.textContent = state.accOrderMode ? 'Selesai' : 'Atur urutan';
+  }
+  function moveAccount(id, dir) {
+    const data = loadData(); const acc = data.accounts.find(a => a.id === id); if (!acc) return;
+    const ids = Array.from(document.querySelectorAll('.acc-group[data-type="' + acc.type + '"] [data-acc-id]')).map(el => el.getAttribute('data-acc-id'));
+    saveAccLayout(moveAccountInGroup(loadAccLayout(data), acc.type, ids, id, dir));
+    refreshAccounts();
+    const again = document.querySelector('.acc-tile[data-acc-id="' + id.replace(/"/g, '') + '"] [data-act="moveAccount"][data-n1="' + dir + '"]');
+    if (again && !again.disabled) again.focus();
+  }
+  function toggleAccPin(id) {
+    const data = loadData();
+    saveAccLayout(toggleAccountPin(loadAccLayout(data), id));
+    refreshAccounts();
+  }
   const ACC_WIDE_TYPES = { kartu_kredit: true, paylater: true, pinjaman: true, pinjaman_online: true, titipan: true };
 
   function toggleAccGroup(type) {
-    accCollapsed[type] = !accCollapsed[type];
+    if (type === '_arsip') accCollapsed[type] = (accCollapsed[type] === false);   // bagian arsip terlipat bawaan: false = dibuka
+    else accCollapsed[type] = !accCollapsed[type];
     try { localStorage.setItem(ACC_GROUP_KEY, JSON.stringify(accCollapsed)); } catch (e) {}
     const g = document.querySelector('.acc-group[data-type="' + type + '"]');
     if (g) {
-      g.classList.toggle('collapsed', !!accCollapsed[type]);
+      const isCol = type === '_arsip' ? accCollapsed[type] !== false : !!accCollapsed[type];
+      g.classList.toggle('collapsed', isCol);
       const head = g.querySelector('.acc-group-head');
-      if (head) head.setAttribute('aria-expanded', accCollapsed[type] ? 'false' : 'true');
+      if (head) head.setAttribute('aria-expanded', isCol ? 'false' : 'true');
     }
   }
 
@@ -150,42 +179,70 @@
       const txnCount = txnStats[acc.id] ? txnStats[acc.id].count : 0;
       const di = accountDisplayInfo(data, acc, bal);
       const { valueText, color, metaExtra, sortVal, groupVal, canPay, payLabel, payAct } = di;
-      const lines = di.lines.slice();
+      const hidB = !!state.balanceHidden, mk = t => hidB ? maskRpText(t) : t;
+      const lines = di.lines.map(l => ({ text: mk(l.text), tone: l.tone }));
       if (!di.isDebt) { if (lines.length) lines[0] = { text: lines[0].text + ' · ' + txnCount + ' transaksi', tone: '' }; else lines.push({ text: txnCount + ' transaksi', tone: '' }); }
       const barHtml = di.bar ? `<div class="acc-bar"><div class="acc-bar-fill" style="width:${di.bar.pct}%; background:var(${di.bar.color});"></div></div>` : '';
-      return { acc, colorVar, valueText, color, metaExtra, lines, barHtml, txnCount, sortVal, groupVal, canPay, payLabel, payAct };
+      return { acc, colorVar, valueText: mk(valueText), color, metaExtra: mk(metaExtra), lines, barHtml, txnCount, sortVal, groupVal, canPay, payLabel, payAct, isDebt: di.isDebt };
     });
 
-    // Kelompokkan per tipe (urutan mengikuti TYPE_LABELS), tipe kosong dilewati.
+    // A7: pencarian + chip filter
+    const fq = state.accQuery, ff = state.accFilter, filtering = !!fq || ff !== 'all';
+    renderAccountFilterBar(data, items, filtering);
+    const visible = items.filter(it => accountFilterMatch(it.acc, it.groupVal, it.isDebt, ff, fq));
+    if (filtering && visible.length === 0) {
+      container.innerHTML = '<div class="empty">' + (ff === 'arsip' && !fq ? 'Belum ada akun yang diarsipkan.' : 'Tidak ada akun yang cocok dengan pencarian atau filter ini.') + '<br><button type="button" class="empty-reset-link" data-act="resetAccFilters">Reset filter</button></div>';
+      return;
+    }
+
+    const makeCard = (it, colorVar) => {
+      const toneCss = { late: 'color:var(--red); font-weight:600;', warn: 'color:var(--amber);' };
+      const metaHtml = it.lines.map(l => `<div class="acc-tile-meta"${toneCss[l.tone] ? ' style="' + toneCss[l.tone] + '"' : ''}>${escapeHtml(l.text)}</div>`).join('');
+      return `
+        <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${escapeHtml(it.acc.id)}" data-keydown-act="openAccountDetail" data-keydown-a0="${escapeHtml(it.acc.id)}" data-keydown-keys="Enter| " data-acc-id="${escapeHtml(it.acc.id)}">
+          <div class="acc-name">${escapeHtml(it.acc.name)}${it.pinned ? ' <span class="acc-pin-tag">Disematkan</span>' : ''}</div>
+          <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
+          ${metaHtml}
+          ${it.barHtml}
+          ${it.orderHtml || ''}
+          ${it.canPay && !it.orderHtml ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="${it.payAct}" data-a0="${escapeHtml(it.acc.id)}"${it.payAct === 'payCardFromDetail' ? ' data-a1="tagihan"' : ''} data-stop="1" data-keydown-stop="1">${it.payLabel}</button>` : ''}
+        </div>`;
+    };
+
+    // Kelompokkan per tipe (urutan mengikuti TYPE_LABELS), tipe kosong dilewati. Akun arsip (A4) dipisah ke bagian sendiri di bawah.
+    const accLayout = loadAccLayout(data), pinSet = new Set(accLayout.pins);
+    const archItems = visible.filter(it => it.acc.archived);
     const html = Object.keys(TYPE_LABELS).map(type => {
-      const group = items.filter(it => it.acc.type === type);
+      const group = visible.filter(it => it.acc.type === type && !it.acc.archived);
       if (!group.length) return '';
-      group.sort((x, y) => y.sortVal - x.sortVal);
+      const sorted = sortAccountGroup(group, accLayout);
+      group.length = 0; sorted.forEach(x => group.push(x));
+      group.forEach((it, gi) => {
+        it.pinned = pinSet.has(it.acc.id);
+        if (state.accOrderMode && !filtering) {
+          const samePrev = gi > 0 && pinSet.has(group[gi - 1].acc.id) === it.pinned, sameNext = gi < group.length - 1 && pinSet.has(group[gi + 1].acc.id) === it.pinned;
+          it.orderHtml = `<div class="acc-order-row" data-stop="1" data-keydown-stop="1">
+            <button type="button" class="io-btn" data-act="moveAccount" data-a0="${escapeHtml(it.acc.id)}" data-n1="-1" data-stop="1" ${samePrev ? '' : 'disabled'} aria-label="Naikkan ${escapeHtml(it.acc.name)}">▲</button>
+            <button type="button" class="io-btn" data-act="moveAccount" data-a0="${escapeHtml(it.acc.id)}" data-n1="1" data-stop="1" ${sameNext ? '' : 'disabled'} aria-label="Turunkan ${escapeHtml(it.acc.name)}">▼</button>
+            <button type="button" class="io-btn" data-act="toggleAccPin" data-a0="${escapeHtml(it.acc.id)}" data-stop="1" aria-pressed="${it.pinned}">${it.pinned ? 'Lepas' : 'Sematkan'}</button></div>`;
+        }
+      });
       const colorVar = TYPE_COLOR_VAR[type] || '--teal';
       const isDebtType = !!TYPE_DEBT[type];
       const total = group.reduce((sum, it) => sum + it.groupVal, 0);
       let totalText;
+      const hidG = !!state.balanceHidden;
       if (isDebtType) totalText = total > 0 ? 'Utang ' + formatRp(total) : 'Lunas';
       else if (type === 'titipan') totalText = total > 0 ? 'Piutang ' + formatRp(total) : (total < 0 ? 'Utang ' + formatRp(-total) : 'Lunas');
       else totalText = formatRp(total);
+      if (hidG) totalText = maskRpText(totalText);
       const totalColor = (isDebtType && total > 0) || (type === 'titipan' && total < 0) || (!isDebtType && type !== 'titipan' && total < 0) ? 'var(--red)' : 'var(--ink)';
-      const collapsed = !!accCollapsed[type];
+      const collapsed = !filtering && !!accCollapsed[type];   // saat memfilter, semua kelompok dibuka
       const wide = !!ACC_WIDE_TYPES[type];
-      const cards = group.map(it => {
-        const toneCss = { late: 'color:var(--red); font-weight:600;', warn: 'color:var(--amber);' };
-        const metaHtml = it.lines.map(l => `<div class="acc-tile-meta"${toneCss[l.tone] ? ' style="' + toneCss[l.tone] + '"' : ''}>${escapeHtml(l.text)}</div>`).join('');
-        return `
-          <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${it.acc.id}" data-keydown-act="openAccountDetail" data-keydown-a0="${it.acc.id}" data-keydown-keys="Enter| ">
-            <div class="acc-name">${escapeHtml(it.acc.name)}</div>
-            <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
-            ${metaHtml}
-            ${it.barHtml}
-            ${it.canPay ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="${it.payAct}" data-a0="${it.acc.id}"${it.payAct === 'payCardFromDetail' ? ' data-a1="tagihan"' : ''} data-stop="1" data-keydown-stop="1">${it.payLabel}</button>` : ''}
-          </div>`;
-      }).join('');
+      const cards = group.map(it => makeCard(it, colorVar)).join('');
       return `
         <div class="acc-group${collapsed ? ' collapsed' : ''}" data-type="${type}">
-          <button class="acc-group-head" data-act="toggleAccGroup" data-a0="${type}" aria-expanded="${collapsed ? 'false' : 'true'}">
+          <button class="acc-group-head" data-act="toggleAccGroup" data-a0="${escapeHtml(type)}" aria-expanded="${collapsed ? 'false' : 'true'}">
             <span class="dot" style="background: var(${colorVar})"></span>
             <span class="acc-group-title">${TYPE_LABELS[type]}</span>
             <span class="acc-group-count">${group.length}</span>
@@ -195,7 +252,61 @@
           <div class="acc-grid${wide ? ' one' : ''}">${cards}</div>
         </div>`;
     }).join('');
-    container.innerHTML = html;
+    // A4: bagian "Diarsipkan", terlipat bawaan (accCollapsed._arsip === false berarti sengaja dibuka).
+    let archHtml = '';
+    if (archItems.length) {
+      archItems.sort((x, y) => x.acc.name.localeCompare(y.acc.name));
+      const open = filtering || accCollapsed._arsip === false;
+      archHtml = `
+        <div class="acc-group${open ? '' : ' collapsed'}" data-type="_arsip">
+          <button class="acc-group-head" data-act="toggleAccGroup" data-a0="_arsip" aria-expanded="${open ? 'true' : 'false'}">
+            <span class="dot" style="background: var(--ink-soft)"></span>
+            <span class="acc-group-title">Diarsipkan</span>
+            <span class="acc-group-count">${archItems.length}</span>
+            <span class="acc-group-total" style="color:var(--ink-soft)">Riwayat tetap tersimpan</span>
+            <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-grid">${archItems.map(it => makeCard({ ...it, lines: [{ text: TYPE_LABELS[it.acc.type] + ' · ' + it.txnCount + ' transaksi', tone: '' }], barHtml: '', canPay: false }, '--ink-soft')).join('')}</div>
+        </div>`;
+    }
+    container.innerHTML = html + archHtml;
+  }
+
+  // A7: baris pencarian + chip filter di atas daftar akun. Tampil bila akun >= 5 atau sedang memfilter.
+  function renderAccountFilterBar(data, items, filtering) {
+    const bar = $('acc-filter-bar'), row = $('acc-chip-row');
+    if (!bar || !row) return;
+    bar.style.display = (!state.accOrderMode && (data.accounts.length >= 5 || filtering)) ? '' : 'none';
+    const counts = accountFilterCounts(items);
+    row.innerHTML = ACCOUNT_FILTERS.map(([f, label]) =>
+      `<button type="button" class="chip${state.accFilter === f ? ' active' : ''}" aria-pressed="${state.accFilter === f}" data-act="setAccFilter" data-a0="${escapeHtml(f)}">${label}${f === 'all' ? '' : ' ' + counts[f]}</button>`).join('');
+    const clr = $('acc-search-clear'); if (clr) clr.classList.toggle('show', !!state.accQuery);
+  }
+
+  function refreshAccounts() { renderAccounts(loadData()); }
+  let accSearchTimer = null;
+  function onAccSearchInput() {
+    const raw = $('acc-search-input').value;
+    clearTimeout(accSearchTimer);
+    accSearchTimer = setTimeout(() => { state.accQuery = raw.trim().toLowerCase(); refreshAccounts(); }, 180);
+    const clr = $('acc-search-clear'); if (clr) clr.classList.toggle('show', raw.length > 0);
+  }
+  function clearAccSearch() {
+    const el = $('acc-search-input'); if (el) { el.value = ''; el.focus(); }
+    clearTimeout(accSearchTimer);
+    state.accQuery = '';
+    refreshAccounts();
+  }
+  function setAccFilter(f) {
+    if (!ACCOUNT_FILTERS.some(x => x[0] === f)) return;
+    state.accFilter = f;
+    refreshAccounts();
+  }
+  function resetAccFilters() {
+    clearTimeout(accSearchTimer);
+    state.accQuery = ''; state.accFilter = 'all';
+    const el = $('acc-search-input'); if (el) el.value = '';
+    refreshAccounts();
   }
 
   function renderFilters(data) {
@@ -207,6 +318,7 @@
     allChip.onclick = () => { state.activeFilter = 'all'; refreshTxnList(); };
     row.appendChild(allChip);
     data.accounts.forEach(acc => {
+      if (acc.archived && state.activeFilter !== acc.id) return;   // A4: chip akun arsip hanya muncul bila sedang dipilih
       const chip = document.createElement('button');
       chip.className = 'chip' + (state.activeFilter === acc.id ? ' active' : '');
       chip.textContent = acc.name;

@@ -97,6 +97,9 @@
     detailTxnId: null,
     detailTitipanId: null,
     txnSearchQuery: '',
+    accQuery: '',          // A7: pencarian di tab Akun (huruf kecil)
+    accOrderMode: false,   // A8: mode atur urutan/sematkan di tab Akun
+    accFilter: 'all',      // A7: 'all' | 'tagihan' | 'lunas' | 'arsip'
     txnMonth: 'cur', // 'cur' = bulan berjalan (otomatis ikut ganti bulan), 'YYYY-MM', atau 'all'
     balanceHidden: false,
     collapsedDays: {},
@@ -282,6 +285,13 @@
     });
     return bal;
   }
+  // Jumlah (mis. equity USD, gram) saat ini: jumlah pada penilaian terbaru yang mencatat jumlah, kalau tidak ada pakai jumlah awal akun.
+  function assetQtyNow(acc, asOf) {
+    const limit = asOf || todayStr();
+    const vals = (acc.valuations || []).filter(v => v && typeof v.date === 'string' && v.date <= limit && typeof v.qty === 'number' && v.qty > 0)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    return vals.length ? vals[vals.length - 1].qty : (acc.assetQty > 0 ? acc.assetQty : 0);
+  }
   function hasValuations(acc) { return acc.type === 'aset' && Array.isArray(acc.valuations) && acc.valuations.length > 0; }
 
   // Kelompokkan transaksi per akun SEKALI SAJA (satu pass atas semua transaksi), lalu tiap akun
@@ -302,7 +312,8 @@
     if (acc.type !== 'aset') return '';
     let t = '';
     if (acc.assetKind) t += ' · ' + acc.assetKind;
-    if (acc.assetQty > 0) t += ' · ' + (Math.round(acc.assetQty * 1000) / 1000).toLocaleString('id-ID') + (acc.assetUnit ? ' ' + acc.assetUnit : '');
+    const qNow = assetQtyNow(acc);
+    if (qNow > 0) t += ' · ' + (Math.round(qNow * 1000) / 1000).toLocaleString('id-ID') + (acc.assetUnit ? ' ' + acc.assetUnit : '');
     return t;
   }
 
@@ -494,6 +505,25 @@
       .map(t => t.date).sort();
     return dates[0] || '';
   }
+  // Bayar bunga saja (v1.1.096): beberapa pinjaman bank membolehkan bulan tertentu hanya bayar bunga; pokok tidak
+  // berkurang dan angsuran pokok yang tertunda bergeser ke bulan berikutnya. Sebuah bulan dihitung "bunga saja" kalau
+  // bunga pinjaman yang dibayar di bulan itu >= 90% bunga bulanan dan TIDAK ada pembayaran pokok (transfer ke akun
+  // pinjaman) di bulan yang sama. Dihitung dari bulan sesudah pencairan sampai bulan ini; kalau pokok dibayar belakangan
+  // di bulan yang sama, bulan itu otomatis tidak lagi dianggap ditunda. Mengembalikan daftar 'YYYY-MM'.
+  function loanInterestOnlyMonths(data, acc, startDate, today) {
+    const monthly = computeLoanMonthlyInterest(data, acc);
+    if (!(monthly > 0) || !startDate) return [];
+    const startYm = startDate.slice(0, 7), nowYm = (today || todayStr()).slice(0, 7);
+    const bunga = {}, pokok = {};
+    (data.txns || []).forEach(t => {
+      const ym = (t.date || '').slice(0, 7);
+      if (!ym || ym <= startYm || ym > nowYm) return;
+      if (t.loanId === acc.id && t.type === 'keluar' && t.category === 'Bunga & biaya bank') bunga[ym] = (bunga[ym] || 0) + t.amount;
+      else if (t.type === 'transfer' && t.toAccountId === acc.id) pokok[ym] = (pokok[ym] || 0) + t.amount;
+    });
+    return Object.keys(bunga).filter(ym => bunga[ym] >= monthly * 0.9 && !(pokok[ym] > 0)).sort();
+  }
+
   function computeLoanSchedule(data, acc, bal) {
     if (!TYPE_LOAN[acc.type]) return null;
     const tenor = acc.loanTenorMonths || 0;
@@ -537,8 +567,10 @@
       let cum = 0, paid = 0;
       rows.forEach(r => { cum += r.pokok; if (cum <= paidPrincipal + 1) paid = r.no; });
       if (sisaPokok <= 0) paid = rows.length;
+      const deferredYm = sisaPokok > 0 ? loanInterestOnlyMonths(data, acc, startDate, today) : [], deferredM = deferredYm.length;
+      rows.forEach(r => { if (r.no > paid && deferredM) r.due = dueDateOf(r.no + deferredM); });
       rows.forEach(r => { r.status = r.no <= paid ? 'lunas' : (r.due < today ? 'telat' : 'belum'); });
-      return { rows, paid, tenor: rows.length, next: paid < rows.length ? rows[paid] : null };
+      return { rows, paid, tenor: rows.length, next: paid < rows.length ? rows[paid] : null, deferred: deferredM, deferredYm };
     }
 
     const bunga = computeLoanMonthlyInterest(data, acc, sisaPokok);
@@ -546,14 +578,15 @@
     const paid = sisaPokok <= 0 ? tenor : (pokokPer > 0 ? Math.min(tenor, Math.floor((pokokAwal - sisaPokok + 1) / pokokPer)) : 0);
     const rows = [];
     let sisa = pokokAwal;
+    const deferredYm = sisaPokok > 0 ? loanInterestOnlyMonths(data, acc, startDate, today) : [], deferred = deferredYm.length;
     for (let i = 1; i <= tenor; i++) {
-      const due = dueDateOf(i);
+      const due = dueDateOf(i > paid ? i + deferred : i);
       const pokok = i === tenor ? sisa : pokokPer;
       sisa -= pokok;
       const status = i <= paid ? 'lunas' : (due < today ? 'telat' : 'belum');
       rows.push({ no: i, due, pokok, bunga, total: pokok + bunga, sisa: Math.max(0, sisa), status });
     }
-    return { rows, paid, tenor, next: paid < tenor ? rows[paid] : null };
+    return { rows, paid, tenor, next: paid < tenor ? rows[paid] : null, deferred, deferredYm };
   }
 
   // ---------- ARUS UTANG (dipisah dari pemasukan/pengeluaran di Ringkasan) ----------
@@ -622,7 +655,7 @@
   function computeLimitUsage(data, balances) {
     let used = 0, limit = 0, count = 0;
     data.accounts.forEach(acc => {
-      if ((acc.type !== 'kartu_kredit' && acc.type !== 'paylater') || !(acc.limit > 0)) return;
+      if (acc.archived || (acc.type !== 'kartu_kredit' && acc.type !== 'paylater') || !(acc.limit > 0)) return;   // A4: kartu arsip tidak ikut
       const bal = balances[acc.id] || 0;
       used += acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
       limit += acc.limit; count++;
@@ -633,8 +666,88 @@
   // A6: aksi cepat yang berlaku untuk sebuah akun. Catat transaksi: bukan aset (pakai Transfer) dan bukan titipan
   // (punya form sendiri). Transfer dari sini: bukan akun utang (bayar utang = Transfer KE akun utang) dan bukan titipan.
   function accountQuickActions(acc) {
+    if (acc.archived) return { catat: false, transfer: false };   // A4: akun arsip tidak dipakai transaksi baru
     const noTxn = acc.type === 'aset' || acc.type === 'titipan';
     return { catat: !noTxn, transfer: !TYPE_DEBT[acc.type] && acc.type !== 'titipan' };
+  }
+  // A4: arsip akun. Akun arsip (acc.archived === true) hilang dari daftar utama dan pilihan transaksi baru, tapi
+  // riwayat, laporan, dan saldo historis tetap utuh. Hanya akun bersaldo Rp0 / lunas yang boleh diarsipkan.
+  function activeAccounts(data) { return data.accounts.filter(a => !a.archived); }
+  // Mengembalikan teks alasan kalau akun belum boleh diarsipkan, string kosong kalau boleh.
+  // Mode sembunyi saldo (tombol mata): ganti nominal Rupiah di teks dengan titik. Murni; dipakai tab Akun.
+  const HIDDEN_RP = '•••••••';
+  function maskRpText(s) { return String(s == null ? '' : s).replace(/-?Rp\s?-?[\d.,]+/g, HIDDEN_RP); }
+
+  function archiveBlockReason(data, acc, bal) {
+    if (!acc) return 'Akun tidak ditemukan.';
+    if (acc.type === 'titipan') return 'Akun titipan tidak bisa diarsipkan; hapus lewat tab Titipan.';
+    if (bal === undefined) bal = accountBalance(data, acc.id);
+    if (Math.abs(bal) >= 0.005) return TYPE_DEBT[acc.type] ? 'Masih ada sisa utang. Lunasi dulu sebelum diarsipkan.' : 'Saldo harus Rp0 sebelum diarsipkan.';
+    if (TYPE_LOAN[acc.type] && computeLoanRemaining(data, acc, bal).total >= 0.005) return 'Masih ada bunga terjadwal yang belum jatuh tempo.';
+    if ((data.subscriptions || []).some(s => s.active && s.accountId === acc.id)) return 'Masih dipakai langganan aktif. Nonaktifkan langganannya dulu.';
+    if (!data.accounts.some(a => a.id !== acc.id && !a.archived && a.type !== 'titipan')) return 'Harus tersisa minimal satu akun aktif.';
+    return '';
+  }
+  // A8: sematkan dan urutkan manual akun. layout = { pins: [id], order: { [tipe]: [id] } }, disimpan per perangkat
+  // (bukan ikut ekspor/sinkron). Urutan dalam satu kelompok tipe: akun tersemat dulu, lalu urutan manual (bila ada),
+  // lalu urutan bawaan (nilai terbesar).
+  function sortAccountGroup(group, layout) {
+    const pins = new Set((layout && layout.pins) || []);
+    const ord = (layout && layout.order) || {};
+    return group.slice().sort((x, y) => {
+      const px = pins.has(x.acc.id) ? 0 : 1, py = pins.has(y.acc.id) ? 0 : 1;
+      if (px !== py) return px - py;
+      const o = ord[x.acc.type] || [];
+      const ix = o.indexOf(x.acc.id), iy = o.indexOf(y.acc.id);
+      if (ix >= 0 && iy >= 0) return ix - iy;
+      if (ix >= 0) return -1;
+      if (iy >= 0) return 1;
+      return y.sortVal - x.sortVal;
+    });
+  }
+  // Geser akun `id` ke atas (dir -1) atau ke bawah (+1) di antara `ids` (urutan tampil kelompok `type` sekarang).
+  // Hanya bertukar dengan tetangga yang statusnya sama (tersemat/tidak). Mengembalikan layout baru (tanpa mengubah yang lama).
+  function moveAccountInGroup(layout, type, ids, id, dir) {
+    const pins = new Set((layout && layout.pins) || []);
+    const i = ids.indexOf(id), j = i + dir;
+    const next = { pins: (layout && layout.pins || []).slice(), order: Object.assign({}, layout && layout.order) };
+    if (i < 0 || j < 0 || j >= ids.length || pins.has(ids[i]) !== pins.has(ids[j])) { next.order[type] = ids.slice(); return next; }
+    const arr = ids.slice(); arr[i] = ids[j]; arr[j] = ids[i];
+    next.order[type] = arr;
+    return next;
+  }
+  function toggleAccountPin(layout, id) {
+    const pins = ((layout && layout.pins) || []).slice();
+    const k = pins.indexOf(id);
+    if (k >= 0) pins.splice(k, 1); else pins.push(id);
+    return { pins, order: Object.assign({}, layout && layout.order) };
+  }
+  // Buang id yang sudah tidak ada dan bentuk yang tidak valid.
+  function cleanAccountLayout(raw, data) {
+    const ids = new Set(data.accounts.map(a => a.id));
+    const out = { pins: [], order: {} };
+    if (!raw || typeof raw !== 'object') return out;
+    if (Array.isArray(raw.pins)) out.pins = raw.pins.filter(x => typeof x === 'string' && ids.has(x));
+    if (raw.order && typeof raw.order === 'object') Object.keys(raw.order).forEach(t => { if (Array.isArray(raw.order[t])) out.order[t] = raw.order[t].filter(x => typeof x === 'string' && ids.has(x)); });
+    return out;
+  }
+  // A7: pencarian + chip filter di tab Akun. Fungsi murni: groupVal/isDebt berasal dari accountDisplayInfo.
+  // 'all' = akun aktif (+ yang diarsipkan di bagian terlipat), 'tagihan' = akun utang yang masih ada sisa utang,
+  // 'lunas' = akun utang yang lunas atau titipan bersaldo 0, 'arsip' = hanya akun arsip. Pencarian cocok ke nama atau jenis akun.
+  const ACCOUNT_FILTERS = [['all', 'Semua'], ['tagihan', 'Ada tagihan'], ['lunas', 'Lunas'], ['arsip', 'Diarsipkan']];
+  function accountFilterMatch(acc, groupVal, isDebt, filter, query) {
+    if (query && ((acc.name || '') + ' ' + (TYPE_LABELS[acc.type] || '')).toLowerCase().indexOf(query) < 0) return false;
+    if (filter === 'arsip') return !!acc.archived;
+    if (filter === 'all') return true;
+    if (acc.archived) return false;
+    if (filter === 'tagihan') return !!isDebt && groupVal > 0.005;
+    if (filter === 'lunas') return isDebt ? groupVal <= 0.005 : (acc.type === 'titipan' && Math.abs(groupVal) < 0.005);
+    return true;
+  }
+  function accountFilterCounts(items) {
+    const c = {};
+    ACCOUNT_FILTERS.forEach(([f]) => { c[f] = items.filter(it => accountFilterMatch(it.acc, it.groupVal, it.isDebt, f, '') && (f !== 'all' || !it.acc.archived)).length; });
+    return c;
   }
   // A3: maksimal dua baris prioritas untuk kartu akun (sisanya ada di detail). Tiap baris { text, tone } dengan tone
   // '' | 'warn' (amber, jatuh tempo <= 7 hari atau limit >= 70%) | 'late' (merah, telat atau limit >= 90%).
@@ -735,7 +848,7 @@
           const lp = computeLoanProgress(acc, bal);
           if (lp) { m += ' · Terbayar ' + lp.pct + '%'; info.bar = { pct: lp.pct, color: '--green' }; }
           const sch = computeLoanSchedule(data, acc, bal);
-          if (sch) m += ' · Angsuran ' + sch.paid + '/' + sch.tenor + (sch.next ? ' · berikutnya ' + fmtTgl(sch.next.due) : '');
+          if (sch) m += ' · Angsuran ' + sch.paid + '/' + sch.tenor + (sch.next ? ' · berikutnya ' + fmtTgl(sch.next.due) : '') + (sch.deferred > 0 ? ' · pokok ditunda ' + sch.deferred + ' bln' : '');
         } else if (limit > 0) info.bar = { pct, color: info.barColor };
       }
       info.metaExtra = m;
@@ -1097,6 +1210,7 @@
       return true;
     };
     data.accounts.forEach(acc => {
+      if (acc.archived) return;   // A4: akun arsip tidak dikenai biaya berulang
       if (!TYPE_DEBT[acc.type]) return;
       if (acc.type === 'paylater') return; // PayLater: bunga/admin hanya lewat transaksi cicilan
       const feeVal = acc.feeAmount || 0;

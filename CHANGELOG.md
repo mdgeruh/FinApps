@@ -6,6 +6,184 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.098 — 2 Okt 2026
+
+**Diubah**
+- **Jadwal angsuran pinjaman kini memperlihatkan bulan "bunga saja"** sebagai baris sendiri di atas angsuran yang tersisa (`computeLoanSchedule` mengembalikan `deferredYm`; dirender di `04b-akun-detail.js`). Sebelumnya hanya ada catatan ringkas, sehingga bulan yang bunganya sudah dibayar tidak terlihat di rincian. 189 test.
+
+## v1.1.097 — 2 Okt 2026
+
+**Diubah**
+- **Detail akun pinjaman: tombol cepat "Catat transaksi" diganti "Catat pembayaran"** (saat masih ada sisa utang). Tombol menggulir ke panel Catat pembayaran dan memfokuskan kolom nominal (pilihan bunga saja / pokok+bunga / nominal), tidak lagi membuka form pengeluaran (`quickTxnFromDetail` mode `bayar`, `04c-akun-aset-tagihan.js`). Pinjaman lunas tetap memakai Catat transaksi.
+- Nominal jadwal angsuran memang tidak berubah saat bayar bunga saja; hanya tanggal jatuh tempo yang bergeser.
+
+## v1.1.096 — 2 Okt 2026
+
+**Ditambah**
+- **Pinjaman bank: bayar bunga saja boleh lanjut ke bulan berikutnya, pokok tetap.** `loanInterestOnlyMonths` (`01-data.js`) menghitung bulan (setelah bulan pencairan, sampai bulan ini) yang punya pembayaran bunga ≥ 90% bunga bulanan dan tidak ada pembayaran pokok. `computeLoanSchedule` menggeser jatuh tempo semua angsuran yang belum lunas sebanyak bulan tersebut dan mengembalikan `deferred`. Berlaku untuk bunga tetap dan menurun. Bulan yang juga ada bayar pokok tidak dihitung.
+- Catatan "Bayar bunga saja N bulan" di jadwal (`04b-akun-detail.js`) dan "pokok ditunda N bln" di kartu akun.
+- 6 test baru (188 total).
+
+## v1.1.095 — 2 Okt 2026
+
+**Diubah**
+- **`#sub-account-input` memakai select kustom** (`06-util-ui.js`, daftar `enhanceSelect`), sehingga gayanya sama dengan select form lain (sebelumnya panah bawaan browser). Form anggaran sudah berlabel sejak awal (`.field-label` per kategori), jadi tidak perlu diubah.
+- **1 test baru** (total 182): setiap `<select>` di `index.html` harus terdaftar di `enhanceSelect`; select baru yang lupa didaftarkan akan menggagalkan test.
+- `sw.js` `kp-v1.1.095`; riwayat tombol `?`; README.
+
+## v1.1.094 — 2 Okt 2026
+
+**Diubah**
+- **Label tampak di form titipan, langganan, dan bayar pinjaman** (`index.html`, `05-form-titipan.js`), melanjutkan v1.1.093. Titipan: Orang, Dibayar dari / Diterima ke akun (`#titipan-fund-label` diatur `setTitipanMode`), Keterangan, Jumlah, Tanggal. Langganan: Nama, Nominal per bulan, Tanggal tagih, Dibayar dari akun. Bayar pinjaman: Jenis pembayaran, Dibayar dari akun, Tanggal pembayaran, Nominal. Placeholder dipendekkan; id dan logika tidak berubah.
+- **3 test baru** (total 181): label untuk 13 isian, judul titipan per mode, dan tidak ada `<label for>` yatim di seluruh `index.html`. Dicek di Chromium 390 px.
+- Catatan: pilihan akun di form langganan tampil dengan panah bawaan browser (bukan gaya kustom seperti form lain); belum diubah.
+- `sw.js` `kp-v1.1.094`; riwayat tombol `?`; README.
+
+## v1.1.093 — 2 Okt 2026
+
+**Diubah**
+- **Form transaksi: label tampak** (`index.html`, `style.css`, `03-form-transaksi.js`). Sebelumnya tanggal, kategori, dan akun hanya berupa kolom tanpa judul sehingga untuk transfer tidak jelas mana asal dan tujuan. Kini Tanggal, Kategori, Keterangan, Akun, Ke akun, dan Jumlah memakai `<label for>`; juga Metode bayar, Tenor, Bunga flat, dan Admin pada cicilan PayLater. `#account-label` diatur `setType`: Masuk ke akun / Dibayar dari akun / Dari akun. Kelas baru `.field-row.has-label` (kolom vertikal). Placeholder dipendekkan ("mis. Belanja telor", "Rp"). Id isian dan logika simpan tidak berubah.
+- **2 test baru** (total 178). Chromium 390 px: form pemasukan, pengeluaran, transfer, dan cicilan PayLater tampil rapi; simpan tetap memunculkan dialog konfirmasi seperti sebelumnya.
+- `sw.js` `kp-v1.1.093`; riwayat tombol `?`; README.
+
+## v1.1.092 — 2 Okt 2026
+
+**Ditambah / diubah**
+- **Data contoh (`buildDummyData`, `13-import-export.js`) diperluas**: `dm-emas` (Emas 10 gram, 3 penilaian naik), `dm-forex` (Forex cent, equity 100 → 112 → 125 USD dengan kurs Rp16.000 → 16.150 → 16.300; memakai `qty` per penilaian v1.1.091), `dm-motor` (Kendaraan, nilai menyusut), `dm-kredit-motor` (pinjaman flat 12 bulan, 0,8%/bln, jatuh tempo tanggal 10, denda 0,5%/hari maks 10%, dibayar 2 dari 12 angsuran sehingga bulan ini muncul jatuh tempo/telat), `dm-lama` (rekening arsip dengan riwayat setoran/tarik), 2 langganan (Netflix, Spotify) dan 3 anggaran. Nilai kembalian kini `{ accounts, txns, subscriptions, budgets }`.
+- `tools/build-preview.js`: suntikan "Rekening Lama" lama dihapus karena sudah ada di data contoh.
+- **Saldo awal Kas dan Gopay dinaikkan** (Rp3.000.000 dan Rp1.200.000) karena data contoh sebelumnya membuat keduanya minus menjelang akhir bulan.
+- **2 test baru** (total 176): id unik, transaksi menunjuk akun yang ada, langganan/anggaran lolos sanitasi, tanggal valid, penilaian tidak di masa depan, jumlah forex terbaru, tidak ada saldo non-utang minus, akun arsip lolos aturan arsip. Dicek di Chromium: 12 akun, 44 transaksi, aset Rp45,99 jt, kredit motor "Angsuran ke-3 Rp1.370.000 · jatuh tempo 10 Okt 2026".
+- `sw.js` `kp-v1.1.092`; riwayat tombol `?`; README.
+
+## v1.1.091 — 2 Okt 2026
+
+**Ditambah** (langkah aman untuk todo Fase 2 "akun forex dengan kurs"; tidak mengubah model akun)
+- **Jumlah per penilaian aset** (`01-data.js`, `04c-akun-aset-tagihan.js`, `index.html`). Form "Perbarui nilai" punya kolom *Jumlah sekarang* (terisi jumlah saat ini). Total = harga per satuan × jumlah, dan entri penilaian menyimpan `qty` di samping `price` dan `value`. `assetQtyNow(acc, asOf)` memberi jumlah dari penilaian terbaru yang mencatat `qty`, kalau tidak ada memakai `assetQty` awal. Dipakai di teks meta kartu, ringkasan detail (harga per satuan sekarang), dan prefill form. Menghapus penilaian mengembalikan jumlah ke penilaian sebelumnya. `sanitizeValuations` mempertahankan `qty` valid (impor, ekspor, sinkron). Nilai aset tetap = penilaian terbaru + transaksi sesudahnya, jadi saldo dan grafik tidak berubah.
+- Kasus pakai: akun cent equity 100 USD, perbarui jadi 120 USD pada kurs Rp16.000 → nilai Rp1.920.000, kartu menampilkan "Forex · 120 USD" (diverifikasi di Chromium).
+- **3 test baru** (total 174): `assetQtyNow` (terbaru, tanpa jumlah, masa depan), sanitasi `qty`, form dan simpan.
+- **Belum dikerjakan:** konversi kurs otomatis lintas mata uang dan akun berdenominasi mata uang asing (butuh keputusan pemilik, lihat ROADMAP Fase 2).
+- `sw.js` `kp-v1.1.091`; riwayat tombol `?`; README.
+
+## v1.1.090 — 2 Okt 2026
+
+**Kualitas (Fase 3)** — tanpa perubahan perilaku app.
+- **4 test integritas modul baru** (total 171): (1) 29 file di `index.html` ada di disk dan terdaftar di cache `sw.js`; (2) semua file JS kecuali `15-startup.js` bisa dimuat berurutan ke sandbox tanpa galat (sebelumnya hanya 15 dari 29 yang dimuat test; `14-sync.js` ikut karena tidak menjalankan apa pun saat dimuat); (3) tidak ada nama fungsi/konstanta tingkat atas yang dideklarasikan di dua file (semua file berbagi scope global, deklarasi ganda diam-diam menimpa); (4) tiap `data-act`/`data-change-act`/`data-input-act`/`data-keydown-act` (125 pengendali) menunjuk fungsi yang ada. Diuji dengan mutasi: mengganti nama `cancelAccForm` membuat test (4) gagal.
+- `15-startup.js` sengaja dikecualikan karena menjalankan app dan butuh DOM utuh.
+- `sw.js` `kp-v1.1.090`; riwayat tombol `?`; README.
+
+## v1.1.089 — 2 Okt 2026
+
+**Diperbaiki**
+- **Impor JSON menolak semua tanggal di zona waktu UTC+** (`13-import-export.js`, `isValidDateStr`). Penyebab: `new Date('YYYY-MM-DDT00:00:00').toISOString().slice(0,10)` membandingkan tanggal lokal dengan tanggal UTC; di WITA (UTC+8) tengah malam lokal jatuh pada hari sebelumnya menurut UTC, sehingga tiap tanggal dianggap tidak valid dan `buildTxnFromImport` menggantinya dengan hari ini. Dampak: impor/pemulihan cadangan di Indonesia menghasilkan semua transaksi bertanggal hari impor. Sekarang validasi dihitung murni dengan `Date.UTC` dan komponen UTC.
+- **Nominal impor bukan angka menjadi `NaN`** (`buildTxnFromImport`): kini `0`.
+
+**Kualitas (Fase 3)**
+- **Test konsistensi versi otomatis:** `APP_VERSION`, `CACHE_VERSION`, README, entri teratas CHANGELOG.md, dan riwayat tombol `?` harus sama.
+- **Test impor:** tanggal nyata saja (kabisat, 30 Feb, format salah), batas 5 MB, ID selalu baru, nominal negatif/NaN, tipe tak dikenal, akun tak dikenal jatuh ke akun cadangan, dan regresi zona waktu (dijalankan di UTC, Asia/Makassar, America/Los_Angeles, Pacific/Kiritimati lewat proses terpisah).
+- **7 test baru** (total 167); seluruh suite juga lulus dengan `TZ=Asia/Makassar`.
+- `sw.js` `kp-v1.1.089`; riwayat tombol `?`; README.
+
+## v1.1.088 — 2 Okt 2026
+
+**Diperbaiki**
+- **Mode sembunyi saldo mencakup tab Akun** (todo uji visual; `01-data.js`, `07-render-akun-transaksi.js`, `02-navigasi.js`). Sebelumnya `state.balanceHidden` hanya dipakai header Ringkasan dan grafik kekayaan, sehingga Total aset/utang, Kekayaan bersih, Limit terpakai, total kelompok, dan kartu akun di tab Akun tetap menampilkan angka. Fungsi murni baru `maskRpText` (+ `HIDDEN_RP`) mengganti nominal `Rp…` di teks; `toggleBalanceVisibility` merender ulang tab Akun. Layar detail akun sengaja tidak ditutup (dibuka dengan sengaja).
+- **2 test baru** (total 162). Chromium 390 px: sebelum tutup 5 nominal terlihat, sesudah tutup 0 nominal dan 5 titik, buka lagi kembali normal.
+- Cek tambahan tema gelap: kelompok Diarsipkan tampil benar; aset hanya punya aksi Transfer (`catat:false, transfer:true`). Catatan: chip filter "Diarsipkan" terpotong di tepi kanan 390 px (baris chip bisa digeser).
+- `sw.js` `kp-v1.1.088`; riwayat tombol `?`; README.
+
+## v1.1.087 — 2 Okt 2026
+
+**Diperbaiki**
+- **Satuan suku bunga pinjaman terpotong ("%/...") di 390 px** (`index.html`): kolom Jenis bunga/Suku bunga diberi bobot 0,8/1,2, satuan `flex:0 0 84px`, teks opsi jadi `/thn` dan `/bln` (nilai `tahun`/`bulan` tidak berubah). Koreksi atas catatan "dilebarkan 52%" di v1.1.085 yang ternyata tidak berpengaruh karena `.field-row select { flex: 1 }`.
+- Placeholder maksimal denda: "kosong = tanpa batas" → "tanpa batas" (terpotong di 390 px).
+
+**Pengujian visual (todo uji visual, sebagian)**: Chromium 390 px tema gelap (form pinjaman dengan bagian Lainnya terbuka, daftar Akun), layar 1280 px (daftar Akun dan form), mode Atur urutan (tombol ▲ ▼ Sematkan semuanya `<button>` yang bisa di-Tab dengan aria-label), edit transaksi lama milik akun arsip (opsi akun arsip tetap muncul dan terpilih), tanpa galat JS. **1 test baru** (total 160): pinjaman bertenor lunas boleh diarsipkan, yang masih bersisa pokok tidak. Temuan: pinjaman flat dengan pokok 0 tidak punya sisa bunga terjadwal, jadi tidak diblokir oleh aturan bunga terjadwal (konsisten dengan `computeLoanRemaining`).
+- `sw.js` `kp-v1.1.087`; riwayat tombol `?`; README.
+
+## v1.1.086 — 2 Okt 2026
+
+**Diubah**
+- **Form pinjaman: isian opsional terlipat** (todo A9c; `index.html`, `04-akun.js`, `style.css`). Biaya admin/materai (+ cara bayar dan asuransi pinjaman online), tabungan wajib, dan denda telat/maksimal denda pindah ke `<details id="acc-loan-more">` "Lainnya (opsional)". Urutan inti kini: status, bunga, pokok awal, tenor, tanggal pencairan/jatuh tempo, angsuran, pencairan. `syncLoanMore` membuka bagian itu otomatis bila ada isi, untuk pinjaman online, atau lewat `openLoanMore` sebelum validasi memfokuskan isian di dalamnya (denda tanpa persen, biaya melebihi pokok). Id isian tidak berubah.
+- **Teks bantuan diringkas** (pokok awal, jadwal, denda, pencairan).
+- **3 test baru** (total 159).
+- `sw.js`: `kp-v1.1.086`; riwayat tombol `?`; README.
+
+## v1.1.085 — 2 Okt 2026
+
+**Diubah**
+- **Form akun: label tampak, Saldo awal dipindah ke atas** (todo A9b; `index.html`, `04-akun.js`). Nama akun, Jenis akun, dan Saldo awal memakai `<label for>` yang terlihat. `#acc-balance-row` kini tepat di bawah Jenis akun (sebelumnya baris terakhir). Judul `#acc-balance-label` diatur `updateAccFormFields` per jenis: Sisa pokok sekarang (pinjaman), Sudah terpakai saat ini (kartu/PayLater), Nilai awal / harga beli (aset), Saldo awal (lainnya); `aria-label` ikut disesuaikan.
+- **Placeholder dipendekkan** agar tidak terpotong di 390 px (jumlah/satuan aset, angsuran, pokok awal, bunga pinjaman). Id, hook `updateOnlineLoanEstimate`, dan logika simpan tidak berubah.
+- Kolom satuan suku bunga pinjaman dilebarkan (52%) supaya "%/thn" tidak terpotong di 390 px.
+- **3 test baru** (total 156): label tampak, urutan baris saldo, judul saldo per jenis.
+- `sw.js`: `CACHE_VERSION` `kp-v1.1.085`; riwayat tombol `?`; README.
+
+## v1.1.084 — 2 Okt 2026
+
+**Diperbaiki**
+- **Galat form akun kini terlihat** (todo A9a; `04-akun.js`, `06-util-ui.js`, `index.html`, `style.css`). Penyebab: `saveAccount` memanggil `showIoMsg()` tanpa target, sehingga teks masuk ke `#io-msg` milik tab Profil yang tidak tampil. Kini ada `#acc-form-msg` (`role="alert"`) di dalam sheet di atas tombol Simpan, `position: sticky` di dasar panel supaya terlihat walau form panjang (pinjaman ±1.030 px). Semua validasi `saveAccount` lewat `accFormMsg()`; nama kosong kini punya pesan; pesan dibersihkan saat form dibuka dan saat Simpan ditekan.
+- **`showIoMsg` jatuh ke toast bila targetnya tidak terlihat** (`06-util-ui.js`: `showToast`, `#app-toast`, `role="alert"` untuk galat, 6 dtk galat / 3 dtk lainnya). Ini memperbaiki sekaligus pesan lain yang memakai `#io-msg` bawaan dari luar tab Profil: "hapus transaksinya dulu" dan "Minimal harus ada satu akun" di `deleteAccount`, alasan arsip yang belum boleh, serta galat form transaksi. Pesan galat inline kini bertahan 8 dtk (sebelumnya 4).
+- **Isian yang dibuang diam-diam kini diberi pesan:** biaya admin kartu tanpa tanggal jatuh tempo, dan maksimal denda pinjaman tanpa persen denda.
+- **4 test baru** (total 153): jalur toast vs inline `showIoMsg`, teks kosong tanpa toast, `saveAccount` tidak memakai `showIoMsg` bawaan dan nama kosong berpesan, posisi `#acc-form-msg`.
+- Riwayat perubahan di tombol `?` (v1.1.084); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.084`; README: jumlah test.
+
+**Pengujian**: 153 test lulus; Chromium headless 390 px: nama kosong, nama ganda, admin tanpa tanggal, denda maksimal tanpa persen semuanya menampilkan pesan di dalam sheet dan terlihat di layar (form pinjaman, panel digulir ke atas); setelah dilengkapi akun tersimpan; hapus akun bertransaksi dan `showIoMsg` dari tab non-Profil menampilkan toast; tanpa error JS. **Belum teruji:** tema gelap, pembaca layar untuk `role="alert"`, dan galat form transaksi lewat klik langsung (hanya lewat pemanggilan fungsi).
+
+## v1.1.083 — 2 Okt 2026
+
+**Ditambah**
+- **Sematkan dan urutkan manual akun** (todo A8; `01-data.js`, `07-render-akun-transaksi.js`, `index.html`, `style.css`): tombol **Atur urutan** di judul tab Akun membuka mode atur (`state.accOrderMode`; filter dimatikan dan baris cari/chip disembunyikan supaya semua akun tampil). Tiap kartu mendapat baris ▲ ▼ + **Sematkan/Lepas**; tombol memakai `data-stop` sehingga tidak membuka detail. Fungsi murni: `sortAccountGroup(group, layout)` (tersemat dulu → urutan manual → nilai terbesar), `moveAccountInGroup` (hanya bertukar dengan tetangga yang statusnya sama; tidak mengubah layout lama), `toggleAccountPin`, `cleanAccountLayout` (membuang id yang hilang dan bentuk tidak valid).
+- Tata letak `{ pins: [id], order: { tipe: [id] } }` disimpan di `localStorage` kunci `kp_acc_layout`, **per perangkat** (pola R4): tidak ikut ekspor/impor maupun sinkron cloud. Akun tersemat diberi label "Disematkan" di kartu; akun arsip tidak punya kontrol.
+- **8 test baru** (total 149): urutan bawaan, sematan, urutan manual, sematan mengalahkan urutan, geser naik/turun, batas ujung dan batas sematan, toggle sematan, pembersihan layout.
+- Riwayat perubahan di tombol `?` (v1.1.083); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.083`; README: jumlah test.
+
+**Pengujian**: 149 test lulus; Chromium headless 390 px (3 akun bank): turun, semat, label Disematkan, tombol ▲/▼ nonaktif di batas sematan, Selesai menyembunyikan kontrol, urutan bertahan setelah muat ulang, kartu kembali membuka detail di luar mode; tanpa error JS. **Belum teruji:** tema gelap, layar lebar, pembaca layar untuk tombol ▲ ▼, dan keyboard (Tab lalu Enter) di mode atur.
+
+## v1.1.082 — 2 Okt 2026
+
+**Ditambah**
+- **Cari akun dan chip filter di tab Akun** (todo A7; `01-data.js`, `07-render-akun-transaksi.js`, `index.html`): fungsi murni `accountFilterMatch(acc, groupVal, isDebt, filter, query)` dan `accountFilterCounts(items)` dengan `ACCOUNT_FILTERS`. Filter: **Semua** (aktif + bagian Diarsipkan), **Ada tagihan** (akun utang dengan sisa utang > 0), **Lunas** (akun utang lunas, titipan bersaldo 0; arsip tidak ikut), **Diarsipkan**. Pencarian (debounce 180 ms) cocok ke nama atau label jenis, huruf besar/kecil tidak dibedakan, dan digabung dengan filter. Chip menampilkan jumlah per filter. State `state.accQuery` / `state.accFilter` (tidak disimpan antar sesi).
+- Baris cari + chip (`#acc-filter-bar`) tampil bila akun ≥ 5 atau sedang memfilter. Saat memfilter semua kelompok dibuka (lipatan diabaikan sementara); bila kosong tampil pesan + tombol Reset filter (`resetAccFilters`).
+- **8 test baru** (total 141): tiap filter, pencarian nama/jenis, gabungan, dan jumlah chip.
+- Riwayat perubahan di tombol `?` (v1.1.082); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.082`; README: jumlah test.
+
+**Pengujian**: 141 test lulus; Chromium headless 390 px dengan data contoh + 1 akun arsip: chip berjumlah (Ada tagihan 3, Lunas 0, Diarsipkan 1), tiap filter menyaring benar, "bca" menemukan BCA dan Kartu Kredit BCA, pencarian tak cocok menampilkan pesan kosong dan Reset mengembalikan 8 akun; tanpa error JS. **Belum teruji:** tema gelap, layar lebar, pembaca layar untuk chip.
+
+## v1.1.081 — 2 Okt 2026
+
+**Diubah**
+- **Kartu Grafik dan kartu grafiknya menjadi satu kartu di Ringkasan** (`style.css`): `#chart-group` kini yang berbingkai kartu; kartu pemilih (`#chart-period-card`: segmen + periode) dan kartu grafik aktif di dalamnya tanpa bingkai sendiri, dipisah satu garis tipis. Markup dan JS tidak berubah (tetap satu segmen aktif lewat `data-seg-off`), jadi urutan kartu, sembunyikan kartu, dan pemilihan segmen berjalan seperti sebelumnya. Grup otomatis tersembunyi bila tidak ada grafik yang tampil (`:has`). Layar lebar dan cetak ikut aturan yang sama.
+- **2 test baru** (total 133): bingkai grup dan kartu dalam tanpa bingkai; selector dan semua kartu grafik berada di dalam `#chart-group`.
+- Riwayat perubahan di tombol `?` (v1.1.081); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.081`; README: jumlah test.
+
+**Pengujian**: 133 test lulus; Chromium headless 390 px, tema terang dan gelap, data contoh: satu kartu berisi pemilih + periode + kurva kekayaan; ganti ke Tren menampilkan grafik batang di kartu yang sama; tanpa error JS. **Belum teruji:** layar lebar (≥1280 px), cetak, dan kondisi semua grafik disembunyikan lewat Profil.
+
+## v1.1.080 — 2 Okt 2026
+
+**Ditambah**
+- **Arsip akun** (todo A4; `01-data.js`, `04-akun.js`, `04b-akun-detail.js`, `04c-akun-aset-tagihan.js`, `07-render-akun-transaksi.js`, `03-form-transaksi.js`, `05-form-titipan.js`, `10c-langganan.js`, `13-import-export.js`, `index.html`): field baru `archived: true` pada akun. Fungsi murni `archiveBlockReason(data, acc, bal)` memberi alasan bila belum boleh (titipan; saldo bukan Rp0; pinjaman masih punya bunga terjadwal; langganan aktif memakai akun itu; akun aktif terakhir) dan `activeAccounts(data)`. `setAccountArchived(id, flag)` (konfirmasi untuk arsip) dipanggil `toggleArchiveFromDetail`; tombol **Arsipkan akun / Pulihkan akun** ada di detail akun beserta teks alasan bila belum boleh.
+- **Bagian "Diarsipkan"** di bawah daftar akun, terlipat bawaan (`accCollapsed._arsip === false` = dibuka). `renderAccounts` memakai `makeCard` bersama.
+- **11 test baru** (total 131): syarat arsip, `activeAccounts`/`accountQuickActions`, biaya bulanan dilewati, impor `archived`, saldo historis utuh, limit kartu arsip tidak dihitung. Sandbox test kini juga memuat `04c` dan `13`.
+
+**Diubah**
+- Akun arsip tidak muncul di pilihan akun transaksi (`populateAccountSelects`; transaksi lama milik akun arsip tetap bisa diedit lewat `ensureArchivedOption`), pilihan akun titipan, pencairan pinjaman, langganan, dan chip filter transaksi (kecuali sedang dipilih). `applyRecurringFees`, `applySubscriptions`, dan `computeLimitUsage` melewati akun arsip. `accountQuickActions` kosong untuk akun arsip.
+- Impor (`buildAccountFromImport`) mempertahankan `archived` hanya bila persis `true`. Sinkron cloud ikut otomatis (satu blob JSON).
+- `tools/build-preview.js`: membangun pratinjau satu-halaman yang bisa dicoba langsung (bukan tangkapan layar) untuk artefak; dipakai tiap rilis.
+- Riwayat perubahan di tombol `?` (v1.1.080); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.080`; README: bagian Arsip akun dan jumlah test.
+
+**Pengujian**: 131 test lulus, semua file lolos `node --check`; Chromium headless 390 px: akun bersaldo ditolak dengan alasan, akun saldo 0 (2 transaksi) diarsipkan dan pindah ke bagian Diarsipkan terlipat, hilang dari pilihan akun transaksi, tombol cepat tersembunyi, Pulihkan mengembalikannya; tanpa error JS. **Belum teruji:** tema gelap, layar lebar, edit transaksi lama milik akun arsip di browser (hanya lewat kode), pengarsipan pinjaman bertenor.
+
+## v1.1.079 — 2 Okt 2026
+
+**Diubah (keamanan; Fase 1 ROADMAP)**
+- **Content-Security-Policy** (`index.html`, meta): `default-src 'self'`; `script-src 'self' https://cdn.jsdelivr.net`; `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`; `font-src https://fonts.gstatic.com`; `img-src 'self' data: blob:`; `connect-src 'self' https://*.supabase.co wss://*.supabase.co`; `object-src 'none'`; `base-uri 'self'`; `form-action 'self'`. Tidak ada `<script>` inline atau handler `on*=` di `index.html`, jadi `script-src` tanpa `unsafe-inline`. `style-src` masih `unsafe-inline` karena `style=""` inline (274) belum dikurangi. Diuji di Chromium headless 390 px: render normal, tanpa pelanggaran CSP.
+- **Semua atribut `data-a0/a1` dari template kini lewat `escapeHtml`** (17 tempat di `04b`, `04c`, `07`, `08`, `09`, `10-render-beranda`), supaya ID dari data cloud/impor yang tidak wajar tidak bisa keluar dari atribut.
+- **Loader Supabase JS mendukung SRI** (`14-sync.js`: `SUPABASE_JS_VERSION`, `SUPABASE_JS_SRI`; `integrity` + `crossOrigin` dipasang bila hash diisi).
+
+**Ditambah**
+- `tools/pin-supabase.js`: mengunci versi persis dan menghitung hash SHA-384 dari jsDelivr, lalu mengisi dua konstanta di atas. **Belum dijalankan** (lingkungan pengembangan tidak punya akses ke jsDelivr/npm), jadi versi masih `@2` tanpa hash sampai kamu menjalankannya.
+- **4 test baru** (total 120): atribut `data-aN` tak ter-escape, bentuk CSP, tanpa script/handler inline, loader SRI konsisten.
+- Riwayat perubahan di tombol `?` (v1.1.079); `sw.js`: `CACHE_VERSION` naik ke `kp-v1.1.079`; README: bagian CSP dan kunci versi.
+
 ## v1.1.078 — 29 Sep 2026
 
 **Ditambah**

@@ -184,6 +184,8 @@
 
   .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
   .field-row input, .field-row select { flex: 1; min-width: 0; }
+  .field-row.has-label { flex-direction: column; align-items: stretch; gap: 0; }
+  .field-row.has-label > input, .field-row.has-label > select { flex: none; width: 100%; }
   .debt-hint {
     font-size: 12px; color: var(--rust); background: var(--rust-soft);
     border-radius: 8px; padding: 8px 10px; margin: -2px 0 10px; line-height: 1.4;
@@ -210,8 +212,15 @@
   .io-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
   .io-btn.danger { color: var(--red); border-color: var(--rust-soft); }
   .io-btn.danger:hover { color: var(--red); border-color: var(--red); }
+  .app-toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 1200;
+    max-width: min(92vw, 420px); padding: 10px 14px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 13px; line-height: 1.4;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .15s; }
+  .app-toast.show { opacity: 1; }
+  .app-toast.error { background: var(--red); color: #fff; }
+  @media (prefers-reduced-motion: reduce) { .app-toast { transition: none; } }
   .io-msg { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; min-height: 16px; }
   .io-msg.error { color: var(--red); }
+  #acc-form-msg:not(:empty) { position: sticky; bottom: 0; z-index: 2; background: var(--card); border: 1px solid var(--red); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
   .io-msg.ok { color: var(--green); }
 
   /* Filter chips */
@@ -251,6 +260,11 @@
   .month-nav { flex: 0 0 auto; width: 42px; height: 42px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px; font-size: 20px; line-height: 1; cursor: pointer; font-family: 'Inter', sans-serif; }
   .month-nav:active { opacity: 0.7; }
   .month-nav:disabled { opacity: 0.3; cursor: default; }
+  .acc-pin-tag { font-size: 10px; font-weight: 600; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 99px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; white-space: nowrap; }
+  .acc-order-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .acc-order-row .io-btn { padding: 8px 6px; font-size: 13px; min-width: 0; flex: 1 1 40%; }
+  .acc-order-row .io-btn:last-child { flex: 1 1 100%; }
+  .acc-order-row .io-btn:disabled { opacity: .35; }
   .search-row { position: relative; margin-bottom: 10px; }
   .search-row input { padding-right: 34px; }
   .search-clear-btn {
@@ -354,6 +368,14 @@
 
   .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 10px; margin-top: 20px; }
   .chart-card svg { width: 100%; height: auto; display: block; }
+
+  /* Ringkasan: pemilih grafik + periode + grafik yang aktif tampil sebagai SATU kartu (v1.1.081).
+     #chart-group yang menjadi kartunya; kartu di dalamnya (selector dan tiap grafik) kehilangan bingkai sendiri.
+     Hanya satu grafik tampil sekaligus (segmen aktif), jadi cukup garis pemisah di bawah pemilih. */
+  #chart-group { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 10px; margin-top: 20px; }
+  #tab-ringkasan #chart-group > .chart-card { background: none; border: 0; border-radius: 0; padding: 0; margin: 0 !important; }
+  #tab-ringkasan #chart-group > .chart-card:not(#chart-period-card) { border-top: 1px solid var(--line); margin-top: 14px !important; padding-top: 14px; }
+  #chart-group:not(:has(> .chart-card:not([data-empty="1"]):not([data-seg-off="1"]):not([data-user-hidden="1"]))) { display: none; }
   .month-extra { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
   #chart-group { break-inside: avoid; }
   .order-btn { padding: 4px 9px; font-size: 12px; min-width: 32px; }
@@ -512,6 +534,7 @@
     .tab-panel { max-width: none; }
     #tab-ringkasan.active { column-count: 2; column-gap: 20px; }
     #tab-ringkasan .chart-card { break-inside: avoid; margin: 0 0 16px !important; }
+    #tab-ringkasan #chart-group { margin: 0 0 16px; }
 
     /* Akun: grup akun mengalir dalam dua kolom */
     #tab-akun #accounts-scroll { column-count: 2; column-gap: 24px; }
@@ -694,3 +717,9 @@
 .cl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .cl-badge { font-size: 10.5px; font-weight: 600; color: var(--green); border: 1px solid var(--green); border-radius: 999px; padding: 1px 7px; }
 .cl-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+
+/* A9c: isian opsional pinjaman terlipat */
+.acc-more { border: 1px solid var(--paper-dim); border-radius: 12px; padding: 0 12px; }
+.acc-more > summary { cursor: pointer; padding: 11px 0; font-size: 13px; font-weight: 500; color: var(--ink-soft); list-style-position: inside; }
+.acc-more[open] > summary { border-bottom: 1px solid var(--paper-dim); margin-bottom: 10px; }
+.acc-more-body { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
