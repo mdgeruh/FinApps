@@ -231,7 +231,7 @@
     // PayLater (form transaksi)
     'paylater-method',
     // Langganan berulang
-    'sub-account-input',
+    'sub-type-input', 'sub-category-input', 'sub-account-input', 'goal-account-input',
     // Filter bulan & urutkan (tab Transaksi)
     'txn-month-select', 'sort-select'
   ].forEach(enhanceSelect);
@@ -368,8 +368,139 @@
     }
     refreshLabel();
   }
-  ['date-input', 'acc-loan-start-input', 'asset-val-date-input', 'loan-pay-date-input', 'titipan-date-input'].forEach(id => enhanceDate(id));
+  ['date-input', 'acc-loan-start-input', 'asset-val-date-input', 'loan-pay-date-input', 'titipan-date-input', 'goal-deadline-input'].forEach(id => enhanceDate(id));
   ['laporan-custom-start', 'laporan-custom-end'].forEach(id => enhanceDate(id, { clearable: true }));
+
+  // ============================================================
+  // INPUT NOMINAL: titik pemisah ribuan otomatis saat mengetik (1000000 jadi 1.000.000), koma untuk desimal.
+  // Input asli (type="number") tetap menjadi sumber nilai ("1000000" / "1234.5") tapi disembunyikan; kolom teks di
+  // sampingnya hanya tampilan. Kode lain tetap baca/tulis .value input asli (setter disadap untuk menyegarkan tampilan),
+  // dan event 'input'/'change' diteruskan ke input asli. Aktif untuk elemen ber-atribut data-money
+  // ("dec" = boleh desimal, "neg" = boleh minus); elemen yang dibuat belakangan (daftar anggaran, simulasi) ikut
+  // lewat MutationObserver.
+  // ============================================================
+  function moneyGroup(intPart) { return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  // Teks yang diketik -> {display, value}. Titik dianggap pemisah ribuan (diabaikan), koma = desimal.
+  function moneyFormat(text, opts) {
+    opts = opts || {};
+    const str = String(text == null ? '' : text);
+    const sign = opts.neg && str.trim().charAt(0) === '-' ? '-' : '';
+    let intPart = '', frac = '', comma = false;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charAt(i);
+      if (ch >= '0' && ch <= '9') { if (comma) frac += ch; else intPart += ch; }
+      else if (ch === ',' && opts.dec && !comma) comma = true;
+    }
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+    frac = frac.slice(0, opts.maxFrac || 4);
+    const shownInt = intPart || (comma ? '0' : '');
+    const display = sign + moneyGroup(shownInt) + (comma ? ',' + frac : '');
+    const value = (intPart || frac) ? sign + (intPart || '0') + (frac ? '.' + frac : '') : '';
+    return { display, value };
+  }
+  // Nilai input asli ("1234.5") -> teks tampilan ("1.234,5").
+  function moneyFromValue(v) {
+    const t = String(v == null ? '' : v);
+    return moneyFormat(t.replace('.', ','), { dec: true, neg: true, maxFrac: 6 }).display;
+  }
+  function enhanceMoney(native) {
+    if (!native || native.dataset.moneyDone) return;
+    native.dataset.moneyDone = '1';
+    const flags = (native.getAttribute('data-money') || '').split(/\s+/);
+    const opts = { dec: flags.indexOf('dec') >= 0, neg: flags.indexOf('neg') >= 0 };
+
+    const text = document.createElement('input');
+    text.type = 'text';
+    text.className = native.className + ' cmoney';
+    text.setAttribute('autocomplete', 'off');
+    ['placeholder', 'inputmode', 'aria-label', 'enterkeyhint', 'style', 'data-keydown-act'].forEach(a => {
+      if (native.hasAttribute(a)) text.setAttribute(a, native.getAttribute(a));
+    });
+    if (native.disabled) text.disabled = true;
+    native.parentNode.insertBefore(text, native);
+    native.classList.add('cmoney-native');
+    native.setAttribute('tabindex', '-1');
+
+    const valDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    function fire(type) { native.dispatchEvent(new Event(type, { bubbles: true })); }
+    function setNative(v) { valDesc.set.call(native, v); }
+    function sig(str) { return (str.match(/[0-9,]/g) || []).length; }
+
+    // Rumus (mis. 25000+15000*2): nilai kolom asli mengikuti hasil sementara; tampilan dibiarkan sampai blur/Enter (06c-kalkulator.js)
+    const isExpr = () => typeof calcLooksLikeExpr === 'function' && calcLooksLikeExpr(text.value);
+    function commitExpr() {
+      const v = calcResultFor(text.value, opts);
+      if (v === null) { text.classList.add('cmoney-bad'); text.setAttribute('aria-invalid', 'true'); return false; }
+      text.classList.remove('cmoney-bad'); text.removeAttribute('aria-invalid');
+      setNative(String(v)); text.value = moneyFromValue(String(v)); fire('input'); fire('change');
+      return true;
+    }
+    text._cm = { native, opts, commit(v) { setNative(String(v)); text.value = moneyFromValue(String(v)); text.classList.remove('cmoney-bad'); text.removeAttribute('aria-invalid'); fire('input'); fire('change'); } };
+    text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && isExpr()) commitExpr(); });
+    text.addEventListener('input', () => {
+      if (isExpr()) {
+        const v = calcResultFor(text.value, opts);
+        setNative(v === null ? '' : String(v)); text.classList.remove('cmoney-bad'); text.removeAttribute('aria-invalid');
+        fire('input'); return;
+      }
+      const caret = text.selectionStart == null ? text.value.length : text.selectionStart;
+      const before = sig(text.value.slice(0, caret));
+      const r = moneyFormat(text.value, opts);
+      if (text.value !== r.display) {
+        text.value = r.display;
+        let n = 0, pos = 0;
+        while (pos < r.display.length && n < before) { if (/[0-9,]/.test(r.display.charAt(pos))) n++; pos++; }
+        try { text.setSelectionRange(pos, pos); } catch (e) { /* abaikan */ }
+      }
+      setNative(r.value);
+      fire('input');
+    });
+    text.addEventListener('change', () => fire('change'));
+    text.addEventListener('blur', () => {
+      if (isExpr()) { commitExpr(); return; }
+      text.classList.remove('cmoney-bad'); text.removeAttribute('aria-invalid');
+      const r = moneyFormat(text.value, opts);
+      const clean = r.display.replace(/,$/, '');
+      if (text.value !== clean) text.value = clean;
+    });
+
+    Object.defineProperty(native, 'value', {
+      configurable: true,
+      get() { return valDesc.get.call(native); },
+      set(v) { valDesc.set.call(native, v); text.value = moneyFromValue(valDesc.get.call(native)); }
+    });
+    ['placeholder', 'disabled', 'readOnly'].forEach(p => {
+      const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, p);
+      if (!d || !d.set) return;
+      Object.defineProperty(native, p, { configurable: true, get() { return d.get.call(native); }, set(v) { d.set.call(native, v); text[p] = v; } });
+    });
+    native.focus = () => text.focus();
+    native.select = () => text.select();
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(() => { text.style.display = native.style.display; text.hidden = native.hidden; }).observe(native, { attributes: true, attributeFilter: ['style', 'hidden'] });
+    }
+    text.value = moneyFromValue(native.value);
+  }
+  // Roda mouse/trackpad tidak boleh mengubah nilai input angka yang sedang fokus (perilaku bawaan browser yang sering tak sengaja).
+  document.addEventListener('wheel', (e) => {
+    const t = e.target;
+    if (t && t.tagName === 'INPUT' && t.type === 'number' && document.activeElement === t) t.blur();
+  }, { passive: true });
+  function enhanceMoneyAll(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('input[data-money]').forEach(enhanceMoney);
+  }
+  try {
+    if (typeof document !== 'undefined' && document.body && typeof MutationObserver !== 'undefined') {
+      enhanceMoneyAll(document);
+      new MutationObserver(muts => {
+        muts.forEach(m => m.addedNodes.forEach(n => {
+          if (n.nodeType !== 1) return;
+          if (n.matches && n.matches('input[data-money]')) enhanceMoney(n); else enhanceMoneyAll(n);
+        }));
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  } catch (e) { /* lingkungan tanpa DOM penuh (uji) */ }
 
 
 

@@ -3,7 +3,7 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.100';
+  const APP_VERSION = 'v1.1.121';
   const APP_BUILD = '2 Okt 2026';
   // Versi tampil di kartu paling atas tab Profil (renderProfilTab). #app-footer sengaja kosong: hanya jangkar untuk status sinkron.
 
@@ -45,13 +45,16 @@
     if (state.activeTypeFilter !== 'all') {
       txns = txns.filter(t => t.type === state.activeTypeFilter);
     }
+    if (state.activeTagFilter !== 'all') {
+      txns = txns.filter(t => txnTags(t).some(x => tagKey(x) === state.activeTagFilter));
+    }
     if (state.txnSearchQuery) {
       txns = txns.filter(t => {
         const accName1 = accById[t.accountId] ? accById[t.accountId].name.toLowerCase() : '';
         const accName2 = t.toAccountId && accById[t.toAccountId] ? accById[t.toAccountId].name.toLowerCase() : '';
         const desc = (t.desc || '').toLowerCase();
         const cat = (t.category || '').toLowerCase();
-        return desc.includes(state.txnSearchQuery) || cat.includes(state.txnSearchQuery) || accName1.includes(state.txnSearchQuery) || accName2.includes(state.txnSearchQuery);
+        return desc.includes(state.txnSearchQuery) || cat.includes(state.txnSearchQuery) || accName1.includes(state.txnSearchQuery) || accName2.includes(state.txnSearchQuery) || tagsText(txnTags(t)).toLowerCase().includes(state.txnSearchQuery);
       });
     }
 
@@ -62,7 +65,7 @@
     if (monthActive) txns = txns.filter(t => monthKeyFromDate(t.date || '') === monthSel);
     const periodLabel = state.txnSearchQuery ? 'Pencarian di semua bulan' : (monthSel === 'all' ? 'Semua waktu' : txnMonthLabel(monthSel));
 
-    const isFiltered = state.activeFilter !== 'all' || state.activeTypeFilter !== 'all' || !!state.txnSearchQuery;
+    const isFiltered = state.activeFilter !== 'all' || state.activeTypeFilter !== 'all' || state.activeTagFilter !== 'all' || !!state.txnSearchQuery;
 
     const summaryEl = $('txn-summary');
     if (summaryEl) {
@@ -72,7 +75,7 @@
         const sumIn = txns.filter(t => t.type === 'masuk').reduce((s, t) => s + t.amount, 0);
         const sumOut = txns.filter(t => t.type === 'keluar').reduce((s, t) => s + t.amount, 0);
         const countLabel = periodLabel + ' · ' + txns.length + ' transaksi';
-        summaryEl.innerHTML = `${countLabel} · Masuk <strong style="color:var(--green)">${formatRp(sumIn)}</strong> · Keluar <strong style="color:var(--red)">${formatRp(sumOut)}</strong>`;
+        summaryEl.innerHTML = `${countLabel} · Masuk <strong style="color:var(--green-ink)">${formatRp(sumIn)}</strong> · Keluar <strong style="color:var(--red-ink)">${formatRp(sumOut)}</strong>`;
       }
     }
 
@@ -107,6 +110,7 @@
         sign = t.type === 'masuk' ? '+' : '−';
       }
       if (t.category) metaText += ' · ' + t.category;
+      if (txnTags(t).length) metaText += ' · ' + tagsText(txnTags(t));
       if (t.planId) metaText += ' · Cicilan'; else if (t.method === 'nanti') metaText += ' · Bayar nanti';
       if (showDate) metaText += ' · ' + formatDayLabel(t.date);
       row.innerHTML = `

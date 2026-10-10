@@ -43,7 +43,7 @@
     const r = computeEmergencyFund(data, balances);
     if (!r) { list.innerHTML = '<div class="acc-sub">Belum ada target. Atur berapa bulan pengeluaran yang ingin dicadangkan sebagai dana darurat.</div>'; return; }
     if (r.status === 'nodata') { list.innerHTML = '<div class="acc-sub">Target ' + r.months + ' bulan. Belum ada pengeluaran 90 hari terakhir, jadi target belum bisa dihitung. Catat pengeluaran dulu.</div>'; return; }
-    const color = { ok: 'var(--green)', warn: 'var(--amber)', low: 'var(--red)' }[r.status];
+    const color = { ok: 'var(--green-ink)', warn: 'var(--amber-ink)', low: 'var(--red-ink)' }[r.status];
     const cover = r.cover.toFixed(1).replace('.', ',');
     list.innerHTML = `<div class="budget-top"><span class="budget-name">${formatRp(r.liquid)}</span><span class="acc-sub">target ${formatRp(r.target)}</span></div>
       <div class="acc-bar"><div class="acc-bar-fill" style="width:${Math.min(100, r.pct).toFixed(1)}%; background:${color};"></div></div>

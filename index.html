@@ -14,6 +14,7 @@
 <meta name="theme-color" content="#0E9E76">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Keuangan">
@@ -66,12 +67,12 @@
       <div style="display:flex; gap:10px;">
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Pemasukan</div>
-          <div class="acc-balance" id="month-in" style="margin-top:6px; color:var(--green);">Rp0</div>
+          <div class="acc-balance" id="month-in" style="margin-top:6px; color:var(--green-ink);">Rp0</div>
           <div class="acc-sub" id="month-in-compare" style="margin-top:3px;"></div>
         </div>
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Pengeluaran</div>
-          <div class="acc-balance" id="month-out" style="margin-top:6px; color:var(--red);">Rp0</div>
+          <div class="acc-balance" id="month-out" style="margin-top:6px; color:var(--red-ink);">Rp0</div>
           <div class="acc-sub" id="month-out-compare" style="margin-top:3px;"></div>
         </div>
       </div>
@@ -121,7 +122,7 @@
 
     <div class="chart-card" id="sub-card">
       <div class="section-title-row">
-        <div class="section-title">Langganan berulang</div>
+        <div class="section-title">Langganan &amp; transaksi berulang</div>
         <button class="see-all-btn" data-act="openSubForm">Kelola ›</button>
       </div>
       <div class="acc-sub" id="sub-total"></div>
@@ -134,6 +135,14 @@
         <button class="see-all-btn" data-act="openEmergencyForm">Atur ›</button>
       </div>
       <div id="emergency-list"></div>
+    </div>
+
+    <div class="chart-card" id="goal-card">
+      <div class="section-title-row">
+        <div class="section-title">Target tabungan</div>
+        <button class="see-all-btn" data-act="openGoalForm">Kelola ›</button>
+      </div>
+      <div id="goal-list"></div>
     </div>
 
     <div class="chart-card" id="plan-cta-card" data-empty="1"></div>
@@ -204,7 +213,7 @@
       <div class="section-title u-mb12">Pemasukan vs pengeluaran (6 bulan terakhir)</div>
       <svg id="trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="chart-legend">
-        <span><i style="background: var(--green)"></i>▲ Pemasukan</span>
+        <span><i class="u-bg-green"></i>▲ Pemasukan</span>
         <span><i style="background: var(--red)"></i>▼ Pengeluaran</span>
       </div>
     </div>
@@ -276,11 +285,11 @@
         </div>
         <div class="field-row" id="acc-balance-row" style="flex-direction:column; align-items:stretch;">
           <label class="field-label" id="acc-balance-label" for="acc-balance-input">Saldo awal</label>
-          <input type="number" id="acc-balance-input" placeholder="Rp, boleh 0" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Saldo awal (Rp)">
+          <input type="number" data-money="neg" id="acc-balance-input" placeholder="Rp, boleh 0" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Saldo awal (Rp)">
         </div>
         <div class="field-row" id="acc-limit-row" style="display:none; flex-direction:column; align-items:stretch;">
           <span class="field-label">Limit kartu</span>
-          <input type="number" id="acc-limit-input" placeholder="Limit (Rp)" inputmode="numeric" aria-label="Limit kartu (Rp)">
+          <input type="number" data-money="int" id="acc-limit-input" placeholder="Limit (Rp)" inputmode="numeric" aria-label="Limit kartu (Rp)">
         </div>
         <div class="field-row" id="acc-fee-row" style="display:none; flex-direction:column; align-items:stretch;">
           <div class="u-flex-gap8">
@@ -378,7 +387,7 @@
           </div>
           <div id="acc-loan-original-row" style="display:none;">
             <span class="field-label">Pokok awal saat pertama cair (Rp)</span>
-            <input class="u-w100" type="number" id="acc-loan-original-input" placeholder="Rp, kalau beda dari sisa" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Pokok awal pinjaman saat pertama kali cair, Rupiah">
+            <input class="u-w100" type="number" data-money="int" id="acc-loan-original-input" placeholder="Rp, kalau beda dari sisa" inputmode="numeric" data-input-act="updateOnlineLoanEstimate" aria-label="Pokok awal pinjaman saat pertama kali cair, Rupiah">
             <div class="acc-sub u-mt4">Untuk hitung progres &amp; bunga. Kosong = sisa pokok dianggap pokok awal (0% terbayar).</div>
           </div>
           <div id="acc-loan-tenor-row" style="display:none;">
@@ -398,7 +407,7 @@
           <div class="acc-sub" style="margin-top:-2px;">Opsional, untuk jadwal & pengingat. Tgl jatuh tempo kosong = pakai tanggal pencairan.</div>
           <div>
             <span class="field-label" id="acc-loan-installment-label">Angsuran per bulan (pokok + bunga)</span>
-            <input class="u-w100" type="number" id="acc-loan-installment-input" placeholder="Rp, otomatis" inputmode="numeric" data-input-act="onInstallmentManualInput" aria-label="Angsuran per bulan, pokok ditambah bunga, Rupiah">
+            <input class="u-w100" type="number" data-money="int" id="acc-loan-installment-input" placeholder="Rp, otomatis" inputmode="numeric" data-input-act="onInstallmentManualInput" aria-label="Angsuran per bulan, pokok ditambah bunga, Rupiah">
             <div class="acc-sub u-mt4" id="acc-loan-installment-hint"></div>
             <button type="button" class="io-btn" id="acc-loan-installment-auto-btn" style="display:none; margin-top:6px;" data-act="resetInstallmentAuto">Hitung otomatis lagi</button>
             <div class="acc-sub u-mt4" id="acc-loan-tenor-hint"></div>
@@ -409,7 +418,7 @@
           <div class="u-flex-gap8">
             <div class="u-flex1-min0" id="acc-loan-admin-rp-wrap">
               <span class="field-label" id="acc-loan-admin-label">Biaya admin (sekali)</span>
-              <input class="u-w100" type="number" id="acc-loan-admin-input" placeholder="Rp, opsional" inputmode="numeric" aria-label="Biaya admin/provisi sekali di awal, Rupiah, opsional">
+              <input class="u-w100" type="number" data-money="int" id="acc-loan-admin-input" placeholder="Rp, opsional" inputmode="numeric" aria-label="Biaya admin/provisi sekali di awal, Rupiah, opsional">
             </div>
             <div id="acc-loan-admin-pct-wrap" style="flex:1; min-width:0; display:none;">
               <span class="field-label">Biaya admin (% dari pokok)</span>
@@ -417,7 +426,7 @@
             </div>
             <div class="u-flex1-min0">
               <span class="field-label">Biaya materai (sekali)</span>
-              <input class="u-w100" type="number" id="acc-loan-stamp-input" placeholder="Rp, opsional" inputmode="numeric" aria-label="Biaya materai sekali di awal, Rupiah, opsional">
+              <input class="u-w100" type="number" data-money="int" id="acc-loan-stamp-input" placeholder="Rp, opsional" inputmode="numeric" aria-label="Biaya materai sekali di awal, Rupiah, opsional">
             </div>
           </div>
           <div class="acc-sub" id="acc-loan-admin-hint" style="display:none; margin-top:-2px;"></div>
@@ -436,7 +445,7 @@
           </div>
           <div id="acc-loan-savings-wrap">
             <span class="field-label">Tabungan wajib/bulan</span>
-            <input class="u-w100" type="number" id="acc-loan-savings-input" placeholder="Rp, opsional, info saja" inputmode="numeric" aria-label="Tabungan wajib per bulan, Rupiah, opsional">
+            <input class="u-w100" type="number" data-money="int" id="acc-loan-savings-input" placeholder="Rp, opsional, info saja" inputmode="numeric" aria-label="Tabungan wajib per bulan, Rupiah, opsional">
           </div>
           <div class="u-flex-gap8">
             <div class="u-flex1-min0"><span class="field-label">Denda telat (%/hari)</span>
@@ -507,18 +516,53 @@
   <div class="sheet-overlay" id="sub-form" data-backdrop="closeSubForm">
     <div class="sheet-panel">
     <div class="sheet-header">
-      <div class="sheet-title">Langganan berulang</div>
+      <div class="sheet-title">Transaksi berulang</div>
       <button class="sheet-close" data-act="closeSubForm" aria-label="Tutup">×</button>
     </div>
-    <div class="acc-sub">Dicatat otomatis sebagai pengeluaran (kategori Tagihan &amp; langganan) tiap bulan pada tanggalnya.</div>
+    <div class="acc-sub">Dicatat otomatis tiap bulan pada tanggalnya: langganan/tagihan sebagai pengeluaran, atau pemasukan rutin seperti gaji.</div>
     <div id="sub-manage-list"></div>
-    <div class="section-title u-mt14">Tambah langganan</div>
-    <div class="field-row has-label"><label class="field-label" for="sub-name-input">Nama langganan</label><input type="text" id="sub-name-input" maxlength="60" placeholder="mis. Netflix" aria-label="Nama langganan"></div>
-    <div class="field-row has-label"><label class="field-label" for="sub-amount-input">Nominal per bulan</label><input type="number" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
-    <div class="field-row has-label"><label class="field-label" for="sub-day-input">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
-    <div class="field-row has-label"><label class="field-label" for="sub-account-input">Dibayar dari akun</label><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
+    <div class="section-title u-mt14">Tambah transaksi berulang</div>
+    <div class="field-row has-label"><label class="field-label" for="sub-type-input">Jenis</label><select id="sub-type-input" aria-label="Jenis transaksi berulang" data-change-act="onSubTypeChange"><option value="keluar">Pengeluaran (langganan/tagihan)</option><option value="masuk">Pemasukan (gaji, dll.)</option></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-name-input" id="sub-name-label">Nama langganan</label><input type="text" id="sub-name-input" maxlength="60" placeholder="mis. Netflix" aria-label="Nama langganan"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-amount-input">Nominal per bulan</label><input type="number" data-money="int" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-day-input" id="sub-day-label">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-category-input">Kategori</label><select id="sub-category-input" aria-label="Kategori transaksi berulang"></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-account-input" id="sub-account-label">Dibayar dari akun</label><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
     <div class="acc-sub u-red" id="sub-form-msg"></div>
-    <button type="button" class="submit-btn" data-act="saveSubForm">Tambah langganan</button>
+    <button type="button" class="submit-btn" id="sub-submit-btn" data-act="saveSubForm">Tambah langganan</button>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="goal-form" data-backdrop="closeGoalForm">
+    <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title">Target tabungan</div>
+      <button class="sheet-close" data-act="closeGoalForm" aria-label="Tutup">×</button>
+    </div>
+    <div class="acc-sub">Hubungkan ke satu akun kas/bank/e-wallet (saldonya dihitung sebagai terkumpul), atau catat setoran sendiri. Dengan tenggat, aplikasi menyarankan setoran per bulan.</div>
+    <div id="goal-manage-list"></div>
+    <div class="section-title u-mt14">Tambah target</div>
+    <div class="field-row has-label"><label class="field-label" for="goal-name-input">Nama target</label><input type="text" id="goal-name-input" maxlength="60" placeholder="mis. Beli motor, Modal tanam" aria-label="Nama target"></div>
+    <div class="field-row has-label"><label class="field-label" for="goal-target-input">Nominal target</label><input type="number" data-money="int" id="goal-target-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal target"></div>
+    <div class="field-row has-label"><label class="field-label" for="goal-deadline-input">Tenggat (boleh kosong)</label><input class="u-w100" type="date" id="goal-deadline-input" aria-label="Tenggat target, boleh kosong"></div>
+    <div class="field-row has-label"><label class="field-label" for="goal-account-input">Sumber dana</label><select id="goal-account-input" aria-label="Akun sumber target" data-change-act="onGoalAccountChange"></select></div>
+    <div class="field-row has-label" id="goal-saved-row"><label class="field-label" for="goal-saved-input">Sudah terkumpul</label><input type="number" data-money="int" id="goal-saved-input" inputmode="numeric" min="0" step="1" placeholder="Rp, boleh kosong" aria-label="Sudah terkumpul"></div>
+    <div class="acc-sub u-red" id="goal-form-msg"></div>
+    <button type="button" class="submit-btn" data-act="saveGoalForm">Tambah target</button>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="goal-deposit-form" data-backdrop="closeGoalDeposit">
+    <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title">Setor ke target</div>
+      <button class="sheet-close" data-act="closeGoalDeposit" aria-label="Tutup">×</button>
+    </div>
+    <div class="acc-sub" id="goal-deposit-title"></div>
+    <div class="field-row has-label"><label class="field-label" for="goal-deposit-input">Nominal setoran</label><input type="number" data-money="int" id="goal-deposit-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal setoran" enterkeyhint="done" data-keydown-act="saveGoalDeposit" data-keydown-keys="Enter"></div>
+    <div class="acc-sub u-red" id="goal-deposit-msg"></div>
+    <button type="button" class="submit-btn" data-act="saveGoalDeposit">Tambah setoran</button>
+    <div class="acc-sub u-mt8">Hanya mengubah angka terkumpul di target ini; tidak membuat transaksi.</div>
     </div>
   </div>
 
@@ -539,8 +583,8 @@
         <div class="acc-sub" style="margin:12px 0 6px;">Perbarui nilai</div>
         <div class="field-row"><input class="u-w100" type="date" id="asset-val-date-input" aria-label="Tanggal penilaian"></div>
         <div class="field-row" id="asset-val-qty-row" style="display:none; flex-direction:column; align-items:stretch;"><label class="field-label" id="asset-val-qty-label" for="asset-val-qty-input">Jumlah sekarang</label><input class="u-w100" type="number" id="asset-val-qty-input" inputmode="decimal" step="any" min="0" data-input-act="onAssetQtyInput" aria-label="Jumlah sekarang"></div>
-        <div class="field-row" id="asset-val-price-row" style="display:none;"><input class="u-w100" type="number" id="asset-val-price-input" inputmode="decimal" placeholder="Harga per satuan (Rp)" data-input-act="onAssetPriceInput" aria-label="Harga per satuan"></div>
-        <div class="field-row"><input class="u-w100" type="number" id="asset-val-total-input" inputmode="decimal" placeholder="Nilai total sekarang (Rp)" aria-label="Nilai total sekarang"></div>
+        <div class="field-row" id="asset-val-price-row" style="display:none;"><input class="u-w100" type="number" data-money="dec" id="asset-val-price-input" inputmode="decimal" placeholder="Harga per satuan (Rp)" data-input-act="onAssetPriceInput" aria-label="Harga per satuan"></div>
+        <div class="field-row"><input class="u-w100" type="number" data-money="dec" id="asset-val-total-input" inputmode="decimal" placeholder="Nilai total sekarang (Rp)" aria-label="Nilai total sekarang"></div>
         <div class="acc-form-actions"><button type="button" class="submit-btn" data-act="saveAssetValuation">Simpan nilai</button></div>
         <div id="asset-val-msg" class="io-msg"></div>
         <div class="acc-sub" style="margin:12px 0 4px;">Riwayat nilai</div>
@@ -550,7 +594,7 @@
       <div id="acc-detail-recon" style="display:none; margin-bottom:18px;">
         <div class="section-title">Cocokkan saldo</div>
         <div class="acc-sub u-mb8">Isi saldo asli (mis. dari mutasi bank atau isi dompet). Selisihnya bisa dicatat sebagai penyesuaian yang tidak dihitung sebagai pemasukan/pengeluaran.</div>
-        <div class="field-row"><input class="u-w100" type="number" id="recon-actual-input" inputmode="decimal" placeholder="Saldo asli sekarang (Rp)" aria-label="Saldo asli sekarang"></div>
+        <div class="field-row"><input class="u-w100" type="number" data-money="dec neg" id="recon-actual-input" inputmode="decimal" placeholder="Saldo asli sekarang (Rp)" aria-label="Saldo asli sekarang"></div>
         <div id="recon-result" class="acc-sub"></div>
         <div class="acc-form-actions"><button type="button" class="io-btn" data-act="reconcileCheck">Cek selisih</button><button type="button" class="submit-btn" id="recon-apply-btn" style="display:none;" data-act="reconcileApply">Catat penyesuaian</button></div>
         <div id="recon-msg" class="io-msg"></div>
@@ -587,7 +631,7 @@
         <div class="acc-sub" style="margin-top:-6px; margin-bottom:8px;">Ubah tanggal ini kalau mau catat angsuran bulan-bulan sebelumnya yang belum tercatat.</div>
         <div class="field-row has-label">
           <label class="field-label" for="loan-pay-amount-input">Nominal</label>
-          <input type="number" id="loan-pay-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Nominal pembayaran (Rp)" data-input-act="updateLoanPaySplit">
+          <input type="number" data-money="int" id="loan-pay-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Nominal pembayaran (Rp)" data-input-act="updateLoanPaySplit">
         </div>
         <div class="acc-sub u-mb8" id="loan-pay-split"></div>
         <div class="acc-form-actions">
@@ -616,7 +660,7 @@
       <button type="button" class="month-nav" id="txn-month-next" data-act="shiftTxnMonth" data-n0="-1" aria-label="Bulan berikutnya">›</button>
     </div>
     <div class="search-row">
-      <input type="text" id="txn-search-input" placeholder="Cari transaksi (keterangan/kategori)..." data-input-act="onTxnSearchInput" aria-label="Cari transaksi">
+      <input type="text" id="txn-search-input" placeholder="Cari transaksi (keterangan/kategori/label)..." data-input-act="onTxnSearchInput" aria-label="Cari transaksi">
       <button type="button" class="search-clear-btn" id="txn-search-clear" data-act="clearTxnSearch" aria-label="Hapus pencarian">×</button>
     </div>
     <div class="sort-row">
@@ -631,6 +675,7 @@
       </select>
     </div>
     <div class="filter-row" id="type-filter-row"></div>
+    <div class="filter-row" id="tag-filter-row" role="group" aria-label="Filter label" style="display:none;"></div>
     <div class="filter-row" id="filter-row"></div>
     <div class="acc-sub" id="txn-summary" style="margin:2px 2px 12px;"></div>
 </div>
@@ -698,7 +743,7 @@
 
       <div class="field-row has-label">
         <label class="field-label" for="titipan-amount-input">Jumlah</label>
-        <input type="number" id="titipan-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Jumlah (Rp)">
+        <input type="number" data-money="int" id="titipan-amount-input" placeholder="Rp" inputmode="numeric" aria-label="Jumlah (Rp)">
       </div>
       <div class="field-row has-label">
         <label class="field-label" for="titipan-date-input">Tanggal</label>
@@ -781,24 +826,25 @@
 </div>
 
     <div class="laporan-results">
-    <div class="chart-card no-print" style="margin-top:12px;">
+    <div class="print-only" id="laporan-print-head"></div>
+    <div class="chart-card laporan-trend no-print" style="margin-top:12px;">
       <div class="section-title" style="margin-bottom:8px;">Tren alur kas (pemasukan vs pengeluaran)</div>
       <svg id="laporan-trend-chart" viewBox="0 0 320 138" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="chart-legend">
-        <span><i style="background: var(--green)"></i>▲ Pemasukan</span>
+        <span><i class="u-bg-green"></i>▲ Pemasukan</span>
         <span><i style="background: var(--red)"></i>▼ Pengeluaran</span>
       </div>
     </div>
 
-    <div class="chart-card u-mt10">
+    <div class="chart-card laporan-summary u-mt10">
       <div style="display:flex; gap:10px;">
         <div class="u-flex1">
           <div class="acc-type">Pemasukan</div>
-          <div class="acc-balance" id="laporan-total-in" style="margin-top:4px; color:var(--green);">Rp0</div>
+          <div class="acc-balance" id="laporan-total-in" style="margin-top:4px; color:var(--green-ink);">Rp0</div>
         </div>
         <div class="u-flex1">
           <div class="acc-type">Pengeluaran</div>
-          <div class="acc-balance" id="laporan-total-out" style="margin-top:4px; color:var(--red);">Rp0</div>
+          <div class="acc-balance" id="laporan-total-out" style="margin-top:4px; color:var(--red-ink);">Rp0</div>
         </div>
       </div>
       <div class="acc-sub u-mt8">Laba bersih: <strong id="laporan-net">Rp0</strong></div>
@@ -807,11 +853,11 @@
       <div id="laporan-insight-card" style="display:flex; gap:10px;">
         <div class="u-flex1-min0">
           <div class="acc-type" id="laporan-biggest-expense-label" style="white-space:normal; line-height:1.3;">Pengeluaran terbesar</div>
-          <div class="acc-balance" id="laporan-biggest-expense-amount" style="margin-top:4px; font-size:13.5px; color:var(--red);">—</div>
+          <div class="acc-balance" id="laporan-biggest-expense-amount" style="margin-top:4px; font-size:13.5px; color:var(--red-ink);">—</div>
         </div>
         <div class="u-flex1">
           <div class="acc-type">Rata-rata/hari</div>
-          <div class="acc-balance" id="laporan-avg-daily-expense" style="margin-top:4px; font-size:13.5px; color:var(--red);">Rp0</div>
+          <div class="acc-balance" id="laporan-avg-daily-expense" style="margin-top:4px; font-size:13.5px; color:var(--red-ink);">Rp0</div>
         </div>
       </div>
     </div>
@@ -819,14 +865,16 @@
     <div id="laporan-extra"></div>
 
     <div class="laporan-cats">
-    <div class="section-title u-mt14">Pemasukan per kategori</div>
-    <div class="list-section u-mt8" id="laporan-cat-masuk-list"></div>
-
-    <div class="section-title u-mt14">Pengeluaran per kategori</div>
-    <div class="list-section u-mt8" id="laporan-cat-keluar-list"></div>
+    <div class="list-section u-mt14" id="laporan-cat-masuk-list"></div>
+    <div class="list-section u-mt14" id="laporan-cat-keluar-list"></div>
+    <div class="list-section u-mt14" id="laporan-tag-list" style="display:none;"></div>
     </div>
 
-    <button class="fab-btn no-print" style="margin-top:16px;" data-act="exportLaporanPdf">⬇ Export PDF</button>
+    <button class="fab-btn no-print u-mt14" id="laporan-export-btn" data-act="exportLaporanPdf" aria-describedby="laporan-export-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Cetak / simpan PDF</button>
+    <div class="acc-sub no-print u-mt6" id="laporan-export-hint" style="text-align:center;">Di jendela cetak pilih "Simpan sebagai PDF". Isinya mengikuti periode dan filter di atas.</div>
+    <button type="button" class="io-btn io-btn-full no-print u-mt8" id="laporan-csv-btn" data-act="exportLaporanCsv" aria-describedby="laporan-csv-hint">Unduh CSV (periode ini)</button>
+    <div class="acc-sub no-print u-mt6" id="laporan-csv-hint" style="text-align:center;">Daftar transaksi sesuai periode dan filter, siap dibuka di Excel atau Google Sheets.</div>
+    <div class="io-msg no-print" id="laporan-export-msg"></div>
     </div>
   </div>
 
@@ -843,6 +891,17 @@
       <button type="button" class="io-btn" data-act="saveOwnerNameFromInput">Simpan</button>
     </div>
     <div id="profil-msg" class="io-msg"></div>
+    </div>
+    <div class="set-block">
+    <div class="section-title">Kunci app</div>
+    <div class="acc-sub u-mb6" id="lock-status">Kunci app belum aktif.</div>
+    <div class="acc-sub u-mb10">PIN 6 angka disimpan di perangkat ini saja dan tidak ikut backup atau sinkron. Ini penghalang akses sekilas, bukan enkripsi data. Lupa PIN berarti data di perangkat ini harus direset.</div>
+    <button type="button" class="io-btn io-btn-full" id="lock-btn-enable" data-act="lockSetupStart">Aktifkan PIN</button>
+    <div class="io-row">
+      <button type="button" class="io-btn u-flex1" id="lock-btn-change" data-act="lockChangeStart" style="display:none;">Ubah PIN</button>
+      <button type="button" class="io-btn u-flex1" id="lock-btn-disable" data-act="lockDisableStart" style="display:none;">Matikan PIN</button>
+    </div>
+    <button type="button" class="io-btn io-btn-full u-mt8" id="lock-btn-now" data-act="lockNow" style="display:none;">Kunci sekarang</button>
     </div>
     <div class="set-block">
     <div class="section-title">Akun sinkron (login cloud)</div>
@@ -875,7 +934,8 @@
       <div class="section-title">Export &amp; import</div>
       <div class="io-row">
         <button class="io-btn" data-act="exportJson">Export JSON</button>
-        <button class="io-btn" data-act="exportCsv">Export CSV</button>
+        <button class="io-btn" data-act="exportCsv">Export CSV transaksi</button>
+        <button class="io-btn" data-act="exportAccountsCsv">Export CSV akun</button>
         <button class="io-btn" data-act="clickById" data-a0="import-file">Import JSON</button>
         <input type="file" id="import-file" accept="application/json" style="display:none" data-change-act="importJson" data-change-with-event="1">
       </div>
@@ -971,6 +1031,11 @@
     <label class="field-label" for="desc-input">Keterangan</label>
     <input type="text" id="desc-input" placeholder="mis. Belanja telor" aria-label="Keterangan transaksi">
   </div>
+  <div class="field-row has-label" id="tags-row">
+    <label class="field-label" for="tags-input">Label (boleh kosong, pisahkan koma)</label>
+    <input type="text" id="tags-input" maxlength="140" placeholder="mis. kebun, lebaran" aria-label="Label transaksi, opsional, pisahkan dengan koma" data-input-act="renderTagSuggest">
+  </div>
+  <div class="tag-suggest" id="tags-suggest"></div>
   <div class="field-row has-label" id="account-row">
     <label class="field-label" id="account-label" for="account-select">Akun</label>
     <select id="account-select" data-change-act="updateTypeAvailability"></select>
@@ -991,7 +1056,7 @@
       </div>
       <div class="field-row has-label">
         <label class="field-label" for="paylater-admin">Admin sekali bayar (opsional)</label>
-        <input type="number" id="paylater-admin" placeholder="Rp" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Biaya admin cicilan, Rupiah, opsional">
+        <input type="number" data-money="int" id="paylater-admin" placeholder="Rp" inputmode="numeric" data-input-act="updatePaylaterPreview" aria-label="Biaya admin cicilan, Rupiah, opsional">
       </div>
       <div class="acc-sub u-mb8" id="paylater-preview"></div>
     </div>
@@ -1004,7 +1069,7 @@
   <div class="field-row" id="quick-pay-row" style="display:none; gap:8px;"></div>
   <div class="field-row has-label">
     <label class="field-label" for="amount-input">Jumlah</label>
-    <input type="number" id="amount-input" placeholder="Rp" inputmode="numeric" data-input-act="onAmountInput" aria-label="Jumlah (Rp)">
+    <input type="number" data-money="int" id="amount-input" placeholder="Rp" inputmode="numeric" data-input-act="onAmountInput" aria-label="Jumlah (Rp)">
   </div>
   <div class="acc-form-actions">
     <button class="io-btn" id="txn-cancel-btn" style="display:none;" data-act="closeTxnForm">Batal</button>
@@ -1085,15 +1150,34 @@
   </div>
 </div>
 
+<div class="lock-screen" id="lock-screen" role="dialog" aria-modal="true" aria-labelledby="lock-title" aria-describedby="lock-sub">
+  <div class="lock-card">
+    <div class="lock-title" id="lock-title">Masukkan PIN</div>
+    <div class="lock-sub" id="lock-sub" role="status" aria-live="polite"></div>
+    <div class="lock-dots" id="lock-dots" role="img"></div>
+    <div class="lock-pad">
+      <button type="button" class="lock-key" data-act="lockKey" data-a0="1" aria-label="1">1</button><button type="button" class="lock-key" data-act="lockKey" data-a0="2" aria-label="2">2</button><button type="button" class="lock-key" data-act="lockKey" data-a0="3" aria-label="3">3</button><button type="button" class="lock-key" data-act="lockKey" data-a0="4" aria-label="4">4</button><button type="button" class="lock-key" data-act="lockKey" data-a0="5" aria-label="5">5</button><button type="button" class="lock-key" data-act="lockKey" data-a0="6" aria-label="6">6</button><button type="button" class="lock-key" data-act="lockKey" data-a0="7" aria-label="7">7</button><button type="button" class="lock-key" data-act="lockKey" data-a0="8" aria-label="8">8</button><button type="button" class="lock-key" data-act="lockKey" data-a0="9" aria-label="9">9</button>
+      <span class="lock-key lock-key-empty" aria-hidden="true"></span>
+      <button type="button" class="lock-key" data-act="lockKey" data-a0="0" aria-label="0">0</button>
+      <button type="button" class="lock-key lock-key-del" data-act="lockBackspace" aria-label="Hapus angka terakhir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m13 9 4 6m0-6-4 6"/></svg></button>
+    </div>
+    <button type="button" class="lock-link" id="lock-forgot" data-act="lockForgot">Lupa PIN?</button>
+    <button type="button" class="lock-link" id="lock-cancel" data-act="lockCancel" style="display:none;">Batal</button>
+  </div>
+</div>
 <script src="00-config.js"></script>
 <script src="01-data.js"></script>
 <script src="02-navigasi.js"></script>
+<script src="02b-rute.js"></script>
 <script src="03-form-transaksi.js"></script>
+<script src="03b-label.js"></script>
 <script src="04-akun.js"></script>
 <script src="04b-akun-detail.js"></script>
 <script src="04c-akun-aset-tagihan.js"></script>
 <script src="05-form-titipan.js"></script>
 <script src="06-util-ui.js"></script>
+<script src="06b-kunci.js"></script>
+<script src="06c-kalkulator.js"></script>
 <script src="07-render-akun-transaksi.js"></script>
 <script src="08-render-titipan.js"></script>
 <script src="09-grafik.js"></script>
@@ -1102,6 +1186,7 @@
 <script src="10c-langganan.js"></script>
 <script src="10d-changelog.js"></script>
 <script src="10e-dana-darurat.js"></script>
+<script src="10k-target.js"></script>
 <script src="10f-tren-utang.js"></script>
 <script src="10g-denda-telat.js"></script>
 <script src="10h-ics-tagihan.js"></script>

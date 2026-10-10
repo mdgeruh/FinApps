@@ -520,6 +520,7 @@
     const catCustomEl = $('category-custom-input');
     const dateEl = $('date-input');
     const amount = parseFloat(amtEl.value);
+    const tags = parseTagsInput($('tags-input').value);
 
     if (!amount || amount <= 0) { amtEl.focus(); return; }
 
@@ -546,6 +547,7 @@
       if (isEditing) {
         const t = data.txns.find(x => x.id === state.editingTxnId);
         if (t) Object.assign(t, { date, type: 'transfer', desc: transferDesc, amount, accountId: accSel.value, toAccountId: toSel.value, category });
+        if (t) applyTags(t, tags);
       } else {
         const newTransfer = {
           id: generateId('txn'), date, type: 'transfer',
@@ -557,6 +559,7 @@
           newTransfer.planPaymentIds = state.pendingPlanPayment.planIds;
           newTransfer.planPaymentThrough = state.pendingPlanPayment.planPaymentThrough;
         }
+        applyTags(newTransfer, tags);
         data.txns.push(newTransfer);
       }
       state.pendingTransferLabel = null;
@@ -578,7 +581,7 @@
         if (!okCic) return;
         const planId = generateId('plan');
         const base = { date, type: 'keluar', accountId: accSel.value, planId, method: 'cicilan' };
-        data.txns.push({ id: generateId('txn'), ...base, desc, amount: c.pokok, category });
+        data.txns.push(applyTags({ id: generateId('txn'), ...base, desc, amount: c.pokok, category }, tags));
         if (c.bunga > 0) data.txns.push({ id: generateId('txn'), ...base, desc: 'Bunga cicilan: ' + desc, amount: c.bunga, category: 'Bunga & biaya bank' });
         if (admin > 0) data.txns.push({ id: generateId('txn'), ...base, desc: 'Admin cicilan: ' + desc, amount: admin, category: 'Bunga & biaya bank' });
         if (!Array.isArray(payAcc.plans)) payAcc.plans = [];
@@ -599,9 +602,11 @@
       if (isEditing) {
         const t = data.txns.find(x => x.id === state.editingTxnId);
         if (t) Object.assign(t, { date, type: state.currentType, desc, amount, accountId: accSel.value, category });
+        if (t) applyTags(t, tags);
       } else {
         const newTxn = { id: generateId('txn'), date, type: state.currentType, desc, amount, accountId: accSel.value, category };
         if (isPaylaterNew) newTxn.method = 'nanti'; // Bayar nanti: bunga 0%
+        applyTags(newTxn, tags);
         data.txns.push(newTxn);
       }
       descEl.value = '';

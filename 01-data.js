@@ -97,6 +97,7 @@
     detailTxnId: null,
     detailTitipanId: null,
     txnSearchQuery: '',
+    activeTagFilter: 'all',   // v1.1.121: kunci label (huruf kecil) atau 'all'
     accQuery: '',          // A7: pencarian di tab Akun (huruf kecil)
     accOrderMode: false,   // A8: mode atur urutan/sematkan di tab Akun
     accFilter: 'all',      // A7: 'all' | 'tagihan' | 'lunas' | 'arsip'
@@ -113,7 +114,8 @@
     laporanCustomEnd: null,
     laporanAccFilter: 'all',
     laporanCatMasukFilter: 'all',
-    laporanCatKeluarFilter: 'all'
+    laporanCatKeluarFilter: 'all',
+    laporanCatExpanded: {}
   };
 
   // Nama pemilik: SEKARANG cuma dipakai sebagai prefix nama file export/backup saat belum login
@@ -684,7 +686,7 @@
     if (bal === undefined) bal = accountBalance(data, acc.id);
     if (Math.abs(bal) >= 0.005) return TYPE_DEBT[acc.type] ? 'Masih ada sisa utang. Lunasi dulu sebelum diarsipkan.' : 'Saldo harus Rp0 sebelum diarsipkan.';
     if (TYPE_LOAN[acc.type] && computeLoanRemaining(data, acc, bal).total >= 0.005) return 'Masih ada bunga terjadwal yang belum jatuh tempo.';
-    if ((data.subscriptions || []).some(s => s.active && s.accountId === acc.id)) return 'Masih dipakai langganan aktif. Nonaktifkan langganannya dulu.';
+    if ((data.subscriptions || []).some(s => s.active && s.accountId === acc.id)) return 'Masih dipakai transaksi berulang aktif (langganan/gaji). Nonaktifkan dulu.';
     if (!data.accounts.some(a => a.id !== acc.id && !a.archived && a.type !== 'titipan')) return 'Harus tersisa minimal satu akun aktif.';
     return '';
   }
@@ -814,7 +816,7 @@
       info.payLabel = parts ? 'Bayar angsuran' : 'Bayar tagihan';
       info.payAct = acc.type === 'kartu_kredit' ? 'payCardFromDetail' : 'payDueFromRingkasan';
       info.valueText = overpaid > 0 ? 'Lebih bayar ' + formatRp(overpaid) : (parts ? (shown > 0 ? 'Sisa pokok ' + formatRp(shown) : 'Lunas') : 'Terpakai ' + formatRp(used));
-      info.color = shown > 0 ? 'var(--red)' : 'var(--ink)';
+      info.color = shown > 0 ? 'var(--red-ink)' : 'var(--ink)';
       let m = limit > 0 ? ' · Sisa limit ' + formatRp(limit - used) : '';
       if (detail) { if (parts && shown > 0 && parts.bunga > 0) m += ' · + bunga terjadwal ' + formatRp(parts.bunga) + ' (total sampai lunas ' + formatRp(shown + parts.bunga) + ')'; }
       else m += loanBungaNote(parts);
@@ -853,12 +855,12 @@
       }
       info.metaExtra = m;
     } else if (acc.type === 'titipan') {
-      if (bal > 0) { info.valueText = 'Berutang ' + formatRp(bal); info.color = 'var(--red)'; }
-      else if (bal < 0) { info.valueText = 'Lebih ' + formatRp(Math.abs(bal)); info.color = 'var(--green)'; }
+      if (bal > 0) { info.valueText = 'Berutang ' + formatRp(bal); info.color = 'var(--red-ink)'; }
+      else if (bal < 0) { info.valueText = 'Lebih ' + formatRp(Math.abs(bal)); info.color = 'var(--green-ink)'; }
       else { info.valueText = 'Lunas'; info.color = 'var(--ink-soft)'; }
     } else {
       info.valueText = formatRp(bal);
-      info.color = bal < 0 ? 'var(--red)' : 'var(--ink)';
+      info.color = bal < 0 ? 'var(--red-ink)' : 'var(--ink)';
       info.metaExtra = assetMetaText(acc);
     }
     if (!detail) info.lines = accountPriorityLines(data, acc, bal, info);

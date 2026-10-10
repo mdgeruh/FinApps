@@ -49,11 +49,11 @@
       const outH = (t.outSum / maxVal) * chartH;
       const inX = gx - barW - 2;
       const outX = gx + 2;
-      svgContent += `<rect x="${inX.toFixed(1)}" y="${(padTop + chartH - inH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(inH, 0).toFixed(1)}" rx="2" style="fill:var(--green)"></rect>`;
-      svgContent += `<rect x="${outX.toFixed(1)}" y="${(padTop + chartH - outH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(outH, 0).toFixed(1)}" rx="2" style="fill:var(--red)"></rect>`;
-      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
+      svgContent += `<rect x="${inX.toFixed(1)}" y="${(padTop + chartH - inH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(inH, 0).toFixed(1)}" rx="2" class="svg-fill-green"></rect>`;
+      svgContent += `<rect x="${outX.toFixed(1)}" y="${(padTop + chartH - outH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(outH, 0).toFixed(1)}" rx="2" class="svg-fill-red"></rect>`;
+      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
     });
-    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" style="stroke:var(--line)" stroke-width="1"></line>`;
+    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" class="svg-stroke-line" stroke-width="1"></line>`;
     svgContent += tooltipGroupSvgMulti('trend-chart', 2);
 
     svg.innerHTML = svgContent;
@@ -428,8 +428,9 @@
   const RINGKASAN_CARDS = [
     { id: 'month-insight-card', label: 'Bulan ini' },
     { id: 'budget-card', label: 'Anggaran bulan ini' },
-    { id: 'sub-card', label: 'Langganan berulang' },
+    { id: 'sub-card', label: 'Langganan & transaksi berulang' },
     { id: 'emergency-card', label: 'Dana darurat' },
+    { id: 'goal-card', label: 'Target tabungan' },
     { id: 'plan-cta-card', label: 'Ajakan mengatur rencana' },
     { id: 'account-values-card', label: 'Nilai akun' },
     { id: 'recent-txn-card', label: 'Transaksi terbaru' },
@@ -454,7 +455,8 @@
     return {
       budget: Object.keys(sanitizeBudgets(data && data.budgets)).length > 0,
       sub: sanitizeSubscriptions(data && data.subscriptions).length > 0,
-      emergency: sanitizeEmergencyMonths(data && data.emergencyMonths) > 0
+      emergency: sanitizeEmergencyMonths(data && data.emergencyMonths) > 0,
+      goal: sanitizeGoals(data && data.goals).length > 0
     };
   }
 
@@ -473,7 +475,8 @@
       'budget-card': !plan.budget,
       'sub-card': !plan.sub,
       'emergency-card': !plan.emergency,
-      'plan-cta-card': plan.budget && plan.sub && plan.emergency,
+      'goal-card': !plan.goal,
+      'plan-cta-card': plan.budget && plan.sub && plan.emergency && plan.goal,
       'category-chart-card': monthReal.length === 0,
       'trend-chart-card': !data.txns.some(t => sixKeys.has(monthKeyFromDate(t.date || '')) && !isNonOperatingTxn(t) && (t.type === 'masuk' || t.type === 'keluar')),
       'debt-trend-card': !data.accounts.some(a => TYPE_DEBT[a.type]),
@@ -561,8 +564,9 @@
   const RINGKASAN_ORDER_UNITS = [
     { id: 'month-insight-card', label: 'Bulan ini' },
     { id: 'budget-card', label: 'Anggaran bulan ini' },
-    { id: 'sub-card', label: 'Langganan berulang' },
+    { id: 'sub-card', label: 'Langganan & transaksi berulang' },
     { id: 'emergency-card', label: 'Dana darurat' },
+    { id: 'goal-card', label: 'Target tabungan' },
     { id: 'plan-cta-card', label: 'Ajakan mengatur rencana' },
     { id: 'account-values-card', label: 'Nilai akun' },
     { id: 'recent-txn-card', label: 'Transaksi terbaru' },
@@ -618,7 +622,7 @@
     const hidden = new Set(loadHiddenCards());
     const order = loadRingkasanOrder();
     const label = id => (RINGKASAN_ORDER_UNITS.find(u => u.id === id) || {}).label || id;
-    const chk = (c, indent) => `<input type="checkbox" ${hidden.has(c.id) ? '' : 'checked'} data-change-act="toggleRingkasanCardFromEl" data-change-a0="${c.id}" style="width:20px; height:20px; accent-color:var(--green);" aria-label="Tampilkan ${escapeHtml(c.label)}">`;
+    const chk = (c, indent) => `<input type="checkbox" ${hidden.has(c.id) ? '' : 'checked'} data-change-act="toggleRingkasanCardFromEl" data-change-a0="${c.id}" aria-label="Tampilkan ${escapeHtml(c.label)}">`;
     const arrows = (id, i) => `<button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${escapeHtml(id)}" data-n1="-1" ${i === 0 ? 'disabled' : ''} aria-label="Naikkan ${escapeHtml(label(id))}">▲</button><button type="button" class="io-btn order-btn" data-act="moveRingkasanCard" data-a0="${escapeHtml(id)}" data-n1="1" ${i === order.length - 1 ? 'disabled' : ''} aria-label="Turunkan ${escapeHtml(label(id))}">▼</button>`;
     const chartIds = new Set(CHART_SEGMENTS.map(s => s.card));
     el.innerHTML = order.map((id, i) => {
@@ -652,12 +656,6 @@
   }
 
   let networthPeriodDays = 30;
-
-  function setNetWorthPeriod(days) {
-    networthPeriodDays = days;
-    document.querySelectorAll('#networth-chart-card .type-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.networthPeriod) === days));
-    renderNetWorthChart(loadData());
-  }
 
   function renderNetWorthChart(data) {
     const svg = $('networth-chart');
@@ -744,8 +742,8 @@
     const endLabelY = Math.min(Math.max(padTop - 10, 11), Math.max(11, lastY - 16));
     const startLabelY = Math.max(Math.min(H - padBottom + 16, H - 6), Math.min(H - 6, firstY + 22));
     svgContent += `<g id="networth-chart-perm-labels" style="transition:opacity 0.12s;">`;
-    svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${state.balanceHidden ? '•••••••' : formatRp(lastVal)}</text>`;
-    svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${state.balanceHidden ? '•••••••' : formatRp(firstVal)}</text>`;
+    svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? '•••••••' : formatRp(lastVal)}</text>`;
+    svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? '•••••••' : formatRp(firstVal)}</text>`;
     svgContent += `</g>`;
     svgContent += tooltipGroupSvg('networth-chart');
 
@@ -767,7 +765,7 @@
         summaryEl.style.color = 'var(--ink)';
       } else {
         summaryEl.textContent = `Perubahan periode ini: ${trendArrow(delta)}${sign}${formatRp(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(1)}%)`;
-        summaryEl.style.color = delta > 0 ? 'var(--green)' : (delta < 0 ? 'var(--red)' : 'var(--ink-soft)');
+        summaryEl.style.color = delta > 0 ? 'var(--green-ink)' : (delta < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
       }
     }
   }
@@ -779,12 +777,6 @@
     cashflowViewMode = cashflowViewMode === 'per-account' ? 'total' : 'per-account';
     const btn = $('cashflow-view-toggle');
     if (btn) btn.textContent = cashflowViewMode === 'per-account' ? 'Total saja' : 'Per akun';
-    renderCashflowChart(loadData());
-  }
-
-  function setCashflowPeriod(days) {
-    cashflowPeriodDays = days;
-    document.querySelectorAll('#cashflow-chart-card .type-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.cashflowPeriod) === days));
     renderCashflowChart(loadData());
   }
 
@@ -887,7 +879,7 @@
     const areaD = `${lineD} L${xs[xs.length - 1].toFixed(2)},${zeroY.toFixed(2)} L${xs[0].toFixed(2)},${zeroY.toFixed(2)} Z`;
 
     let svgContent = '';
-    svgContent += `<line x1="${padSide}" y1="${zeroY.toFixed(1)}" x2="${W - padSide}" y2="${zeroY.toFixed(1)}" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="3,3"></line>`;
+    svgContent += `<line x1="${padSide}" y1="${zeroY.toFixed(1)}" x2="${W - padSide}" y2="${zeroY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
     if (!showPerAccount) svgContent += `<path d="${areaD}" style="fill:${lineColor}; opacity:0.12"></path>`;
     svgContent += `<path d="${lineD}" style="fill:none; stroke:${lineColor}" stroke-width="${showPerAccount ? 2.6 : 2}" stroke-linejoin="round" stroke-linecap="round"></path>`;
 
@@ -907,8 +899,8 @@
     const endLabelY = Math.min(Math.max(padTop - 10, 11), Math.max(11, lastY - 16));
     const startLabelY = Math.max(Math.min(H - padBottom + 16, H - 6), Math.min(H - 6, firstY + 22));
     svgContent += `<g id="cashflow-chart-perm-labels" style="transition:opacity 0.12s;">`;
-    svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${fmtSigned(lastVal)}</text>`;
-    svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${fmtSigned(firstVal)}</text>`;
+    svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${fmtSigned(lastVal)}</text>`;
+    svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${fmtSigned(firstVal)}</text>`;
     svgContent += `</g>`;
 
     const seriesForTooltip = [{ label: 'Total', values: points, color: lineColor }];
@@ -938,7 +930,7 @@
               <span class="pie-dot" style="background:var(${s.colorVar})"></span>
               <span>${escapeHtml(s.acc.name)}</span>
             </div>
-            <span class="pie-legend-amount" style="color:${val >= 0 ? 'var(--green)' : 'var(--red)'}">${trendArrow(val)}${fmtSigned(val)}</span>
+            <span class="pie-legend-amount" style="color:${val >= 0 ? 'var(--green-ink)' : 'var(--red-ink)'}">${trendArrow(val)}${fmtSigned(val)}</span>
           </div>
         `;
       }).join('') : '';
@@ -947,7 +939,7 @@
     if (summaryEl) {
       const sign = lastVal > 0 ? '+' : (lastVal < 0 ? '−' : '');
       summaryEl.textContent = `Arus kas bersih: ${trendArrow(lastVal)}${sign}${formatRp(Math.abs(lastVal))}`;
-      summaryEl.style.color = lastVal > 0 ? 'var(--green)' : (lastVal < 0 ? 'var(--red)' : 'var(--ink-soft)');
+      summaryEl.style.color = lastVal > 0 ? 'var(--green-ink)' : (lastVal < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
     }
   }
 
@@ -1116,14 +1108,14 @@
         const used = bal < 0 ? Math.abs(bal) : 0;
         const overpaid = bal > 0 ? bal : 0;
         valueText = overpaid > 0 ? 'Lebih bayar ' + formatRp(overpaid) : formatRp(-used);
-        color = used > 0 ? 'var(--red)' : 'var(--ink)';
+        color = used > 0 ? 'var(--red-ink)' : 'var(--ink)';
       } else if (acc.type === 'titipan') {
-        if (bal > 0) { valueText = 'Berutang ' + formatRp(bal); color = 'var(--red)'; }
-        else if (bal < 0) { valueText = 'Lebih ' + formatRp(Math.abs(bal)); color = 'var(--green)'; }
+        if (bal > 0) { valueText = 'Berutang ' + formatRp(bal); color = 'var(--red-ink)'; }
+        else if (bal < 0) { valueText = 'Lebih ' + formatRp(Math.abs(bal)); color = 'var(--green-ink)'; }
         else { valueText = 'Lunas'; color = 'var(--ink-soft)'; }
       } else {
         valueText = formatRp(bal);
-        color = bal < 0 ? 'var(--red)' : 'var(--ink)';
+        color = bal < 0 ? 'var(--red-ink)' : 'var(--ink)';
       }
       return `
         <div class="txn-row acc-accent" style="--accent-color: var(${colorVar});">

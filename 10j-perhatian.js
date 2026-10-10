@@ -57,12 +57,12 @@
     if (!items.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
     el.style.display = 'block';
     el.innerHTML = '<div class="section-title" style="margin-bottom:6px;">Perlu perhatian</div>' + items.map(it => {
-      const color = it.level === 'red' ? 'var(--red)' : 'var(--amber)';
+      const color = it.level === 'red' ? 'var(--red-ink)' : 'var(--amber-ink)';
       return `<div class="txn-row clickable" role="button" tabindex="0" data-act="${it.act}" data-a0="${escapeHtml(it.arg)}" data-keydown-act="${it.act}" data-keydown-a0="${escapeHtml(it.arg)}" data-keydown-keys="Enter| ">
         <div class="txn-left">
           <span class="dot" style="background:${color};"></span>
           <div class="txn-text">
-            <div class="txn-desc txn-desc-wrap">${it.level === 'red' ? '<span style="color:var(--red);" aria-hidden="true">▲</span> ' : ''}${escapeHtml(it.title)}</div>
+            <div class="txn-desc txn-desc-wrap">${it.level === 'red' ? '<span class="u-c-red" aria-hidden="true">▲</span> ' : ''}${escapeHtml(it.title)}</div>
             <div class="txn-meta" style="color:${color}; font-weight:600;">${escapeHtml(it.sub)}</div>
           </div>
         </div>
@@ -86,7 +86,8 @@
   const PLAN_CTAS = [
     { key: 'budget', title: 'Anggaran', text: 'Batasi pengeluaran per kategori tiap bulan', act: 'openBudgetForm' },
     { key: 'sub', title: 'Langganan', text: 'Catat tagihan rutin agar otomatis tiap bulan', act: 'openSubForm' },
-    { key: 'emergency', title: 'Dana darurat', text: 'Tentukan target cadangan dalam bulan pengeluaran', act: 'openEmergencyForm' }
+    { key: 'emergency', title: 'Dana darurat', text: 'Tentukan target cadangan dalam bulan pengeluaran', act: 'openEmergencyForm' },
+    { key: 'goal', title: 'Target tabungan', text: 'Kumpulkan dana untuk tujuan tertentu, lengkap dengan setoran per bulan', act: 'openGoalForm' }
   ];
   function renderPlanCta(data) {
     const el = $('plan-cta-card');

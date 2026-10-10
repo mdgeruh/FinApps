@@ -35,16 +35,66 @@
     window.addEventListener('afterprint', () => { opened.forEach(d => { d.open = false; }); opened = []; });
   })();
 
+  // Kepala laporan yang hanya tampil saat dicetak: judul, periode, filter aktif, tanggal cetak, versi app.
+  function laporanPrintFilterText(data) {
+    const acc = state.laporanAccFilter !== 'all' ? (data.accounts.find(a => a.id === state.laporanAccFilter) || {}).name : '';
+    const parts = [];
+    if (acc) parts.push('Akun: ' + acc);
+    if (state.laporanCatMasukFilter !== 'all') parts.push('Kategori pemasukan: ' + state.laporanCatMasukFilter);
+    if (state.laporanCatKeluarFilter !== 'all') parts.push('Kategori pengeluaran: ' + state.laporanCatKeluarFilter);
+    return parts.length ? parts.join(' · ') : 'Semua akun dan kategori';
+  }
+  function renderLaporanPrintHead(data, periodLabel) {
+    const el = $('laporan-print-head');
+    if (!el) return;
+    el.innerHTML = '<div class="ph-title">Laporan Keuangan</div>' +
+      '<div class="ph-period">' + escapeHtml(periodLabel || '') + '</div>' +
+      '<div class="ph-meta">' + escapeHtml(laporanPrintFilterText(data)) + '</div>' +
+      '<div class="ph-meta">Dicetak ' + escapeHtml(fmtTgl(todayStr())) + ' · Keuangan Pribadi ' + escapeHtml(typeof APP_VERSION === 'string' ? APP_VERSION : '') + '</div>';
+  }
+  // Isi <details> yang terlipat tidak ikut tercetak: buka semuanya selama proses cetak, lalu kembalikan.
+  let _printOpened = [];
+  window.addEventListener('beforeprint', () => {
+    _printOpened = Array.from(document.querySelectorAll('.tab-panel.active details:not([open])'));
+    _printOpened.forEach(d => { d.open = true; });
+  });
+  window.addEventListener('afterprint', () => { _printOpened.forEach(d => { d.open = false; }); _printOpened = []; });
+
+  // Nama berkas PDF mengikuti judul dokumen saat dicetak; karakter yang tidak boleh di nama berkas diganti.
+  function laporanPdfTitle(periodLabel) {
+    const l = String(periodLabel || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+    return 'Laporan Keuangan' + (l ? ' - ' + l : '');
+  }
+  // Ada transaksi pada periode (dan akun) yang sedang dilihat? Kalau tidak, tidak ada yang perlu dicetak.
+  function laporanTxns(data, range) {
+    return (data.txns || []).filter(t => t.date >= range.start && t.date <= range.end &&
+      (state.laporanAccFilter === 'all' || t.accountId === state.laporanAccFilter || t.toAccountId === state.laporanAccFilter));
+  }
+  function laporanHasData(data, range) { return laporanTxns(data, range).length > 0; }
+  // Unduh CSV transaksi pada periode dan filter akun yang sedang dilihat di Laporan
+  async function exportLaporanCsv() {
+    const data = loadData(), range = getLaporanRange(data), txns = laporanTxns(data, range);
+    if (!txns.length) { showToast('Tidak ada transaksi di periode ini untuk diunduh.', 'error'); return; }
+    await saveTextFile('laporan-' + exportUserPrefix() + '-' + range.start + '_' + range.end + '.csv', buildTxnCsv(data, txns), 'text/csv;charset=utf-8', 'CSV laporan (' + txns.length + ' transaksi)', 'laporan-export-msg');
+  }
+  // Tombol "Cetak / simpan PDF": membuka jendela cetak browser (pilih "Simpan sebagai PDF"). Layout cetak ada di @media print.
   function exportLaporanPdf() {
-    const label = $('laporan-period-label')?.textContent || '';
+    const data = loadData();
+    if (!laporanHasData(data, getLaporanRange(data))) { showToast('Tidak ada transaksi di periode ini untuk dicetak.', 'error'); return; }
     const prevTitle = document.title;
-    document.title = 'Laporan Keuangan' + (label ? ' - ' + label : '');
+    document.title = laporanPdfTitle($('laporan-period-label')?.textContent);
     const restoreTitle = () => {
       document.title = prevTitle;
       window.removeEventListener('afterprint', restoreTitle);
     };
     window.addEventListener('afterprint', restoreTitle);
-    window.print();
+    try {
+      if (typeof window.print !== 'function') throw new Error('print tidak tersedia');
+      window.print();
+    } catch (e) {
+      restoreTitle();
+      showToast('Cetak tidak tersedia di tampilan ini. Buka app langsung di browser.', 'error');
+    }
   }
 
   function onLaporanCustomChange() {
@@ -166,31 +216,60 @@
     });
   }
 
-  function renderLaporanCatBreakdown(containerId, txns, total, colorVar) {
-    const container = $(containerId);
-    if (!container) return;
-    if (txns.length === 0 || total <= 0) {
-      container.innerHTML = '<div class="empty">Tidak ada transaksi di periode ini.</div>';
-      return;
-    }
+  // Ringkasan per kategori (lihat renderLaporanCatCard di bawah).
+  const CAT_TOP_N = 6;
+  function formatCatPct(amount, total) {
+    const p = total > 0 ? (amount / total) * 100 : 0;
+    if (p > 0 && p < 1) return '<1%';
+    return Math.round(p) + '%';
+  }
+  function summarizeCategories(txns) {
     const sums = {};
     txns.forEach(t => {
       const key = t.category || 'Tanpa kategori';
-      sums[key] = (sums[key] || 0) + t.amount;
+      if (!sums[key]) sums[key] = { category: key, amount: 0, count: 0 };
+      sums[key].amount += t.amount; sums[key].count++;
     });
-    const items = Object.entries(sums).map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount);
-    container.innerHTML = items.map(item => {
-      const pct = Math.round((item.amount / total) * 100);
-      return `
-        <div class="acc-card" style="min-width:0; width:100%; padding:9px 12px; margin-bottom:6px;">
-          <div class="acc-top" style="justify-content:space-between; margin-bottom:0;">
-            <span class="acc-name" style="margin-bottom:0;">${escapeHtml(item.category)}</span>
-            <span class="acc-balance" style="color:var(${colorVar});">${formatRp(item.amount)} <span style="font-weight:500; color:var(--ink-soft); font-size:11.5px;">${pct}%</span></span>
-          </div>
-          <div class="acc-bar" style="margin-top:5px;"><div class="acc-bar-fill" style="width:${pct}%; background:var(${colorVar});"></div></div>
-        </div>
-      `;
+    return Object.values(sums).sort((x, y) => y.amount - x.amount);
+  }
+  // Dua kartu: satu untuk Pemasukan dan satu untuk Pengeluaran. Judul + total di kepala kartu, lalu daftar kategorinya
+  // (nama, jumlah transaksi, nominal, persen, bilah). Bilah dibandingkan dengan kategori terbesar di kartu itu supaya
+  // kategori kecil tetap terbaca; persen terhadap total. Lebih dari CAT_TOP_N kategori: sisanya dilipat
+  // ("Lihat N kategori lainnya"), tetapi tampil semua saat dicetak. Ketuk baris untuk memfilter ke kategori itu, ketuk lagi untuk semua.
+  function renderLaporanCatCard(containerId, kind, txns, total, colorVar, title) {
+    const container = $(containerId);
+    if (!container) return;
+    const head = `<div class="cat-head"><span class="cat-title">${escapeHtml(title)}</span><span class="cat-total" style="color:var(${colorVar}-ink);">${total > 0 ? formatRp(total) : 'Rp0'}</span></div>`;
+    if (txns.length === 0 || total <= 0) {
+      container.innerHTML = `<div class="cat-list">${head}<div class="empty">Tidak ada transaksi di periode ini.</div></div>`;
+      return;
+    }
+    const active = kind === 'masuk' ? state.laporanCatMasukFilter : state.laporanCatKeluarFilter;
+    const items = summarizeCategories(txns);
+    const max = items[0].amount || 1;
+    const expanded = !!(state.laporanCatExpanded && state.laporanCatExpanded[kind]);
+    const extra = items.length - CAT_TOP_N;
+    const rows = items.map((item, i) => {
+      const w = Math.max(2, Math.round((item.amount / max) * 100));
+      return `<div class="cat-row${i >= CAT_TOP_N ? ' cat-extra' : ''}${active === item.category ? ' active' : ''}" role="button" tabindex="0" data-act="toggleLaporanCat" data-a0="${escapeHtml(kind)}" data-a1="${escapeHtml(item.category)}" aria-label="Filter kategori ${escapeHtml(item.category)}">
+        <div class="cat-main"><span class="cat-name">${escapeHtml(item.category)}<span class="cat-count">${item.count}x</span></span>
+          <span class="cat-amt" style="color:var(${colorVar});">${formatRp(item.amount)}<span class="cat-pct">${formatCatPct(item.amount, total)}</span></span></div>
+        <div class="cat-bar"><div class="cat-bar-fill" style="width:${w}%; background:var(${colorVar});"></div></div>
+      </div>`;
     }).join('');
+    const more = extra > 0
+      ? `<button type="button" class="cat-more no-print" data-act="toggleLaporanCatMore" data-a0="${escapeHtml(kind)}">${expanded ? 'Tampilkan lebih sedikit' : 'Lihat ' + extra + ' kategori lainnya'}</button>` : '';
+    container.innerHTML = `<div class="cat-list${expanded ? ' expanded' : ''}">${head}${rows}${more}</div>`;
+  }
+  function toggleLaporanCat(kind, cat) {
+    const key = kind === 'masuk' ? 'laporanCatMasukFilter' : 'laporanCatKeluarFilter';
+    state[key] = state[key] === cat ? 'all' : cat;
+    renderLaporan();
+  }
+  function toggleLaporanCatMore(kind) {
+    if (!state.laporanCatExpanded) state.laporanCatExpanded = {};
+    state.laporanCatExpanded[kind] = !state.laporanCatExpanded[kind];
+    renderLaporan();
   }
 
   function renderLaporanTrendChart(range, masukTxns, keluarTxns) {
@@ -234,7 +313,7 @@
     const inAreaD = `${inLineD} L${inXs[inXs.length - 1].toFixed(2)},${baseY.toFixed(2)} L${inXs[0].toFixed(2)},${baseY.toFixed(2)} Z`;
 
     let svgContent = '';
-    svgContent += `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="3,3"></line>`;
+    svgContent += `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
     svgContent += `<path d="${inAreaD}" style="fill:var(--green); opacity:0.12"></path>`;
     svgContent += `<path d="${outLineD}" style="fill:none; stroke:var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
     svgContent += `<path d="${inLineD}" style="fill:none; stroke:var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
@@ -248,8 +327,8 @@
     const inPeakVal = inVals[inPeakIdx], outPeakVal = outVals[outPeakIdx];
     const inPeakX = xAt(inPeakIdx), inPeakY = yAt(inPeakVal);
     const outPeakX = xAt(outPeakIdx), outPeakY = yAt(outPeakVal);
-    svgContent += `<circle cx="${inPeakX.toFixed(1)}" cy="${inPeakY.toFixed(1)}" r="3.5" style="fill:var(--green)"></circle>`;
-    svgContent += `<circle cx="${outPeakX.toFixed(1)}" cy="${outPeakY.toFixed(1)}" r="3.5" style="fill:var(--red)"></circle>`;
+    svgContent += `<circle cx="${inPeakX.toFixed(1)}" cy="${inPeakY.toFixed(1)}" r="3.5" class="svg-fill-green"></circle>`;
+    svgContent += `<circle cx="${outPeakX.toFixed(1)}" cy="${outPeakY.toFixed(1)}" r="3.5" class="svg-fill-red"></circle>`;
 
     // Label nilai puncak, nempel di kurva (sama seperti kurva cashflow di Ringkasan).
     const anchorFor = x => (x < 40 ? 'start' : (x > W - 40 ? 'end' : 'middle'));
@@ -262,14 +341,14 @@
     const labelIdx = n === 1 ? [0] : [0, Math.floor((n - 1) / 2), n - 1];
     svgContent += `<g id="laporan-trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
     if (inPeakVal > 0) {
-      svgContent += `<text x="${inPeakX.toFixed(1)}" y="${inLabelY.toFixed(1)}" text-anchor="${anchorFor(inPeakX)}" font-size="11" font-weight="600" style="fill:var(--green)" font-family="Inter, sans-serif">${formatRp(inPeakVal)}</text>`;
+      svgContent += `<text x="${inPeakX.toFixed(1)}" y="${inLabelY.toFixed(1)}" text-anchor="${anchorFor(inPeakX)}" font-size="11" font-weight="600" class="svg-fill-green" font-family="Inter, sans-serif">${formatRp(inPeakVal)}</text>`;
     }
     if (outPeakVal > 0) {
-      svgContent += `<text x="${outPeakX.toFixed(1)}" y="${outLabelY.toFixed(1)}" text-anchor="${anchorFor(outPeakX)}" font-size="11" font-weight="600" style="fill:var(--red)" font-family="Inter, sans-serif">${formatRp(outPeakVal)}</text>`;
+      svgContent += `<text x="${outPeakX.toFixed(1)}" y="${outLabelY.toFixed(1)}" text-anchor="${anchorFor(outPeakX)}" font-size="11" font-weight="600" class="svg-fill-red" font-family="Inter, sans-serif">${formatRp(outPeakVal)}</text>`;
     }
     labelIdx.forEach(i => {
       const anchor = i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle');
-      svgContent += `<text x="${xAt(i).toFixed(1)}" y="${H - 6}" text-anchor="${anchor}" font-size="9" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${dayShortLabel(days[i])}</text>`;
+      svgContent += `<text x="${xAt(i).toFixed(1)}" y="${H - 6}" text-anchor="${anchor}" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${dayShortLabel(days[i])}</text>`;
     });
     svgContent += `</g>`;
     svgContent += tooltipGroupSvgMulti('laporan-trend-chart', 2);
@@ -294,6 +373,7 @@
 
     const range = getLaporanRange(data);
     labelEl.textContent = laporanPeriodLabel(range);
+    renderLaporanPrintHead(data, labelEl.textContent);
 
     renderLaporanFilters(data);
 
@@ -314,7 +394,7 @@
     $('laporan-total-out').textContent = formatRp(totalOut);
     const netEl = $('laporan-net');
     netEl.textContent = formatRp(net);
-    netEl.style.color = net < 0 ? 'var(--red)' : 'var(--green)';
+    netEl.style.color = net < 0 ? 'var(--red-ink)' : 'var(--green-ink)';
     const debtNoteEl = $('laporan-debt-note');
     if (debtNoteEl) {
       const fl = debtFlowsOf(data, txns);
@@ -326,8 +406,9 @@
     }
 
     renderLaporanTrendChart(range, masukTxns, keluarTxns);
-    renderLaporanCatBreakdown('laporan-cat-masuk-list', masukTxns, totalIn, '--green');
-    renderLaporanCatBreakdown('laporan-cat-keluar-list', keluarTxns, totalOut, '--red');
+    renderLaporanCatCard('laporan-cat-masuk-list', 'masuk', masukTxns, totalIn, '--green', 'Pemasukan per kategori');
+    renderLaporanCatCard('laporan-cat-keluar-list', 'keluar', keluarTxns, totalOut, '--red', 'Pengeluaran per kategori');
+    renderLaporanTagCard(masukTxns.concat(keluarTxns));
 
     const biggestLabelEl = $('laporan-biggest-expense-label');
     const biggestAmountEl = $('laporan-biggest-expense-amount');
