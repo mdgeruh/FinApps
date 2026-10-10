@@ -51,7 +51,7 @@
 
   async function exportJson() {
     const data = loadData();
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '-' + nowTimeStr() + '.json';
 
@@ -71,44 +71,58 @@
     } catch (e) { showIoMsg('Gagal membuat file export.', 'error'); }
   }
 
-  function csvEscape(v) {
-    const s = String(v === undefined || v === null ? '' : v);
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  // ---------- CSV ----------
+  // Format untuk Excel/Google Sheets berlokal Indonesia: pemisah titik koma, desimal koma, UTF-8 + BOM.
+  // Sel teks yang diawali = + - @ (atau tab/CR) diberi apostrof di depan supaya tidak dijalankan sebagai rumus (CSV injection).
+  const CSV_SEP = ';';
+  function csvCell(v) {
+    if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 100) / 100).replace('.', ',') : '';
+    let s = String(v === undefined || v === null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function csvBuild(header, rows) {
+    return '﻿' + [header, ...rows].map(r => r.map(csvCell).join(CSV_SEP)).join('\r\n');
+  }
+  const CSV_TYPE_LABEL = { masuk: 'Masuk', keluar: 'Keluar', transfer: 'Transfer' };
+  // txns: daftar transaksi yang diekspor (urut tanggal naik, lalu urutan asli)
+  function buildTxnCsv(data, txns) {
+    const accName = id => (data.accounts.find(a => a.id === id) || {}).name || '';
+    const rows = txns.map((t, i) => [t, i]).sort((a, b) => (a[0].date < b[0].date ? -1 : a[0].date > b[0].date ? 1 : a[1] - b[1])).map(([t]) => [
+      t.date, CSV_TYPE_LABEL[t.type] || 'Transfer', t.category || '', t.desc || '', t.amount, accName(t.accountId), t.type === 'transfer' ? accName(t.toAccountId) : '', txnTags(t).join(', ')
+    ]);
+    return csvBuild(['Tanggal', 'Jenis', 'Kategori', 'Deskripsi', 'Jumlah', 'Akun', 'Akun Tujuan', 'Label'], rows);
+  }
+  function buildAccountsCsv(data) {
+    const rows = data.accounts.map(a => [a.name, TYPE_LABELS[a.type] || a.type, accountBalance(data, a.id), a.archived ? 'Diarsipkan' : 'Aktif', typeof a.limit === 'number' ? a.limit : '']);
+    return csvBuild(['Akun', 'Jenis', 'Saldo', 'Status', 'Limit'], rows);
   }
 
-  async function exportCsv() {
-    const data = loadData();
-    const accName = id => (data.accounts.find(a => a.id === id) || {}).name || '';
-    const header = ['Tanggal', 'Jenis', 'Kategori', 'Deskripsi', 'Jumlah', 'Akun', 'Akun Tujuan'];
-    const rows = data.txns
-      .slice()
-      .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0)
-      .map(t => [
-        t.date,
-        t.type === 'masuk' ? 'Masuk' : t.type === 'keluar' ? 'Keluar' : 'Transfer',
-        t.category || '',
-        t.desc || '',
-        t.amount,
-        accName(t.accountId),
-        t.type === 'transfer' ? accName(t.toAccountId) : ''
-      ]);
-    // BOM di depan supaya Excel baca sebagai UTF-8 (biar "Rp" dan karakter lain tidak berantakan).
-    const csv = '\ufeff' + [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
-    const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '.csv';
-
+  // Simpan teks sebagai berkas: lewat kapabilitas unduhan bila ada, jika tidak lewat tautan unduh
+  async function saveTextFile(filename, text, mime, okMsg, msgId) {
     if (downloadsCap) {
-      try { await downloadsCap.save({ filename, data: csv }); showIoMsg('File CSV siap disimpan.', 'ok'); return; }
+      try { await downloadsCap.save({ filename, data: text }); showIoMsg(okMsg + ' siap disimpan.', 'ok', msgId); return true; }
       catch (e) { /* fall through */ }
     }
     try {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const blob = new Blob([text], { type: mime });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = filename;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showIoMsg('File CSV diunduh.', 'ok');
-    } catch (e) { showIoMsg('Gagal membuat file export.', 'error'); }
+      showIoMsg(okMsg + ' diunduh.', 'ok', msgId);
+      return true;
+    } catch (e) { showIoMsg('Gagal membuat file export.', 'error', msgId); return false; }
+  }
+
+  async function exportCsv() {
+    const data = loadData();
+    await saveTextFile('keuangan-' + exportUserPrefix() + '-' + todayStr() + '.csv', buildTxnCsv(data, data.txns), 'text/csv;charset=utf-8', 'File CSV transaksi');
+  }
+  async function exportAccountsCsv() {
+    const data = loadData();
+    await saveTextFile('akun-' + exportUserPrefix() + '-' + todayStr() + '.csv', buildAccountsCsv(data), 'text/csv;charset=utf-8', 'File CSV akun');
   }
 
   // ---------- Helper bersama: bangun objek akun & transaksi dari file import ----------
@@ -185,6 +199,7 @@
       ...(type === 'transfer' && Array.isArray(t.planPaymentIds) && t.planPaymentIds.length ? { planPaymentIds: t.planPaymentIds.map(cleanPlanId).filter(Boolean) } : {}),
       ...(type === 'transfer' && t.planPaymentThrough && typeof t.planPaymentThrough === 'object' ? { planPaymentThrough: Object.fromEntries(Object.entries(t.planPaymentThrough).map(([pid, no]) => [cleanPlanId(pid), no]).filter(([pid]) => pid)) } : {}),
       ...(typeof t.category === 'string' && t.category ? { category: t.category } : {}),
+      ...(sanitizeTags(t.tags).length ? { tags: sanitizeTags(t.tags) } : {}),
       ...(type === 'keluar' && t.loanId !== undefined && idMap[t.loanId] ? { loanId: idMap[t.loanId] } : {}),
       ...(type === 'keluar' && cleanPlanId(t.planId) ? { planId: cleanPlanId(t.planId) } : {}),
       ...(type === 'keluar' && (t.method === 'nanti' || t.method === 'cicilan') ? { method: t.method } : {})
@@ -247,6 +262,7 @@
           mergeImportedBudgets(data, parsed);
           mergeImportedSubscriptions(data, parsed, idMap);
           mergeImportedEmergency(data, parsed);
+          mergeImportedGoals(data, parsed, idMap);
           saveData(data);
           render();
           showIoMsg(`${newAccountsCount} akun baru ditambahkan.`, 'ok');
@@ -291,6 +307,7 @@
         mergeImportedBudgets(data, parsed);
         mergeImportedSubscriptions(data, parsed, idMap);
         mergeImportedEmergency(data, parsed);
+        mergeImportedGoals(data, parsed, idMap);
         saveData(data);
         runRecurringFees();
         render();
@@ -486,7 +503,7 @@
   }
 
   async function autoBackupBeforeReset(data) {
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals) };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-backup-sebelum-reset-' + exportUserPrefix() + '-' + todayStr() + '-' + Date.now() + '.json';
     if (downloadsCap) {
@@ -539,7 +556,8 @@
 
         const backupOk = await autoBackupBeforeReset(loadData());
 
-        saveData({ accounts: cleanAccounts, txns: cleanTxns, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)), emergencyMonths: sanitizeEmergencyMonths(parsed && !Array.isArray(parsed) ? parsed.emergencyMonths : 0) });
+        const goalsHolder = { accounts: cleanAccounts, goals: [] }; mergeImportedGoals(goalsHolder, parsed, idMap);
+        saveData({ accounts: cleanAccounts, txns: cleanTxns, goals: goalsHolder.goals, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)), emergencyMonths: sanitizeEmergencyMonths(parsed && !Array.isArray(parsed) ? parsed.emergencyMonths : 0) });
         state.activeFilter = 'all';
         state.activeTypeFilter = 'all';
         state.sortMode = 'date-desc';

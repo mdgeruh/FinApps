@@ -66,20 +66,20 @@
     const stat = (label, val, color) => `<div><div class="acc-sub" style="margin:0;">${label}</div><strong style="font-size:13.5px; font-variant-numeric:tabular-nums;${color ? ' color:' + color + ';' : ''}">${val}</strong></div>`;
     let body = `<div class="type-toggle no-print" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin:6px 0 4px;">${btn(30)}${btn(60)}</div>` +
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:8px 0 10px; border-bottom:1px solid var(--line);">' +
-      stat('Saldo sekarang', formatRp(liquid), liquid < 0 ? 'var(--red)' : '') +
-      stat('Tagihan & angsuran ' + horizon + ' hr', formatRp(totalOut), totalOut > 0 ? 'var(--red)' : '') +
-      stat('Setelah dibayar semua', formatRp(liquid - totalOut), liquid - totalOut < 0 ? 'var(--red)' : 'var(--green)') +
-      (events.length ? stat('Terendah (' + escapeHtml(fmtTgl(minDate)) + ')', formatRp(minBal), minBal < 0 ? 'var(--red)' : '') : '') + '</div>';
+      stat('Saldo sekarang', formatRp(liquid), liquid < 0 ? 'var(--red-ink)' : '') +
+      stat('Tagihan & angsuran ' + horizon + ' hr', formatRp(totalOut), totalOut > 0 ? 'var(--red-ink)' : '') +
+      stat('Setelah dibayar semua', formatRp(liquid - totalOut), liquid - totalOut < 0 ? 'var(--red-ink)' : 'var(--green-ink)') +
+      (events.length ? stat('Terendah (' + escapeHtml(fmtTgl(minDate)) + ')', formatRp(minBal), minBal < 0 ? 'var(--red-ink)' : '') : '') + '</div>';
     if (firstNeg) {
-      body += `<div style="border-left:3px solid var(--red); padding:6px 0 6px 10px; margin:8px 0; font-size:13px;"><strong style="color:var(--red);">Minus mulai ${escapeHtml(fmtTgl(firstNeg.date))}</strong> saat bayar ${escapeHtml(firstNeg.name)} ${formatRp(firstNeg.amount)}. Siapkan tambahan dana atau atur ulang urutan bayar.</div>`;
+      body += `<div style="border-left:3px solid var(--red); padding:6px 0 6px 10px; margin:8px 0; font-size:13px;"><strong class="u-c-red">Minus mulai ${escapeHtml(fmtTgl(firstNeg.date))}</strong> saat bayar ${escapeHtml(firstNeg.name)} ${formatRp(firstNeg.amount)}. Siapkan tambahan dana atau atur ulang urutan bayar.</div>`;
     }
     if (!events.length) {
       body += '<div class="acc-sub u-mt8">Tidak ada tagihan atau angsuran jatuh tempo dalam ' + horizon + ' hari ke depan.</div>';
     } else {
       const shown = events.slice(0, 20);
       body += '<div class="acc-sub" style="margin:10px 0 0;">Urutan bayar & saldo sesudahnya</div>' + lapMore(shown.map(e => lapItem({
-        noDot: true, title: e.name + ' · ' + formatRp(e.amount), right: formatRp(e.after), rightColor: e.after < 0 ? 'var(--red)' : 'var(--ink)',
-        hint: escapeHtml(e.label) + ' · ' + (e.late ? '<span style="color:var(--red);">sudah lewat, bayar sekarang</span>' : escapeHtml(fmtTgl(e.date)))
+        noDot: true, title: e.name + ' · ' + formatRp(e.amount), right: formatRp(e.after), rightColor: e.after < 0 ? 'var(--red-ink)' : 'var(--ink)',
+        hint: escapeHtml(e.label) + ' · ' + (e.late ? '<span class="u-c-red">sudah lewat, bayar sekarang</span>' : escapeHtml(fmtTgl(e.date)))
       })), 5) + (events.length > 20 ? '<div class="acc-sub u-mt4">+' + (events.length - 20) + ' tagihan lain tidak ditampilkan.</div>' : '');
     }
     body += lapNote('Saldo = kas + bank + e-wallet. Hanya tagihan & angsuran yang sudah terjadwal; pemasukan (gaji dll.), belanja harian, dan tagihan kartu yang belum dicetak belum ikut dihitung.');
@@ -143,8 +143,8 @@
     if (!items.length) return '';
     let sumPaid = 0, sumRem = 0;
     items.forEach(i => { sumPaid += i.paid || 0; sumRem += i.remaining || 0; });
-    let body = row('Bunga & biaya sudah dibayar', formatRp(Math.round(sumPaid)), 'var(--red)') +
-      row('Bunga & biaya masih harus dibayar', formatRp(Math.round(sumRem)), sumRem > 0 ? 'var(--red)' : '') +
+    let body = row('Bunga & biaya sudah dibayar', formatRp(Math.round(sumPaid)), 'var(--red-ink)') +
+      row('Bunga & biaya masih harus dibayar', formatRp(Math.round(sumRem)), sumRem > 0 ? 'var(--red-ink)' : '') +
       row('Total biaya utang (yang bisa dihitung)', formatRp(Math.round(sumPaid + sumRem)));
     body += items.map(i => {
       const lines = [];
@@ -244,7 +244,7 @@
       const saved = i === 0 ? null : base.interest - x.r.interest;
       const faster = i === 0 || !base.finished ? null : base.months - x.r.months;
       return `<div style="padding:8px 0; border-bottom:1px solid var(--line);"><div style="font-size:13px; font-weight:600;">${x.label}</div>
-        <div class="acc-sub" style="margin-top:2px;">Bebas utang: <strong>${mLabel(x.r)}</strong> · bunga tambahan ${formatRp(x.r.interest)}${saved !== null && saved > 0 ? ' · <span style="color:var(--green);">hemat ' + formatRp(saved) + '</span>' : ''}${faster !== null && faster > 0 ? ' · <span style="color:var(--green);">' + faster + ' bln lebih cepat</span>' : ''}</div></div>`;
+        <div class="acc-sub" style="margin-top:2px;">Bebas utang: <strong>${mLabel(x.r)}</strong> · bunga tambahan ${formatRp(x.r.interest)}${saved !== null && saved > 0 ? ' · <span style="color:var(--green-ink);">hemat ' + formatRp(saved) + '</span>' : ''}${faster !== null && faster > 0 ? ' · <span style="color:var(--green-ink);">' + faster + ' bln lebih cepat</span>' : ''}</div></div>`;
     }).join('');
     const notes = ['Tanpa ekstra: kartu bayar minimum, lainnya sesuai angsuran. Skenario ekstra: cicilan yang sudah lunas digulung ke utang lain, ditambah dana ekstra tiap bulan.'];
     if (debts.some(d => d.flat)) notes.push('Bunga pinjaman flat (pinjol, dll.) sudah terkunci di saldo, jadi bayar lebih awal tidak menghemat bunga di simulasi ini. Manfaatnya: cicilan yang lunas bisa digulung ke utang lain.');
@@ -277,7 +277,7 @@
     const shown = state.laporanSimExtra != null ? state.laporanSimExtra : (() => { const inc = laporanMonthlyIncome(data); return inc > 0 ? Math.round(inc * 0.1 / 50000) * 50000 : 500000; })();
     return card('Simulasi pelunasan',
       '<div class="acc-sub" style="margin:4px 0 6px;">Dana ekstra per bulan (Rp), di luar cicilan wajib</div>' +
-      `<div class="field-row no-print u-mb8"><input type="number" id="laporan-sim-extra" value="${shown}" inputmode="numeric" min="0" step="50000" data-input-act="onLaporanSimInput" aria-label="Dana ekstra per bulan untuk bayar utang" style="width:100%;"></div>` +
+      `<div class="field-row no-print u-mb8"><input type="number" data-money="int" id="laporan-sim-extra" value="${shown}" inputmode="numeric" min="0" step="50000" data-input-act="onLaporanSimInput" aria-label="Dana ekstra per bulan untuk bayar utang" style="width:100%;"></div>` +
       '<div id="laporan-sim-result">' + laporanSimResultHtml(data, balances) + '</div>');
   }
 
@@ -297,8 +297,8 @@
     keluarTxns.forEach(t => { byDay[t.date] = (byDay[t.date] || 0) + t.amount; });
     const worst = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0];
     html += card('Ringkasan periode',
-      row('Rasio tabungan (sisa dari pemasukan)', saveRate === null ? '—' : saveRate + '%', saveRate !== null && saveRate < 0 ? 'var(--red)' : (saveRate !== null ? 'var(--green)' : '')) +
-      row('Rata-rata pemasukan/hari', formatRp(Math.round(totalIn / dayCount)), 'var(--green)') +
+      row('Rasio tabungan (sisa dari pemasukan)', saveRate === null ? '—' : saveRate + '%', saveRate !== null && saveRate < 0 ? 'var(--red-ink)' : (saveRate !== null ? 'var(--green-ink)' : '')) +
+      row('Rata-rata pemasukan/hari', formatRp(Math.round(totalIn / dayCount)), 'var(--green-ink)') +
       row('Hari terboros', worst ? escapeHtml(fmtTgl(worst[0])) + ' · ' + formatRp(worst[1]) : '—') +
       row('Jumlah transaksi', masukTxns.length + keluarTxns.length + ' (' + masukTxns.length + ' masuk, ' + keluarTxns.length + ' keluar)'));
 
@@ -319,12 +319,12 @@
         if (pct === 0) return '0%';
         return (pct > 0 ? '▲ ' : '▼ ') + Math.abs(pct) + '%';
       };
-      const deltaColor = (cur, prev, upGood) => { if (prev <= 0 || cur === prev) return ''; return ((cur > prev) === upGood) ? 'var(--green)' : 'var(--red)'; };
+      const deltaColor = (cur, prev, upGood) => { if (prev <= 0 || cur === prev) return ''; return ((cur > prev) === upGood) ? 'var(--green-ink)' : 'var(--red-ink)'; };
       html += card('Dibanding periode sebelumnya',
         `<div class="acc-sub u-mb4">${escapeHtml(fmtTgl(prevStart))} – ${escapeHtml(fmtTgl(prevEnd))}</div>` +
         row('Pemasukan', formatRp(totalIn) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn) + ')</span> ' + delta(totalIn, pIn, true), deltaColor(totalIn, pIn, true)) +
         row('Pengeluaran', formatRp(totalOut) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pOut) + ')</span> ' + delta(totalOut, pOut, false), deltaColor(totalOut, pOut, false)) +
-        row('Selisih (laba bersih)', formatRp(net) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn - pOut) + ')</span>', net >= (pIn - pOut) ? 'var(--green)' : 'var(--red)'));
+        row('Selisih (laba bersih)', formatRp(net) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn - pOut) + ')</span>', net >= (pIn - pOut) ? 'var(--green-ink)' : 'var(--red-ink)'));
     }
 
     // 3. Beban utang di periode ini
@@ -338,7 +338,7 @@
       html += card('Pembayaran utang',
         (flows.disbursed > 0 ? row('Pencairan pinjaman (bukan pemasukan)', formatRp(flows.disbursed)) : '') +
         row('Angsuran pokok / bayar tagihan', formatRp(pokokPaid)) +
-        row('Bunga & biaya bank', formatRp(bungaPaid), 'var(--red)') +
+        row('Bunga & biaya bank', formatRp(bungaPaid), 'var(--red-ink)') +
         row('Total keluar untuk utang', formatRp(totalBayar)) +
         row('Porsi terhadap pemasukan', totalIn > 0 ? Math.round((totalBayar / totalIn) * 100) + '%' : '—'));
     }
@@ -360,10 +360,10 @@
     });
     const kekayaan = aset - utang;
     html += card('Posisi saat ini (semua akun)',
-      row('Total aset', formatRp(aset), 'var(--green)') +
-      row('Total utang (sisa pokok)', formatRp(utang), utang > 0 ? 'var(--red)' : '') +
+      row('Total aset', formatRp(aset), 'var(--green-ink)') +
+      row('Total utang (sisa pokok)', formatRp(utang), utang > 0 ? 'var(--red-ink)' : '') +
       (sisaBunga > 0 ? row('Sisa bunga kontrak (belum jatuh tempo)', formatRp(sisaBunga)) : '') +
-      row('Kekayaan bersih', formatRp(kekayaan), kekayaan < 0 ? 'var(--red)' : 'var(--green)'));
+      row('Kekayaan bersih', formatRp(kekayaan), kekayaan < 0 ? 'var(--red-ink)' : 'var(--green-ink)'));
 
     // 4b. Rincian utang per jenis (kartu kredit, PayLater, pinjol, pinjaman bank) + saran
     const debtAn = laporanDebtAnalysis(data, balances);
@@ -378,7 +378,7 @@
       html += card('5 pengeluaran terbesar', top.map(t => `
         <div style="display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px;">
           <div style="min-width:0;"><div style="font-weight:600;">${escapeHtml(t.desc || t.category || 'Transaksi')}</div><div class="acc-sub">${escapeHtml((t.category || 'Tanpa kategori') + ' · ' + fmtTgl(t.date))}</div></div>
-          <strong style="color:var(--red); font-variant-numeric:tabular-nums; white-space:nowrap;">${formatRp(t.amount)}</strong>
+          <strong style="color:var(--red-ink); font-variant-numeric:tabular-nums; white-space:nowrap;">${formatRp(t.amount)}</strong>
         </div>`).join(''));
     }
 

@@ -69,7 +69,7 @@
       list.innerHTML = '<div class="acc-sub">Belum ada anggaran. Atur batas bulanan per kategori untuk memantau pengeluaran.</div>';
       return;
     }
-    const color = { ok: 'var(--green)', warn: 'var(--amber)', over: 'var(--red)' };
+    const color = { ok: 'var(--green-ink)', warn: 'var(--amber-ink)', over: 'var(--red-ink)' };
     list.innerHTML = items.map(it => {
       const w = Math.min(100, it.pct);
       const note = it.status === 'over' ? 'Lebih ' + formatRp(it.spent - it.limit) : 'Sisa ' + formatRp(it.limit - it.spent);
@@ -85,7 +85,7 @@
     const budgets = sanitizeBudgets(loadData().budgets);
     $('budget-form-list').innerHTML = budgetCategories().map((c, i) =>
       `<label class="budget-field"><span class="field-label">${escapeHtml(c)}</span>
-        <input type="number" inputmode="numeric" min="0" step="1" placeholder="Tanpa batas" data-budget-cat="${escapeHtml(c)}" value="${budgets[c] !== undefined ? budgets[c] : ''}" aria-label="Anggaran ${escapeHtml(c)}"></label>`).join('');
+        <input type="number" data-money="int" inputmode="numeric" min="0" step="1" placeholder="Tanpa batas" data-budget-cat="${escapeHtml(c)}" value="${budgets[c] !== undefined ? budgets[c] : ''}" aria-label="Anggaran ${escapeHtml(c)}"></label>`).join('');
     $('budget-form').classList.add('open');
   }
   function closeBudgetForm() { $('budget-form').classList.remove('open'); }

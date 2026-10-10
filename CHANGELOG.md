@@ -6,6 +6,168 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.121 — 9 Okt 2026
+
+**Baru: label (tag) transaksi** (`03b-label.js`, `04c-akun-aset-tagihan.js`, `03-form-transaksi.js`, `12-render-utama.js`, `07-render-akun-transaksi.js`, `02-navigasi.js`, `11-laporan.js`, `13-import-export.js`, `index.html`, `style.css`, `sw.js`)
+- **Form transaksi:** kolom "Label" (pisahkan koma, boleh kosong) dan chip saran dari label yang sudah pernah dipakai (ketuk untuk pasang/lepas). Maksimal 5 label per transaksi, 24 huruf; `#`, koma, titik koma dibuang; "Kebun" dan "kebun" dianggap sama.
+- **Daftar dan detail:** `#label` tampil di baris transaksi dan di detail. Tab Transaksi: baris chip **filter label** (muncul kalau ada label; ketuk lagi untuk melepas; ikut "Reset filter"), dan kolom cari kini mencocokkan label juga.
+- **Laporan:** kartu **Per label** (total pengeluaran dan pemasukan per label di periode dan filter akun yang sedang dilihat; transfer tidak dihitung; transaksi berlabel ganda dihitung di tiap label).
+- **CSV:** kolom baru `Label` di paling kanan. **JSON:** label ikut ekspor, dan impor (gabung maupun ganti semua) menjaga label yang valid.
+- 34 file JS. 5 test baru (247 total); tes CSV lama disesuaikan dengan kolom baru. Diuji di browser (form + saran, simpan, filter, cari `#bibit`, Laporan).
+
+## v1.1.120 — 9 Okt 2026
+
+**Baru: target tabungan** (`10k-target.js`, `index.html`, `09-grafik.js`, `02-navigasi.js`, `10j-perhatian.js`, `13-import-export.js`, `06-util-ui.js`, `style.css`, `sw.js`)
+- **Kartu "Target tabungan" di Ringkasan** (tersembunyi otomatis sampai ada target, ikut daftar kartu yang bisa disembunyikan/diurutkan, dan ajakan di kartu "Atur rencana keuanganmu"). Tiap target: bilah progres, terkumpul/target, persen, dan saran **setoran per bulan** (sisa ÷ sisa bulan kalender, dibulatkan ke atas Rp1.000); status Tercapai (hijau) atau Lewat tenggat (merah).
+- **Sumber dana:** saldo satu akun kas/bank/e-wallet (terkumpul ikut saldo, minimal 0), atau **catatan manual** dengan tombol **Setor** (hanya menambah angka terkumpul, tidak membuat transaksi).
+- Form kelola: tambah target (nama, nominal, tenggat, sumber, terkumpul awal), hapus. Tenggat sebelum hari ini ditolak; maksimal 30 target.
+- **Ekspor/impor JSON** memuat `goals`: gabung melewati target yang sama (nama + nominal), akun dipetakan, akun yang tak dikenal jadi manual; impor "ganti semua" ikut memulihkan target.
+- 33 file JS. 5 test baru (242 total); diuji di browser (tambah target terhubung akun dan manual, setoran lewat Enter, kartu dan form).
+
+## v1.1.119 — 8 Okt 2026
+
+**Baru: kalkulator di kolom nominal** (`06c-kalkulator.js`, `06-util-ui.js`, `index.html`, `style.css`, `sw.js`)
+- **Rumus langsung di kolom:** ketik `25000+15000*2`, `150000/3`, `(1000+500)*2` atau `200000+10%` (persen = persen dari angka di kirinya untuk + dan −). Nilai kolom asli ikut hasil sementara (form tetap bisa disimpan tanpa pindah kolom); saat Enter atau pindah kolom, isi kolom jadi hasil. Rumus rusak/bagi nol: kolom bergaris merah (`aria-invalid`) dan nilai dikosongkan.
+- **Papan kalkulator:** di bawah kolom nominal yang fokus muncul hasil sementara ("= 55.000") dan tombol **Kalkulator** yang membuka papan hitung layar (C, ⌫, %, ÷, ×, −, +, 000, koma, =) plus **Pakai hasil**; untuk HP yang papan angkanya tidak punya tanda operasi. Mulai dari nilai kolom saat ini (angka pertama yang diketik menggantikan, operator melanjutkan). Papan ketik fisik didukung.
+- Aturan kolom tetap berlaku: titik = ribuan, koma = desimal; kolom tanpa desimal membulatkan hasil, kolom tanpa minus menolak hasil negatif, batas < 1e13. Parser sendiri (tanpa `eval`/`Function`).
+- 32 file JS. 6 test baru (237 total); diuji di browser (rumus, Enter, persen, rumus rusak, papan, Pakai hasil, papan ketik).
+
+## v1.1.118 — 8 Okt 2026
+
+**Ekspor CSV disempurnakan** (`13-import-export.js`, `11-laporan.js`, `index.html`)
+- Format CSV kini cocok untuk Excel/Google Sheets berlokal Indonesia: pemisah titik koma (`;`), desimal koma, UTF-8 dengan BOM. Sebelumnya pemisah koma membuat Excel Indonesia menaruh semuanya di satu kolom.
+- Perlindungan CSV injection: sel teks (deskripsi, kategori, nama akun) yang diawali `=`, `+`, `-`, `@` atau tab diberi apostrof di depan supaya tidak dijalankan sebagai rumus.
+- Baru: tombol **Unduh CSV (periode ini)** di tab Laporan: transaksi sesuai periode dan filter akun yang sedang dilihat (memakai penyaring yang sama dengan cetak: `laporanTxns`). Baru: **Export CSV akun** (nama, jenis, saldo, status aktif/diarsipkan, limit) di Profil → Pengaturan data lanjutan; tombol lama jadi "Export CSV transaksi".
+- Pengurutan stabil (tanggal, lalu urutan asli); pembangun CSV bersama (`csvCell`, `csvBuild`, `buildTxnCsv`, `buildAccountsCsv`, `saveTextFile`).
+- 5 test baru (231 total); unduhan ketiganya diverifikasi di browser.
+
+## v1.1.117 — 8 Okt 2026
+
+**Baru: pemasukan berulang (transaksi berulang)** (`10c-langganan.js`, `index.html`, `06-util-ui.js`, `09-grafik.js`, `01-data.js`, `style.css`)
+- Langganan kini bisa berupa **Pemasukan** (gaji, sewa diterima, dll.): data langganan mendapat field `type` ('keluar' bawaan | 'masuk') dan `category`. Transaksi dibuat otomatis tiap bulan pada tanggalnya dengan jenis dan kategori itu, ID deterministik `sub-<id>-<YYYY-MM>` (dua perangkat tidak menggandakan), bulan terlewat dikejar maks. 12 bulan, idempoten.
+- Form "Transaksi berulang": pilihan Jenis, Kategori (daftar menyesuaikan jenis; "Penyesuaian saldo" dikecualikan), akun (pemasukan hanya kas/bank/e-wallet), dan label ikut berubah (Masuk ke akun, Nama pemasukan, Tanggal diterima). Kartu Ringkasan menampilkan "Keluar …/bulan · Masuk …/bulan", pemasukan berwarna hijau dengan tanda +.
+- Kompatibel: data lama tanpa `type`/`category` otomatis jadi pengeluaran "Tagihan & langganan"; ekspor/impor/sinkron membawa field baru; impor tidak menganggap pemasukan dan pengeluaran bernama sama sebagai duplikat.
+- 7 test baru (226 total); form diuji di browser (tambah gaji berulang, total kartu).
+
+## v1.1.116 — 8 Okt 2026
+
+**Baru: kunci app (PIN)** (`06b-kunci.js`, `index.html`, `style.css`, `15-startup.js`, `sw.js`)
+- Tab Profil → "Kunci app": Aktifkan PIN (6 angka, diketik dua kali), Ubah PIN (minta PIN lama), Matikan PIN (minta PIN), Kunci sekarang. Layar kunci dengan papan angka kustom (tanpa input bawaan browser), bisa juga lewat papan ketik fisik; terkunci saat app dibuka dan saat kembali dari latar lebih dari 1 menit. Isi halaman disembunyikan dari pembaca layar dan urutan tab saat terkunci.
+- PIN disimpan sebagai hash PBKDF2-SHA256 (100.000 putaran, salt acak) di `localStorage` perangkat ini; tidak ikut ekspor, backup, atau sinkron. Cadangan hash sederhana bila Web Crypto tidak tersedia.
+- Salah PIN: tiap kelipatan 5 kali berturut-turut, jeda 30 detik, 60, 120, … maksimal 15 menit (hitung mundur tampil; tetap berlaku walau app dimuat ulang).
+- Lupa PIN: hanya lewat reset, yang menghapus data perangkat ini dan mematikan kunci, tanpa backup otomatis (agar data tidak bisa diambil tanpa PIN); dengan konfirmasi jelas, dan data bisa dipulihkan dari akun sinkron atau file backup.
+- Catatan: ini penghalang akses sekilas, bukan enkripsi data (dijelaskan di layar Profil).
+- 31 file JS. 4 test baru (219 total; verifikasi hash dijalankan di proses terpisah agar benar-benar menunggu hasil async); alur aktifkan, kunci, salah, jeda 5x, ubah, keyboard fisik, dan Lupa PIN diuji di browser.
+
+## v1.1.115 — 8 Okt 2026
+
+**Rute web: tombol Kembali menutup form/sheet** (`02b-rute.js`)
+- Setiap sheet/form yang terbuka (transaksi, akun, titipan, anggaran, langganan, dana darurat, rincian, dll.) menambah satu entri riwayat dengan alamat yang sama; Kembali di browser/HP menutup sheet paling atas alih-alih keluar dari app. Ditutup lewat tombol/latar: mundur satu entri (riwayat tidak menumpuk). Bila penutupan ditolak (mis. konfirmasi buang perubahan), entri dikembalikan.
+- Detail akun yang ditutup lalu langsung membuka form (mis. "Catat pengeluaran" dari detail): penutupan riwayatnya ditunda satu putaran agar form yang baru dibuka tidak ikut tertutup; Kembali dari form kembali ke detail akun, Kembali lagi menutup detail.
+- Diuji di browser sungguhan (form dari tab Akun/Ringkasan, tutup lewat tombol, detail + form bertumpuk).
+
+## v1.1.114 — 8 Okt 2026
+
+**Baru: rute web** (`02b-rute.js`, `02-navigasi.js`, `04b-akun-detail.js`, `15-startup.js`, `index.html`, `sw.js`)
+- Alamat browser mengikuti layar: `#/ringkasan`, `#/akun`, `#/transaksi`, `#/titipan`, `#/tagihan`, `#/laporan`, `#/profil`, dan `#/akun/<id>` untuk detail akun. Judul tab browser ikut berubah (mis. "Akun · Keuangan Pribadi", "BCA · Keuangan Pribadi").
+- Tombol Kembali/Maju (browser dan HP) pindah tab sebelumnya dan menutup/membuka detail akun; menutup detail lewat tombol atau latar mundur satu langkah riwayat (tidak menumpuk entri). Membuka tautan langsung (`index.html#/laporan`, atau detail akun) langsung ke layar itu; akun tak ada dialihkan ke `#/akun`, alamat tak dikenal ke `#/ringkasan`; mengubah hash manual juga diterapkan.
+- Memakai hash supaya jalan di hosting statis tanpa pengaturan server, file:// dan PWA. API history dibungkus try/catch: bila diblokir (mis. tampilan tertanam) app tetap jalan tanpa rute.
+- 30 file JS (sebelumnya 29). 3 test baru (215 total); alur Kembali/Maju/deep link diuji di browser sungguhan.
+
+## v1.1.113 — 7 Okt 2026
+
+**Aksesibilitas: kontras teks (WCAG AA 4,5:1)** (`style.css`, `11b-laporan-utang.js`, `11c-laporan-proyeksi.js`, `11-laporan.js`, `07-render-akun-transaksi.js`, dll.)
+- Audit otomatis kontras di 5 tab (terang dan gelap): mode gelap sudah lolos; mode terang punya teks merah (3,9:1), hijau (3,4:1), teal label menu aktif (2,3:1), kuning (2,9:1), oranye "Reset & ganti data" (2,6:1), dan teks tombol cetak (2,2:1).
+- Variabel baru `--red-ink`, `--green-ink`, `--teal-ink`, `--blue-ink`, `--amber-ink`, `--rust-ink` khusus teks (mode gelap = warna dasar, tidak berubah). Semua `color: var(--warna)` di CSS, template JS, dan `index.html` dialihkan; isi grafik, batang, dan titik tetap warna dasar. `--ink-soft` terang diperdalam #5B6B65 → #52625C. Tombol cetak memakai latar `--teal-ink`.
+- Hasil: 0 teks di bawah 4,5:1 di kedua tema. 1 test baru (212 total).
+
+## v1.1.112 — 7 Okt 2026
+
+**Aksesibilitas: target sentuh tombol teks kecil** (`style.css`)
+- Audit otomatis di 5 tab (tombol/isian tanpa nama atau label, gambar tanpa alt, bahasa halaman, reduced-motion, focus-visible) bersih kecuali satu: tombol "Atur urutan" di tab Akun setinggi 19 px. `.see-all-btn` kini minimal 24 px (WCAG 2.2, 2.5.8).
+
+## v1.1.111 — 7 Okt 2026
+
+**Baru: build sebar `dist/` (E8)** (`tools/build-dist.js`, `tests/run.js`)
+- `node tools/build-dist.js [folder]` menggabung 29 file JS jadi satu `app.js`, memadatkan CSS (52 → 41 KB), menyesuaikan `index.html` (satu tag script dengan `?v=<versi>`) dan daftar cache `sw.js`. JS diperkecil bila `terser` terpasang (tanpa mangle, karena handler dipanggil lewat nama global dari `data-act`); tanpanya hanya digabung.
+- Dicek di browser: `src` vs `dist` identik piksel di tab Beranda, Transaksi, Akun, Laporan, tanpa galat konsol.
+- 1 test baru (211 total).
+
+## v1.1.110 — 7 Okt 2026
+
+**Dirapikan: gaya inline grafik** (`09-grafik.js`, `10f-tren-utang.js`, `11-laporan.js`, `10j-perhatian.js`, `11c-laporan-proyeksi.js`, `08-render-titipan.js`, `index.html`, `style.css`)
+- 23 atribut `style=""` (isi fill/stroke SVG, warna merah/hijau) diganti kelas `svg-fill-soft`, `svg-stroke-line`, `svg-fill-red`, `svg-fill-green`, `u-bg-green`, `u-c-red`. Tampilan sama (diverifikasi warna terhitung di browser); sisa `style=""` inline: 269.
+
+## v1.1.109 — 7 Okt 2026
+
+**Diubah: cetak laporan tanpa kurva tren** (`index.html`, `style.css`)
+- Kartu "Tren alur kas" diberi `no-print`: kurva tetap tampil di layar tetapi tidak ikut tercetak/PDF. Aturan urutan dan cetak khusus kurva dihapus.
+- Bagian pendek di laporan cetak tidak dipotong antar halaman (`break-inside: avoid`); hanya bagian berisi daftar akun yang boleh berlanjut. Catatan: judul "Ringkasan periode" masih bisa tertinggal di dasar halaman 1 pada data tertentu (kosmetik).
+- Tes urutan cetak disesuaikan (210 total).
+
+## v1.1.108 — 7 Okt 2026
+
+**Diubah: tombol Export PDF laporan** (`index.html`, `11-laporan.js`, `style.css`)
+- Label "⬇ Export PDF" (menyesatkan: tombol sebenarnya membuka jendela cetak browser, bukan mengunduh) diganti "Cetak / simpan PDF" dengan ikon printer, plus petunjuk di bawahnya: pilih "Simpan sebagai PDF" di jendela cetak, isi mengikuti periode dan filter.
+- `exportLaporanPdf`: tidak mencetak kalau periode/akun terpilih tidak punya transaksi (toast pesan, `laporanHasData`); nama berkas PDF mengikuti judul "Laporan Keuangan - <periode>" dengan karakter terlarang diganti (`laporanPdfTitle`); kalau cetak diblokir (mis. tampilan tertanam tanpa izin cetak) tampil toast "Cetak tidak tersedia di tampilan ini" dan judul halaman dipulihkan, bukan gagal diam-diam.
+- 1 test baru (210 total).
+
+## v1.1.107 — 7 Okt 2026
+
+**Diubah: cetak laporan tanpa kartu** (`style.css`, `@media print`)
+- Saat cetak, semua bagian laporan tampil polos: tanpa kotak, latar, bayangan, atau sudut membulat (`.chart-card`, `.cat-list`, `.acc-card`, `.list-section`). Tiap bagian dipisah judul bergaris tebal, daftar kategori memakai garis tipis antarbaris, dan kartu utang/pinjaman dipisah garis tipis di bawahnya. Tampilan di layar tidak berubah. 209 test.
+
+## v1.1.106 — 7 Okt 2026
+
+**Diubah: cetak / Export PDF laporan** (`style.css` bagian cetak, `11-laporan.js`, `index.html`)
+- **Kepala laporan** khusus cetak (`#laporan-print-head`, `renderLaporanPrintHead`): judul, periode, filter aktif (akun dan kategori) atau "Semua akun dan kategori", tanggal cetak, dan versi app. Judul halaman dan kontrol periode/filter disembunyikan saat cetak.
+- **Urutan isi:** ringkasan, tren alur kas, pemasukan/pengeluaran per kategori, baru analisis tambahan (utang, proyeksi, simulasi, saran). Sebelumnya kategori ada di halaman terakhir. Grafik tren kini ikut tercetak (sebelumnya `no-print`).
+- **Halaman:** `@page` A4 dengan margin 12 mm dan nomor halaman "n / total" di bawah; kartu boleh terpotong di antara baris, tetapi baris, judul, dan ringkasan tidak terbelah. Satu kolom saat cetak.
+- **Selalu terang di kertas** walau app dalam mode gelap (variabel warna ditimpa di `@media print`).
+- **Bilah kategori ikut tercetak** (`print-color-adjust: exact`), tetap tampil meski "background graphics" browser mati.
+- Isi `<details>` yang terlipat dibuka otomatis saat cetak (`beforeprint`) lalu dikembalikan (`afterprint`), termasuk saat menekan Ctrl+P.
+- 4 test baru (208 total). Diperiksa dengan merender PDF A4 dari Chromium pada data dummy (mode terang dan gelap).
+
+## v1.1.105 — 7 Okt 2026
+
+**Audit kontrol bawaan browser dan kode usang**
+- Hasil audit: semua 21 `<select>` dan 8 kolom tanggal sudah kustom; tidak ada `alert/confirm/prompt`, `textarea`, radio, atau tipe bulan/jam/warna. Yang masih bawaan hanya input file (disembunyikan, dibuka lewat tombol sendiri), email, dan password.
+- **Kolom angka:** tombol naik-turun bawaan browser (spinner) dimatikan dan roda mouse tidak lagi mengubah angka yang sedang fokus (`style.css`, `06-util-ui.js`).
+- **Centang** (pengaturan kartu Ringkasan) kini kotak kustom hijau, bukan centang bawaan browser.
+- **Dihapus (kode mati):** `goToAddTxn`, `toggleAccForm`, `setNetWorthPeriod`, `setCashflowPeriod` (sisa dari kartu grafik yang sudah digabung); CSS `.acc-top`, `.u-mt22`, `.u-bb-line`, `.u-fw5-fs115`, `.u-py8-ptr`, selektor `#tab-data` (tab itu sudah tidak ada), dan `-webkit-overflow-scrolling` (usang).
+- Ditambah `<meta name="mobile-web-app-capable">` (pengganti resmi tag `apple-` yang sudah ditandai usang di Chrome; tag lama dipertahankan untuk iOS).
+- Tidak diubah, dicatat: `activeAccounts` hanya dipakai test (produksi menyaring langsung); kode migrasi format transaksi lama di `loadData` dibiarkan demi data lama; 16 `!important` di CSS (sebagian besar pembatalan gaya inline, perlu perapian bertahap).
+- 4 test baru (204 total).
+
+## v1.1.104 — 3 Okt 2026
+
+**Ditambah**
+- **Titik pemisah ribuan otomatis di kolom nominal Rupiah** (ketik 1000000 jadi 1.000.000). `enhanceMoney` di `06-util-ui.js`, pola sama dengan `enhanceSelect`/`enhanceDate`: input asli `type="number"` tetap menjadi sumber nilai (angka murni, mis. `1500000` atau `16250.5`) tetapi disembunyikan; kolom teks di sampingnya hanya tampilan. Kode lain tidak berubah: `.value`, `.placeholder`, `.disabled`, `.focus()` pada input asli diteruskan, dan event `input`/`change` diteruskan ke input asli.
+- Diaktifkan lewat atribut `data-money` (`dec` = boleh desimal dengan koma, `neg` = boleh minus). Terpasang di 15 kolom statis (jumlah transaksi, saldo awal, limit, pokok awal, angsuran, biaya admin, materai, tabungan wajib, nominal langganan, bayar pinjaman, titipan, admin cicilan PayLater, harga/nilai aset, saldo asli rekonsiliasi) dan kolom dinamis (isian anggaran per kategori, dana ekstra simulasi pelunasan, lewat `MutationObserver`).
+- Posisi kursor dijaga saat mengetik di tengah angka; titik yang ditempel dianggap pemisah ribuan. Kolom persen, tanggal, tenor, dan jumlah unit tidak diubah.
+- 4 test baru (200 total), termasuk penjaga agar kolom Rupiah baru tidak lupa diberi `data-money`.
+
+## v1.1.103 — 3 Okt 2026
+
+**Diubah**
+- **Laporan: dua kartu, Pemasukan dan Pengeluaran, masing-masing berisi daftar kategorinya** (`renderLaporanCatCard`, `11-laporan.js`; wadah `#laporan-cat-masuk-list` dan `#laporan-cat-keluar-list`). Kepala kartu memuat judul dan total, lalu baris kategori (nama, jumlah transaksi, nominal, persen, bilah). Menggantikan daftar gabungan satu-kartu-per-kategori dari v1.1.102 yang salah dipahami. Lipat "Lihat N kategori lainnya" untuk lebih dari 6 kategori dan ketuk-untuk-filter dikembalikan; di layar lebar kedua kartu berdampingan.
+- `mergeCategorySummaries` dan `renderLaporanCatCombined` dihapus. 196 test.
+
+## v1.1.102 — 3 Okt 2026
+
+**Diubah**
+- **Laporan: pemasukan dan pengeluaran per kategori digabung dalam satu daftar, satu kartu per kategori** (`renderLaporanCatCombined`, `mergeCategorySummaries` di `11-laporan.js`; satu wadah `#laporan-cat-list` menggantikan dua daftar). Kartu memuat baris Pemasukan (hijau) dan/atau Pengeluaran (merah) untuk kategori itu, jadi kategori yang ada di keduanya (mis. "Lainnya") tampil dalam satu kartu. Urutan menurut volume terbesar; lebih dari 6 kategori dilipat ("Lihat N kategori lainnya", semua tampil saat Export PDF). Di layar lebar kartu tersusun dua kolom.
+- Ketuk-untuk-filter pada baris kategori (v1.1.101) dihapus karena tidak jelas artinya untuk kartu gabungan; filter tetap lewat chip kategori di atas.
+- 197 test.
+
+## v1.1.101 — 3 Okt 2026
+
+**Diubah**
+- **Laporan: Pemasukan/Pengeluaran per kategori dirapikan** (`renderLaporanCatBreakdown`, `11-laporan.js`). Satu kartu berisi baris rapat (sebelumnya satu kartu per kategori) dengan nama, jumlah transaksi ("8x"), nominal, dan persen. Porsi di bawah 1% tampil "<1%" (sebelumnya "0%"). Bilah dibandingkan dengan kategori terbesar supaya kategori kecil tetap terbaca; persen tetap terhadap total.
+- Lebih dari 6 kategori: sisanya dilipat dengan tombol "Lihat N kategori lainnya" (tetap tampil semua saat Export PDF).
+- Ketuk baris kategori untuk memfilter ke kategori itu (sama dengan chip filter), ketuk lagi untuk kembali ke semua (`toggleLaporanCat`, `toggleLaporanCatMore`; `state.laporanCatExpanded`).
+- 3 test baru (196 total).
+
 ## v1.1.100 — 2 Okt 2026
 
 **Ditambah**

@@ -7,6 +7,49 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.121', d: '9 Okt 2026', items: [
+      'Transaksi kini bisa diberi label, misalnya kebun atau lebaran, selain kategori. Ketik di kolom Label atau ketuk saran. Label bisa dipakai untuk menyaring dan mencari di tab Transaksi, ada ringkasannya di Laporan, dan ikut di file CSV'] },
+    { v: 'v1.1.120', d: '9 Okt 2026', items: [
+      'Ada Target tabungan di Ringkasan: isi nama, nominal, dan tenggat (boleh kosong), lalu pilih akun yang saldonya dihitung atau catat setoran sendiri. Aplikasi menunjukkan progres dan berapa yang perlu disisihkan tiap bulan'] },
+    { v: 'v1.1.119', d: '8 Okt 2026', items: [
+      'Kolom nominal kini bisa menghitung: ketik misalnya 25000+15000*2 lalu Enter. Ada juga tombol Kalkulator di bawah kolom yang sedang diisi, berisi papan hitung di layar, lalu tekan Pakai hasil untuk mengisi kolomnya'] },
+    { v: 'v1.1.118', d: '8 Okt 2026', items: [
+      'Ekspor CSV disempurnakan: file kini langsung rapi (berkolom) saat dibuka di Excel atau Google Sheets Indonesia. Di tab Laporan ada tombol Unduh CSV untuk periode yang sedang dilihat, dan di Profil ada Export CSV akun berisi saldo tiap akun'] },
+    { v: 'v1.1.117', d: '8 Okt 2026', items: [
+      'Langganan berulang kini juga bisa untuk pemasukan, misalnya gaji atau sewa yang diterima tiap bulan: pilih Jenis Pemasukan, tentukan tanggal dan akun, lalu tercatat otomatis setiap bulan'] },
+    { v: 'v1.1.116', d: '8 Okt 2026', items: [
+      'Baru: Kunci app dengan PIN 6 angka. Aktifkan di tab Profil. App terkunci saat dibuka dan setelah ditinggal lebih dari 1 menit, dan salah PIN berulang membuat jeda. PIN hanya tersimpan di perangkat ini. Kalau lupa PIN, data di perangkat harus direset, jadi simpan backup'] },
+    { v: 'v1.1.115', d: '8 Okt 2026', items: [
+      'Tombol Kembali di browser atau HP kini menutup form yang sedang terbuka (catat transaksi, tambah akun, dll.) tanpa keluar dari app'] },
+    { v: 'v1.1.114', d: '8 Okt 2026', items: [
+      'Setiap halaman kini punya alamat sendiri (mis. ...#/laporan, ...#/akun). Tombol Kembali di browser atau HP sekarang pindah ke halaman sebelumnya atau menutup detail akun, dan halaman bisa disimpan sebagai bookmark atau dibagikan lewat tautan'] },
+    { v: 'v1.1.113', d: '7 Okt 2026', items: [
+      'Teks berwarna (merah, hijau, biru, kuning, menu aktif) di mode terang dibuat sedikit lebih pekat agar lebih mudah dibaca, terutama di bawah sinar matahari. Mode gelap tidak berubah'] },
+    { v: 'v1.1.112', d: '7 Okt 2026', items: [
+      'Tombol teks kecil seperti Atur urutan dibuat sedikit lebih tinggi agar lebih mudah disentuh dengan jari'] },
+    { v: 'v1.1.111', d: '7 Okt 2026', items: [
+      'Disiapkan versi ringkas untuk dipasang di hosting (file digabung agar app terbuka lebih cepat). Tampilan dan isi app tidak berubah'] },
+    { v: 'v1.1.110', d: '7 Okt 2026', items: [
+      'Perapian di balik layar pada warna grafik agar app lebih mudah dirawat. Tampilan tidak berubah'] },
+    { v: 'v1.1.109', d: '7 Okt 2026', items: [
+      'Kurva tren alur kas tidak lagi ikut tercetak di laporan; kurva tetap tampil di layar. Hasil cetak jadi lebih ringkas'] },
+    { v: 'v1.1.108', d: '7 Okt 2026', items: [
+      'Tombol di bawah laporan kini bernama Cetak / simpan PDF dengan ikon printer dan petunjuk singkat cara menyimpannya sebagai PDF. Kalau periode yang dipilih belum punya transaksi, kamu diberi tahu dulu, dan nama berkas PDF otomatis memuat periode laporan'] },
+    { v: 'v1.1.107', d: '7 Okt 2026', items: [
+      'Hasil cetak laporan kini polos tanpa kotak kartu: tiap bagian punya judul bergaris dan daftar dipisah garis tipis, sehingga lebih hemat tinta dan terlihat seperti dokumen laporan'] },
+    { v: 'v1.1.106', d: '7 Okt 2026', items: [
+      'Cetak laporan lebih rapi: ada kepala laporan berisi periode, filter, dan tanggal cetak, lalu ringkasan, grafik tren, dan daftar kategori ada di halaman pertama. Kertas selalu terang walau app mode gelap, ada nomor halaman, dan semua bagian yang terlipat ikut tercetak'] },
+    { v: 'v1.1.105', d: '7 Okt 2026', items: [
+      'Perapian tampilan: tombol naik-turun bawaan browser di kolom angka dihilangkan dan roda mouse tidak lagi mengubah angka secara tidak sengaja. Kotak centang di pengaturan kartu Ringkasan kini bergaya senada dengan app. Sebagian kode lama yang sudah tidak terpakai juga dibersihkan'] },
+    { v: 'v1.1.104', d: '3 Okt 2026', items: [
+      'Kolom nominal Rupiah kini otomatis diberi titik pemisah ribuan saat kamu mengetik, misalnya 1500000 langsung tampil 1.500.000. Berlaku di form transaksi, akun, pinjaman, titipan, langganan, anggaran, dan lainnya. Kolom persen, tanggal, dan tenor tidak berubah'] },
+    { v: 'v1.1.103', d: '3 Okt 2026', items: [
+      'Tab Laporan: pemasukan dan pengeluaran masing-masing tampil dalam satu kartu, berisi daftar kategorinya lengkap dengan total di bagian atas kartu. Ketuk satu kategori untuk melihat hanya kategori itu'] },
+    { v: 'v1.1.102', d: '3 Okt 2026', items: [
+      'Tab Laporan: pemasukan dan pengeluaran per kategori kini jadi satu daftar. Setiap kategori punya satu kartu yang memuat angka pemasukan dan pengeluarannya, jadi kategori seperti Lainnya tidak muncul dua kali'] },
+    { v: 'v1.1.101', d: '3 Okt 2026', items: [
+      'Tab Laporan: daftar pemasukan dan pengeluaran per kategori kini lebih ringkas dalam satu kartu, lengkap dengan jumlah transaksi dan persen (porsi sangat kecil tampil <1%). Kalau kategorinya banyak, sisanya dilipat dan bisa dibuka dengan satu ketukan',
+      'Ketuk salah satu kategori untuk melihat hanya kategori itu di laporan, ketuk lagi untuk kembali ke semua'] },
     { v: 'v1.1.100', d: '2 Okt 2026', items: [
       'Semua kolom tanggal kini memakai kalender bawaan app yang tampilannya senada, bukan kalender bawaan browser. Ada tombol Hari ini, dan tanggal yang belum boleh dipilih (misalnya tanggal di masa depan saat catat pembayaran) tampil redup'] },
     { v: 'v1.1.099', d: '2 Okt 2026', items: [

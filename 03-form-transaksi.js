@@ -7,6 +7,7 @@
     $('txn-submit-btn').textContent = 'Tambah transaksi';
     $('txn-cancel-btn').style.display = 'none';
     $('desc-input').value = '';
+    setTagsInput([]);
     $('amount-input').value = '';
     $('category-custom-input').value = '';
     $('date-input').value = todayStr();
@@ -51,6 +52,7 @@
     onCategoryChange();
 
     $('desc-input').value = t.type === 'transfer' ? '' : (t.desc || '');
+    setTagsInput(txnTags(t));
     $('amount-input').value = t.amount;
     $('date-input').value = t.date;
 
@@ -108,6 +110,7 @@
       rows.push(['Akun', accName]);
     }
     if (t.category) rows.push(['Kategori', t.category]);
+    if (txnTags(t).length) rows.push(['Label', tagsText(txnTags(t))]);
     rows.push(['Tanggal', formatDayLabel(t.date)]);
     if (t.method === 'nanti') rows.push(['Metode PayLater', 'Bayar nanti (bunga 0%)']);
     if (t.planId) {

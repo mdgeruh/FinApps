@@ -5,7 +5,7 @@ Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur k
 
 ## 1. Gambaran singkat
 
-App web statis (HTML + CSS + JS biasa, tanpa build tool), ±492 KB JS tanpa minify, 29 file JS modular + `sw.js`. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, anggaran, langganan, dana darurat, export/import.
+App web statis (HTML + CSS + JS biasa, tanpa build tool), ±492 KB JS tanpa minify, 34 file JS modular + `sw.js`. Data di `localStorage` (`keuangan-app-data-v2`), sinkron cloud Supabase (email + Google) sebagai **satu blob JSON per user** dengan kunci versi. Fitur inti: akun (kas/bank/e-wallet/aset/kartu kredit/PayLater/pinjaman/pinjol), titipan, laporan utang, kalender tagihan, anggaran, langganan, dana darurat, export/import.
 
 ## 2. Koreksi terhadap analisis awal
 
@@ -126,7 +126,7 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 
 ## 4. Hasil pengujian
 
-**Unit:** 193 test lulus (`node tests/run.js`); semua file lolos `node --check`.
+**Unit:** 247 test lulus (`node tests/run.js`); semua file lolos `node --check`.
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 

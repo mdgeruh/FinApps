@@ -2,6 +2,7 @@
   // STARTUP: dijalankan terakhir, setelah semua file js/ selesai dimuat
   // (kode yang memanggil fungsi dari file lain harus ada di sini, bukan di file asalnya)
   // ============================================================
+  initLock();   // 06b-kunci.js: tampilkan layar kunci lebih dulu bila PIN aktif
   updateGreeting();
   $('today-date').textContent = todayGmt8().toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
 
@@ -20,6 +21,7 @@
     runRecurringFees();     // bunga/biaya bulanan otomatis: setelah sinkron, bukan di dalam render()
     populateCategorySelect();
     render();
+    applyRoute();   // 02b-rute.js: buka tab/detail akun sesuai alamat (#/akun, #/akun/<id>)
   })();
 
   // Tab dibiarkan terbuka lintas hari: saat kembali terlihat dan tanggal sudah ganti,

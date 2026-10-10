@@ -1,15 +1,6 @@
   // ============================================================
   // AKUN: REKENING / KAS / KARTU (form, detail, CRUD)
   // ============================================================
-  function toggleAccForm() {
-    const form = $('acc-form');
-    if (form.classList.contains('open') && !editingAccountId) {
-      form.classList.remove('open');
-    } else {
-      openAccForm('add');
-    }
-  }
-
   function startEditAccount(id) {
     const data = loadData();
     const acc = data.accounts.find(a => a.id === id);

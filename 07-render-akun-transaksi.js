@@ -29,7 +29,7 @@
     card.innerHTML = header + items.map(it => {
       const late = it.days < 0;
       const when = late ? 'Lewat ' + (-it.days) + ' hari' : (it.days === 0 ? 'Hari ini' : (it.days === 1 ? 'Besok' : it.days + ' hari lagi'));
-      const color = late ? 'var(--red)' : (it.days <= 3 ? 'var(--amber)' : 'var(--ink-soft)');
+      const color = late ? 'var(--red-ink)' : (it.days <= 3 ? 'var(--amber-ink)' : 'var(--ink-soft)');
       return `
         <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${escapeHtml(it.id)}">
           <div class="txn-left">
@@ -45,7 +45,7 @@
       const liquid = computeLiquidFunds(data, balances || computeAllBalances(data));
       const gap = liquid - dueTotal;
       const per = dueReminderPeriodDays === 365 ? '1 tahun' : dueReminderPeriodDays + ' hari';
-      return `<div class="acc-sub" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line);">Uang tersedia (kas, bank, e-wallet) ${formatRp(liquid)} · jatuh tempo ${per} ${formatRp(dueTotal)}<br><strong style="color:${gap >= 0 ? 'var(--green)' : 'var(--red)'};">${gap >= 0 ? 'Cukup, sisa ' + formatRp(gap) : 'Kurang ' + formatRp(-gap)}</strong></div>`;
+      return `<div class="acc-sub" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line);">Uang tersedia (kas, bank, e-wallet) ${formatRp(liquid)} · jatuh tempo ${per} ${formatRp(dueTotal)}<br><strong style="color:${gap >= 0 ? 'var(--green-ink)' : 'var(--red-ink)'};">${gap >= 0 ? 'Cukup, sisa ' + formatRp(gap) : 'Kurang ' + formatRp(-gap)}</strong></div>`;
     })();
   }
 
@@ -109,7 +109,7 @@
     const luCard = $('akun-limit-card'), luEl = $('akun-limit-usage'), luSub = $('akun-limit-sub');
     if (luCard) luCard.style.display = lu ? '' : 'none';
     if (lu && luEl && luSub) {
-      const tone = lu.pct >= 90 ? 'var(--red)' : (lu.pct >= 70 ? 'var(--amber)' : '');
+      const tone = lu.pct >= 90 ? 'var(--red-ink)' : (lu.pct >= 70 ? 'var(--amber-ink)' : '');
       luEl.textContent = (lu.pct >= 90 ? '▲ ' : '') + lu.pct + '%';
       luEl.style.color = tone;
       luSub.textContent = hid ? HIDDEN_RP : formatRp(lu.used) + ' dari ' + formatRp(lu.limit);
@@ -196,7 +196,7 @@
     }
 
     const makeCard = (it, colorVar) => {
-      const toneCss = { late: 'color:var(--red); font-weight:600;', warn: 'color:var(--amber);' };
+      const toneCss = { late: 'color:var(--red-ink); font-weight:600;', warn: 'color:var(--amber-ink);' };
       const metaHtml = it.lines.map(l => `<div class="acc-tile-meta"${toneCss[l.tone] ? ' style="' + toneCss[l.tone] + '"' : ''}>${escapeHtml(l.text)}</div>`).join('');
       return `
         <div class="acc-card acc-tile" style="--accent-color: var(${colorVar});" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${escapeHtml(it.acc.id)}" data-keydown-act="openAccountDetail" data-keydown-a0="${escapeHtml(it.acc.id)}" data-keydown-keys="Enter| " data-acc-id="${escapeHtml(it.acc.id)}">
@@ -236,7 +236,7 @@
       else if (type === 'titipan') totalText = total > 0 ? 'Piutang ' + formatRp(total) : (total < 0 ? 'Utang ' + formatRp(-total) : 'Lunas');
       else totalText = formatRp(total);
       if (hidG) totalText = maskRpText(totalText);
-      const totalColor = (isDebtType && total > 0) || (type === 'titipan' && total < 0) || (!isDebtType && type !== 'titipan' && total < 0) ? 'var(--red)' : 'var(--ink)';
+      const totalColor = (isDebtType && total > 0) || (type === 'titipan' && total < 0) || (!isDebtType && type !== 'titipan' && total < 0) ? 'var(--red-ink)' : 'var(--ink)';
       const collapsed = !filtering && !!accCollapsed[type];   // saat memfilter, semua kelompok dibuka
       const wide = !!ACC_WIDE_TYPES[type];
       const cards = group.map(it => makeCard(it, colorVar)).join('');
@@ -370,6 +370,7 @@
   function resetFilters() {
     state.activeFilter = 'all';
     state.activeTypeFilter = 'all';
+    state.activeTagFilter = 'all';
     state.sortMode = 'date-desc';
     state.txnSearchQuery = '';
     state.txnMonth = 'cur';
@@ -391,6 +392,7 @@
     renderTxnMonthRow(data);
     renderFilters(data);
     renderTypeFilters();
+    renderTagFilters(data);
     renderTxnListSection(data);
   }
 

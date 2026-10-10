@@ -93,8 +93,8 @@
     }
     container.innerHTML = filtered.map(({ acc, bal, txnCount, lastDate }) => {
       let statusText, color;
-      if (bal > 0) { statusText = 'Berutang ' + formatRp(bal); color = 'var(--red)'; }
-      else if (bal < 0) { statusText = 'Saldo lebih ' + formatRp(Math.abs(bal)); color = 'var(--green)'; }
+      if (bal > 0) { statusText = 'Berutang ' + formatRp(bal); color = 'var(--red-ink)'; }
+      else if (bal < 0) { statusText = 'Saldo lebih ' + formatRp(Math.abs(bal)); color = 'var(--green-ink)'; }
       else { statusText = 'Lunas'; color = 'var(--ink-soft)'; }
       const metaText = txnCount > 0
         ? txnCount + ' transaksi · terakhir ' + dayShortLabel(lastDate)
@@ -102,7 +102,7 @@
       return `
         <div class="txn-row clickable" data-act="openTitipanDetail" data-a0="${escapeHtml(acc.id)}">
           <div class="txn-left">
-            <span class="dot" style="background: var(--green)"></span>
+            <span class="dot u-bg-green"></span>
             <div class="txn-text">
               <div class="txn-desc">${escapeHtml(acc.name)}</div>
               <div class="txn-meta">${metaText}</div>
@@ -125,8 +125,8 @@
 
     const bal = accountBalance(data, id);
     let statusText, statusColor;
-    if (bal > 0) { statusText = 'Berutang ke saya'; statusColor = 'var(--red)'; }
-    else if (bal < 0) { statusText = 'Titipan lebih saya'; statusColor = 'var(--green)'; }
+    if (bal > 0) { statusText = 'Berutang ke saya'; statusColor = 'var(--red-ink)'; }
+    else if (bal < 0) { statusText = 'Titipan lebih saya'; statusColor = 'var(--green-ink)'; }
     else { statusText = 'Lunas'; statusColor = 'var(--ink-soft)'; }
 
     $('titipan-detail-name').textContent = acc.name;

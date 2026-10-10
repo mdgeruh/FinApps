@@ -79,7 +79,7 @@
     if (outEl) outEl.textContent = formatRp(monthOut);
     if (netEl) {
       netEl.textContent = formatRp(net);
-      netEl.style.color = net < 0 ? 'var(--red)' : 'var(--green)';
+      netEl.style.color = net < 0 ? 'var(--red-ink)' : 'var(--green-ink)';
     }
 
     // Bandingkan dengan bulan lalu, tapi cuma sampai tanggal yang sama (biar adil, bukan bulan lalu penuh vs bulan ini yang belum selesai).
@@ -110,7 +110,7 @@
       const arrow = up ? '▲' : (down ? '▼' : '▬');
       const good = up ? higherIsGood : (down ? !higherIsGood : null);
       el.textContent = `${arrow} ${Math.abs(pct).toFixed(0)}% vs bulan lalu`;
-      el.style.color = good === null ? 'var(--ink-soft)' : (good ? 'var(--green)' : 'var(--red)');
+      el.style.color = good === null ? 'var(--ink-soft)' : (good ? 'var(--green-ink)' : 'var(--red-ink)');
     }
     renderCompare('month-in-compare', monthIn, prevIn, true);
     renderCompare('month-out-compare', monthOut, prevOut, false);
@@ -153,7 +153,7 @@
     if (p.budget) {
       const b = p.budget;
       note += '\nKategori beranggaran: ' + (b.status === 'over' ? '▲ diperkirakan lebih ' + formatRp(b.diff) : '▼ diperkirakan sisa ' + formatRp(-b.diff)) + ' dari batas ' + formatRp(b.limit);
-      noteEl.style.color = b.status === 'over' ? 'var(--red)' : (b.status === 'warn' ? 'var(--amber)' : '');
+      noteEl.style.color = b.status === 'over' ? 'var(--red-ink)' : (b.status === 'warn' ? 'var(--amber-ink)' : '');
     } else noteEl.style.color = '';
     noteEl.style.whiteSpace = 'pre-line';
     noteEl.textContent = note;

@@ -87,6 +87,7 @@
           if (!vis.off('budget-card')) renderBudgetCard(data);
           if (!vis.off('sub-card')) renderSubscriptionCard(data);
           if (!vis.off('emergency-card')) renderEmergencyCard(data, balances);
+          if (!vis.off('goal-card')) renderGoalCard(data, balances);
           if (!vis.off('plan-cta-card')) renderPlanCta(data);
           const curSeg = applyChartSegments(data, vis);
           applyRingkasanVisibility(data, vis);
@@ -99,6 +100,7 @@
         renderTxnMonthRow(data);
         renderFilters(data);
         renderTypeFilters();
+        renderTagFilters(data);
         renderTxnListSection(data);
         break;
       case 'titipan':
@@ -170,6 +172,7 @@
     // Tab ini belum digambar ulang sejak data terakhir berubah -> gambar sekarang,
     // pas dibuka (bukan tiap kali render() dipanggil dari tab lain).
     if (dirtyTabs.has(name)) renderTabContent(name);
+    routeOnTabChange(name);   // 02b-rute.js: alamat mengikuti tab
   }
 
   const THEME_KEY = 'kp_theme';
@@ -215,7 +218,6 @@
     else if (tab === 'titipan') openTitipanForm();
     else openAddTxnForm();
   }
-  function goToAddTxn() { openAddTxnForm(); }
   function updateNavFab(name) {
     const fab = $('nav-fab');
     if (!fab) return;

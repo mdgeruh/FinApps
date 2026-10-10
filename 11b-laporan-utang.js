@@ -39,7 +39,7 @@
   }
   // Baris ringkas seperti kartu Saran: titik status + judul (+ nilai di kanan) + petunjuk satu baris; kalau ada
   // `lines`, baris bisa diketuk untuk membuka detail. title = teks biasa (di-escape di sini); hint & lines = HTML yang sudah aman.
-  const LAP_DOT = { red: 'var(--red)', amber: 'var(--amber)', ok: 'var(--green)', none: 'var(--ink-soft)' };
+  const LAP_DOT = { red: 'var(--red-ink)', amber: 'var(--amber-ink)', ok: 'var(--green-ink)', none: 'var(--ink-soft)' };
   function lapItem(o) {
     const dot = o.noDot ? '' : `<span style="flex:0 0 8px; width:8px; height:8px; margin-top:5px; border-radius:50%; background:${LAP_DOT[o.level || 'none']};"></span>`;
     const head = `<div style="display:flex; justify-content:space-between; gap:10px; font-size:13px;"><strong>${escapeHtml(o.title)}</strong>` +
@@ -140,23 +140,23 @@
     const dueLine = (d) => {
       if (!d) return null;
       const late = d.days < 0;
-      return { text: escapeHtml(d.label) + ' · ' + formatRp(d.amount) + ' · jatuh tempo ' + escapeHtml(fmtTgl(d.due)) + (late ? ' (lewat ' + (-d.days) + ' hari)' : (d.days === 0 ? ' (hari ini)' : ' (' + d.days + ' hari lagi)')), color: late ? 'var(--red)' : '' };
+      return { text: escapeHtml(d.label) + ' · ' + formatRp(d.amount) + ' · jatuh tempo ' + escapeHtml(fmtTgl(d.due)) + (late ? ' (lewat ' + (-d.days) + ' hari)' : (d.days === 0 ? ' (hari ini)' : ' (' + d.days + ' hari lagi)')), color: late ? 'var(--red-ink)' : '' };
     };
     // Petunjuk satu baris di bawah nama akun (detail lengkap ada di baris yang bisa dibuka)
     const dueShort = (d) => !d ? '' : (d.days < 0 ? 'lewat ' + (-d.days) + ' hari' : (d.days === 0 ? 'jatuh tempo hari ini' : 'jatuh tempo ' + escapeHtml(fmtTgl(d.due)) + ' (' + d.days + ' hari lagi)'));
-    const pctColor = (pct) => pct === null ? '' : (pct >= 70 ? 'var(--red)' : (pct >= 30 ? 'var(--amber)' : 'var(--green)'));
+    const pctColor = (pct) => pct === null ? '' : (pct >= 70 ? 'var(--red-ink)' : (pct >= 30 ? 'var(--amber-ink)' : 'var(--green-ink)'));
     const levelOf = (pct, d) => ((d && d.days < 0) || (pct !== null && pct >= 70)) ? 'red' : (((pct !== null && pct >= 30) || (d && d.days <= 7)) ? 'amber' : 'ok');
-    const hintOf = (parts, d) => ({ hint: parts.concat(dueShort(d) || []).filter(Boolean).join(' · '), hintColor: d && d.days < 0 ? 'var(--red)' : '' });
-    let html = row(an.totalBunga > 0 ? 'Total semua utang (pokok + bunga terjadwal)' : 'Total semua utang', formatRp(an.totalDebt), 'var(--red)') +
-      row('Tagihan & angsuran 30 hari ke depan', formatRp(an.due30), an.due30 > 0 ? 'var(--red)' : '');
+    const hintOf = (parts, d) => ({ hint: parts.concat(dueShort(d) || []).filter(Boolean).join(' · '), hintColor: d && d.days < 0 ? 'var(--red-ink)' : '' });
+    let html = row(an.totalBunga > 0 ? 'Total semua utang (pokok + bunga terjadwal)' : 'Total semua utang', formatRp(an.totalDebt), 'var(--red-ink)') +
+      row('Tagihan & angsuran 30 hari ke depan', formatRp(an.due30), an.due30 > 0 ? 'var(--red-ink)' : '');
 
     if (an.cards.length) {
       html += head('Kartu kredit', an.cards.reduce((s2, c) => s2 + c.total, 0));
       html += an.cards.map(c => lapItem(Object.assign({
-        title: c.acc.name, right: formatRp(c.used), rightColor: 'var(--red)', level: levelOf(c.pct, c.due),
+        title: c.acc.name, right: formatRp(c.used), rightColor: 'var(--red-ink)', level: levelOf(c.pct, c.due),
         lines: [
           c.limit > 0 ? { text: 'Terpakai ' + c.pct + '% dari limit ' + formatRp(c.limit) + ' · sisa limit ' + formatRp(Math.max(0, c.limit - c.used)), color: pctColor(c.pct) } : null,
-          c.ci ? { text: 'Tagihan cetak ' + escapeHtml(fmtTgl(c.ci.statementDate)) + ' ' + formatRp(c.ci.statement) + ' · belum dibayar ' + formatRp(c.ci.remaining) + (c.ci.remaining > 0 ? ' (minimum ' + formatRp(c.ci.minRemaining) + ')' : '') + (c.due ? ' · jatuh tempo ' + escapeHtml(fmtTgl(c.due.due)) + (c.due.days < 0 ? ' (lewat ' + (-c.due.days) + ' hari)' : ' (' + c.due.days + ' hari lagi)') : ''), color: (c.due && c.due.days < 0) ? 'var(--red)' : '' } : dueLine(c.due),
+          c.ci ? { text: 'Tagihan cetak ' + escapeHtml(fmtTgl(c.ci.statementDate)) + ' ' + formatRp(c.ci.statement) + ' · belum dibayar ' + formatRp(c.ci.remaining) + (c.ci.remaining > 0 ? ' (minimum ' + formatRp(c.ci.minRemaining) + ')' : '') + (c.due ? ' · jatuh tempo ' + escapeHtml(fmtTgl(c.due.due)) + (c.due.days < 0 ? ' (lewat ' + (-c.due.days) + ' hari)' : ' (' + c.due.days + ' hari lagi)') : ''), color: (c.due && c.due.days < 0) ? 'var(--red-ink)' : '' } : dueLine(c.due),
           c.acc.interestPercent ? { text: 'Bunga ' + c.acc.interestPercent + '%/bln kalau tidak lunas penuh ≈ ' + formatRp(Math.round(c.used * c.acc.interestPercent / 100)) + '/bln dari saldo sekarang' } : null
         ]
       }, hintOf([c.limit > 0 ? 'Limit ' + c.pct + '%' : ''], c.due)))).join('');
@@ -164,7 +164,7 @@
     if (an.paylaters.length) {
       html += head('PayLater', an.paylaters.reduce((s2, c) => s2 + c.total, 0));
       html += an.paylaters.map(c => lapItem(Object.assign({
-        title: c.acc.name, right: formatRp(c.used), rightColor: 'var(--red)', level: levelOf(c.pct, c.due),
+        title: c.acc.name, right: formatRp(c.used), rightColor: 'var(--red-ink)', level: levelOf(c.pct, c.due),
         lines: [
           c.limit > 0 ? { text: 'Limit terpakai ' + formatRp(c.credit) + ' dari ' + formatRp(c.limit) + ' (' + c.pct + '%)', color: pctColor(c.pct) } : null,
           c.meta ? { text: escapeHtml(c.meta) } : null,
@@ -187,7 +187,7 @@
     const sisaBiaya = c.rem.flat ? c.rem.sisaBunga : 0;
     const angs = c.sch ? 'Angsuran ' + c.sch.paid + '/' + c.sch.tenor : '';
     return lapItem(Object.assign({
-      title: a.name, right: formatRp(c.total), rightColor: 'var(--red)', level: levelOf(null, c.due),
+      title: a.name, right: formatRp(c.total), rightColor: 'var(--red-ink)', level: levelOf(null, c.due),
       lines: [
         { text: 'Sisa pokok ' + formatRp(c.rem.sisaPokok) + (sisaBiaya > 0 ? ' + bunga & biaya ' + formatRp(sisaBiaya) : '') },
         c.sch ? { text: 'Angsuran ' + c.sch.paid + '/' + c.sch.tenor + (c.sch.rows[0] ? ' · ' + formatRp(c.sch.rows[0].total) + '/bln' : '') } : (a.loanInstallment ? { text: 'Angsuran ' + formatRp(a.loanInstallment) + '/bln' } : null),
@@ -270,7 +270,7 @@
 
     const order = { red: 0, amber: 1, info: 2, green: 3 };
     items.sort((x, y) => order[x.level] - order[y.level]);
-    const color = { red: 'var(--red)', amber: 'var(--amber)', info: 'var(--ink-soft)', green: 'var(--green)' };
+    const color = { red: 'var(--red-ink)', amber: 'var(--amber-ink)', info: 'var(--ink-soft)', green: 'var(--green-ink)' };
     const one = (i) => {
       const dot = `<span style="flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:${color[i.level]};"></span>`;
       const row = `<div style="display:flex; align-items:center; gap:9px; padding:9px 0; font-size:13px;">${dot}<span class="u-flex1-min0">${i.title}</span>${i.detail ? '<span class="adv-chev" style="color:var(--ink-soft); font-size:11px;">▾</span>' : ''}</div>`;
@@ -280,7 +280,7 @@
     const SHOW = 3;
     const top = items.slice(0, SHOW), rest = items.slice(SHOW);
     const nRed = items.filter(i => i.level === 'red').length, nAmber = items.filter(i => i.level === 'amber').length;
-    const badge = (nRed ? `<span style="color:var(--red); font-size:11.5px; font-weight:600; margin-left:8px;">${nRed} segera</span>` : '') + (nAmber ? `<span style="color:var(--amber); font-size:11.5px; font-weight:600; margin-left:8px;">${nAmber} waspada</span>` : '');
+    const badge = (nRed ? `<span style="color:var(--red-ink); font-size:11.5px; font-weight:600; margin-left:8px;">${nRed} segera</span>` : '') + (nAmber ? `<span style="color:var(--amber-ink); font-size:11.5px; font-weight:600; margin-left:8px;">${nAmber} waspada</span>` : '');
     const body = top.map(one).join('') +
       (rest.length ? `<details class="adv-more"><summary class="acc-sub" style="padding:8px 0; cursor:pointer;">Tampilkan ${rest.length} lagi</summary>${rest.map(one).join('')}</details>` : '') +
       '<div class="acc-sub" style="margin-top:8px; font-size:11px;">Otomatis dari data yang dicatat, bukan nasihat keuangan profesional.</div>';

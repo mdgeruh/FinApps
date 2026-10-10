@@ -55,7 +55,7 @@
       else {
         const delta = roundMoney(last.total - prev.total);
         sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti akhir bulan lalu' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dari akhir bulan lalu');
-        sumEl.style.color = delta > 0 ? 'var(--red)' : (delta < 0 ? 'var(--green)' : '');
+        sumEl.style.color = delta > 0 ? 'var(--red-ink)' : (delta < 0 ? 'var(--green-ink)' : '');
       }
     }
     const W = 320, H = 170, padBottom = 22, padTop = 10, padSide = 10;
@@ -69,9 +69,9 @@
     trend.forEach((t, i) => {
       const h = Math.max(0, (t.total / maxVal) * chartH), gx = xAt(i);
       svgContent += `<rect x="${(gx - barW / 2).toFixed(1)}" y="${(padTop + chartH - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" style="fill:var(--rust)"></rect>`;
-      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" style="fill:var(--ink-soft)" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
+      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
     });
-    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" style="stroke:var(--line)" stroke-width="1"></line>`;
+    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" class="svg-stroke-line" stroke-width="1"></line>`;
     svgContent += tooltipGroupSvgMulti('debt-trend-chart', 1);
     svg.innerHTML = svgContent;
     chartGeom['debt-trend-chart'] = {
