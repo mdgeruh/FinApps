@@ -526,9 +526,8 @@
 
     let category = catSel.value;
     if (category === CATEGORY_CUSTOM) {
-      const custom = catCustomEl.value.trim();
-      if (!custom) { catCustomEl.focus(); showIoMsg('Isi nama kategorinya dulu.', 'error'); return; }
-      category = custom;
+      // Nilai "Lainnya" juga kategori biasa (transaksi lama berkategori Lainnya dibuka lewat Edit): nama kosong = tetap "Lainnya".
+      category = catCustomEl.value.trim() || CATEGORY_CUSTOM;
     }
 
     const date = dateEl.value || todayStr();

@@ -6,6 +6,13 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.123 — 11 Okt 2026
+
+**Perbaikan: Edit transaksi tidak bekerja** (`02b-rute.js`, `04c-akun-aset-tagihan.js`, `index.html`)
+- **Form Edit langsung tertutup sendiri.** Dari detail transaksi, "Edit transaksi" menutup sheet detail lalu membuka form. Penutupan detail memicu `history.back()` (sejak rute v1.1.114) yang popstate-nya baru tiba setelah form terbuka, sehingga dianggap tombol Kembali dan menutup form itu. Kini Kembali yang dipicu app sendiri dihitung (`selfBacks`) dan popstate-nya tidak menutup sheet lain. Memperbaiki semua peralihan sheet ke sheet yang serupa, bukan hanya Edit.
+- **Transaksi berkategori "Lainnya" tak bisa disimpan** ("Isi nama kategorinya dulu"): "Lainnya" sama dengan penanda kategori buatan sendiri, jadi saat diedit dianggap kategori baru berisi kosong. Kini nama kosong = tetap "Lainnya" (kolom nama ditandai "boleh kosong").
+- 2 test baru (250 total); diuji di browser: buka detail, Edit, ubah nominal, simpan; Kembali setelah Edit menutup form saja.
+
 ## v1.1.122 — 11 Okt 2026
 
 **Perbaikan: kalkulator tidak terlihat di form** (`06-util-ui.js`, `06c-kalkulator.js`, `style.css`)
