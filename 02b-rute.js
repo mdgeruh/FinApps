@@ -99,11 +99,15 @@
     try { history.pushState({ kp: 1, sheet: id, detail: !!(history.state && history.state.detail) }, '', location.href); } catch (e) { /* abaikan */ }
   }
 
+  // Jumlah history.back() yang dipicu app sendiri (menutup sheet) dan popstate-nya belum tiba. Popstate semacam itu tidak boleh
+  // menutup sheet lain yang sempat dibuka di antaranya (mis. Edit transaksi: detail ditutup, form edit langsung dibuka).
+  let selfBacks = 0;
+
   function onSheetClosed(id) {
     const i = sheetStack.indexOf(id);
     if (i < 0) return;                         // sudah dikeluarkan oleh tombol Kembali
     sheetStack.splice(i, 1);
-    try { if (history.state && history.state.sheet === id) history.back(); } catch (e) { /* abaikan */ }
+    try { if (history.state && history.state.sheet === id) { selfBacks++; history.back(); } } catch (e) { /* abaikan */ }
   }
 
   // true bila popstate ini dipakai untuk menutup sheet
@@ -122,7 +126,10 @@
     return true;
   }
 
-  window.addEventListener('popstate', () => { closeTopSheetOnBack(); applyRoute(); });
+  window.addEventListener('popstate', () => {
+    if (selfBacks > 0) { selfBacks--; applyRoute(); return; }
+    closeTopSheetOnBack(); applyRoute();
+  });
 
   (function watchSheets() {
     if (typeof MutationObserver === 'undefined') return;
