@@ -471,6 +471,7 @@
     state.activeFilter = 'all';
     state.activeTypeFilter = 'all';
     state.categoryChartType = 'keluar';
+    state.tagChartType = 'keluar'; state.activeTagFilter = 'all';
     state.sortMode = 'date-desc';
     const sortSel = $('sort-select');
     if (sortSel) sortSel.value = 'date-desc';
@@ -494,6 +495,7 @@
     state.activeFilter = 'all';
     state.activeTypeFilter = 'all';
     state.categoryChartType = 'keluar';
+    state.tagChartType = 'keluar'; state.activeTagFilter = 'all';
     state.sortMode = 'date-desc';
     const sortSel = $('sort-select');
     if (sortSel) sortSel.value = 'date-desc';

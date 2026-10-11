@@ -11,17 +11,24 @@
     today = today || todayStr();
     const [y, m] = today.split('-').map(Number);
     const p2 = n => String(n).padStart(2, '0');
-    const debtAccs = data.accounts.filter(a => TYPE_DEBT[a.type]);
     const out = [];
     for (let i = DEBT_TREND_MONTHS - 1; i >= 0; i--) {
       const d = new Date(y, m - 1 - i, 1);
       const key = d.getFullYear() + '-' + p2(d.getMonth() + 1);
       out.push({ key, date: i === 0 ? today : key + '-' + p2(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()), total: 0 });
     }
+    const totals = computeDebtAtDates(data, out.map(o => o.date));
+    out.forEach((o, i) => { o.total = totals[i]; });
+    return out;
+  }
+
+  // Fungsi murni: total utang (jumlah saldo negatif akun utang) pada tiap tanggal di `dates` (urut lama -> baru).
+  function computeDebtAtDates(data, dates) {
+    const debtAccs = data.accounts.filter(a => TYPE_DEBT[a.type]);
     // Satu lintasan (v1.1.074, R9): saldo tiap akun utang pada tiap tanggal akhir bulan dihitung sekaligus, bukan
     // accountBalanceAsOf per akun per bulan (yang menelusuri seluruh transaksi berulang-ulang). Hasil identik dengan
     // cara lama (dijaga test). Akun dengan riwayat penilaian (hasValuations) tetap lewat accountBalanceAsOf.
-    const n = out.length, dates = out.map(o => o.date);
+    const n = dates.length;
     const perAcc = new Map(); // id akun -> saldo pada tiap tanggal
     const totals = new Array(n).fill(0);
     const addBal = (bal) => { for (let i = 0; i < n; i++) if (bal[i] < 0) totals[i] += -bal[i]; };
@@ -40,45 +47,57 @@
       else if (t.type === 'transfer') { bump(t.accountId, t.date, -t.amount); bump(t.toAccountId, t.date, t.amount); }
     });
     perAcc.forEach(addBal);
-    out.forEach((o, i) => { o.total = roundMoney(totals[i]); });
-    return out;
+    return totals.map(roundMoney);
   }
 
   function renderDebtTrendChart(data) {
     const svg = $('debt-trend-chart');
     if (!svg) return;
-    const trend = computeDebtTrend(data);
+    // Periode mengikuti pemilih yang sama dengan kurva lain (v1.1.125): total utang di akhir tiap bucket waktu.
+    const buckets = chartBuckets(trendPeriodDays);
+    const totals = computeDebtAtDates(data, buckets.map(b => b.to));
+    const trend = buckets.map((b, i) => ({ b, key: b.key, total: totals[i] }));
+    const periodText = bucketPeriodText(buckets);
+    const titleEl = $('debt-trend-title');
+    if (titleEl) titleEl.textContent = `Tren total utang (${periodText})`;
     const sumEl = $('debt-trend-summary');
-    const last = trend[trend.length - 1], prev = trend[trend.length - 2];
+    const last = trend[trend.length - 1], first = trend[0];
     if (sumEl) {
-      if (trend.every(t => t.total === 0)) { sumEl.textContent = 'Tidak ada utang tercatat dalam ' + DEBT_TREND_MONTHS + ' bulan terakhir.'; sumEl.style.color = ''; }
+      if (trend.every(t => t.total === 0)) { sumEl.textContent = 'Tidak ada utang tercatat dalam ' + periodText + '.'; sumEl.style.color = ''; }
       else {
-        const delta = roundMoney(last.total - prev.total);
-        sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti akhir bulan lalu' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dari akhir bulan lalu');
+        const delta = roundMoney(last.total - first.total);
+        sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti awal periode' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dalam ' + periodText);
         sumEl.style.color = delta > 0 ? 'var(--red-ink)' : (delta < 0 ? 'var(--green-ink)' : '');
       }
     }
-    const W = 320, H = 170, padBottom = 22, padTop = 10, padSide = 10;
+    // Garis seperti kurva cashflow (v1.1.124): garis mulus + area tipis, titik per bucket, nilai terakhir tertulis.
+    const W = 320, H = 170, padBottom = 22, padTop = 26, padSide = 18;
     const chartH = H - padBottom - padTop;
     const maxVal = Math.max(1, ...trend.map(t => t.total));
-    const groupW = (W - padSide * 2) / trend.length;
-    const barW = Math.min(28, groupW * 0.55);
-    const xAt = i => padSide + i * groupW + groupW / 2;
+    const stepX = (W - padSide * 2) / Math.max(1, trend.length - 1);
+    const xAt = i => padSide + i * stepX;
     const yAt = v => padTop + chartH - (v / maxVal) * chartH;
-    let svgContent = '';
-    trend.forEach((t, i) => {
-      const h = Math.max(0, (t.total / maxVal) * chartH), gx = xAt(i);
-      svgContent += `<rect x="${(gx - barW / 2).toFixed(1)}" y="${(padTop + chartH - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" style="fill:var(--rust)"></rect>`;
-      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
+    const baseY = yAt(0), xs = trend.map((_, i) => xAt(i)), ys = trend.map(t => yAt(t.total));
+    const lineD = monotonePathD(xs, ys);
+    const tipByKey = {}; buckets.forEach(b => { tipByKey[b.key] = bucketTipLabel(b); });
+    let svgContent = `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
+    svgContent += `<path d="${lineD} L${xs[xs.length - 1].toFixed(2)},${baseY.toFixed(2)} L${xs[0].toFixed(2)},${baseY.toFixed(2)} Z" style="fill:var(--rust); opacity:0.12"></path>`;
+    svgContent += `<path d="${lineD}" style="fill:none; stroke:var(--rust)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+    ys.forEach((y, i) => { svgContent += `<circle cx="${xs[i].toFixed(1)}" cy="${y.toFixed(1)}" r="${i === ys.length - 1 ? 3.5 : 2.5}" style="fill:var(--rust)"></circle>`; });
+    buckets.forEach((b, i) => {
+      svgContent += `<text x="${xs[i].toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${bucketAxisLabel(b)}</text>`;
     });
-    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" class="svg-stroke-line" stroke-width="1"></line>`;
+    const endLabelY = Math.max(11, ys[ys.length - 1] - 10);
+    svgContent += `<g id="debt-trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
+    svgContent += `<text x="${xs[xs.length - 1].toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${formatRp(last.total)}</text>`;
+    svgContent += `</g>`;
     svgContent += tooltipGroupSvgMulti('debt-trend-chart', 1);
     svg.innerHTML = svgContent;
     chartGeom['debt-trend-chart'] = {
       days: trend.map(t => t.key), xAt, yAt, W, H, padTop, padBottom, padSide,
       series: [{ label: 'Total utang', values: trend.map(t => t.total), color: 'var(--rust)' }],
       formatValue: v => formatRp(v),
-      formatDate: monthShortLabel
+      formatDate: k => tipByKey[k] || k
     };
     bindChartInteraction('debt-trend-chart');
   }

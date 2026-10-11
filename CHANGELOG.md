@@ -6,6 +6,24 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.125 — 11 Okt 2026
+
+**Grafik: kartu Kategori terpisah, kartu Label baru, Tren dan Utang ikut filter periode** (`09-grafik.js`, `10f-tren-utang.js`, `03b-label.js`, `02-navigasi.js`, `index.html`)
+- **Kategori** kini kartu sendiri di bawah kartu Grafik (bukan lagi tab di dalamnya). Isinya sama: pie Pengeluaran/Pemasukan/Transfer bulan ini.
+- **Kartu Label baru**: pie per label bulan ini, tombol Pengeluaran/Pemasukan, maksimal 8 irisan (sisanya "Label lain"). Ketuk label untuk membuka tab Transaksi yang sudah disaring ke label dan jenis itu. Transaksi multi-label dihitung di tiap labelnya.
+- **Tren dan Utang mengikuti pemilih periode** 1H/7H/30H/180H/360H seperti Kekayaan dan Cashflow: harian (1H/7H), per 5 hari (30H), bulanan (180H/360H). Judul, ringkasan, dan label sumbu ikut berubah. `computeDebtAtDates` menghitung utang di tanggal mana pun dalam satu putaran.
+- Batasan: 180H/360H memakai 6/12 bulan kalender; bawaan 30H berarti Tren kini 5 harian (dulu 6 bulan); pilihan segmen 'kategori' lama kembali ke Kekayaan.
+- 4 test baru (257 total); diuji di browser untuk semua periode.
+
+## v1.1.124 — 11 Okt 2026
+
+**Tampilan: grafik Tren dan Utang jadi garis, kartu Nilai akun diseragamkan** (`09-grafik.js`, `10f-tren-utang.js`, `index.html`)
+- **Grafik Tren (pemasukan vs pengeluaran, 6 bulan)** kini berupa dua garis mulus (hijau/merah) dengan titik per bulan dan garis dasar putus-putus, seperti kurva Cashflow; ada ringkasan "Selisih bulan ini" berwarna di atas grafik. Tanpa area terisi (dua area bertumpuk jadi keruh).
+- **Grafik Tren utang** kini berupa garis mulus berwarna rust dengan area tipis, titik per bulan, dan nilai terakhir tertulis; ringkasan di atas memakai gaya yang sama dengan Cashflow. Tooltip per bulan tetap bekerja (terang dan gelap).
+- Kurva bulanan memakai **monotone cubic** (`monotonePathD`), jadi garis tidak melampaui nilai antar titik (tidak menembus sumbu bawah seperti kurva Catmull-Rom Cashflow saat nilainya naik-turun tajam).
+- **Kartu Nilai akun** memakai baris yang sama dengan Transaksi terbaru: titik warna, nama akun, jenis akun di baris kedua, nominal di kanan. Garis aksen warna di tepi kiri dihapus.
+- 3 test baru (253 total); diuji di browser dengan data enam bulan (garis, ringkasan, tooltip, mode gelap).
+
 ## v1.1.123 — 11 Okt 2026
 
 **Perbaikan: Edit transaksi tidak bekerja** (`02b-rute.js`, `04c-akun-aset-tagihan.js`, `index.html`)

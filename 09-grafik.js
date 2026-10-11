@@ -15,58 +15,60 @@
     const svg = $('trend-chart');
     if (!svg) return;
 
-    const now = todayGmt8();
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
-    }
-
-    const totals = months.map(key => {
-      let inSum = 0, outSum = 0;
-      data.txns.forEach(t => {
-        if (monthKeyFromDate(t.date) !== key) return;
-        if (isNonOperatingTxn(t)) return;
-        if (t.type === 'masuk') inSum += t.amount;
-        else if (t.type === 'keluar') outSum += t.amount;
-      });
-      return { key, inSum, outSum };
+    // Periode mengikuti pemilih yang sama dengan kurva lain (v1.1.125); garis seperti cashflow (v1.1.124).
+    const buckets = chartBuckets(trendPeriodDays);
+    const totals = buckets.map(b => ({ b, inSum: 0, outSum: 0 }));
+    const first = buckets[0].from, last = buckets[buckets.length - 1].to;
+    data.txns.forEach(t => {
+      if (!t.date || t.date < first || t.date > last || isNonOperatingTxn(t)) return;
+      if (t.type !== 'masuk' && t.type !== 'keluar') return;
+      const e = totals.find(x => t.date >= x.b.from && t.date <= x.b.to);
+      if (!e) return;
+      if (t.type === 'masuk') e.inSum += t.amount; else e.outSum += t.amount;
     });
+    const titleEl = $('trend-title');
+    if (titleEl) titleEl.textContent = `Pemasukan vs pengeluaran (${bucketPeriodText(buckets)})`;
 
     const maxVal = Math.max(1, ...totals.flatMap(t => [t.inSum, t.outSum]));
     const W = 320, H = 170;
-    const padBottom = 22, padTop = 10, padSide = 10;
+    const padBottom = 22, padTop = 14, padSide = 18;
     const chartH = H - padBottom - padTop;
-    const groupW = (W - padSide * 2) / months.length;
-    const barW = Math.min(16, groupW / 3);
-    const xAt = i => padSide + i * groupW + groupW / 2;
+    const stepX = (W - padSide * 2) / Math.max(1, buckets.length - 1);
+    const xAt = i => padSide + i * stepX;
     const yAt = v => padTop + chartH - (v / maxVal) * chartH;
+    const baseY = yAt(0);
+    const xs = buckets.map((_, i) => xAt(i));
+    const tipByKey = {}; buckets.forEach(b => { tipByKey[b.key] = bucketTipLabel(b); });
 
-    let svgContent = '';
-    totals.forEach((t, i) => {
-      const gx = xAt(i);
-      const inH = (t.inSum / maxVal) * chartH;
-      const outH = (t.outSum / maxVal) * chartH;
-      const inX = gx - barW - 2;
-      const outX = gx + 2;
-      svgContent += `<rect x="${inX.toFixed(1)}" y="${(padTop + chartH - inH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(inH, 0).toFixed(1)}" rx="2" class="svg-fill-green"></rect>`;
-      svgContent += `<rect x="${outX.toFixed(1)}" y="${(padTop + chartH - outH).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(outH, 0).toFixed(1)}" rx="2" class="svg-fill-red"></rect>`;
-      svgContent += `<text x="${gx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${monthShortLabel(t.key)}</text>`;
+    let svgContent = `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
+    [['inSum', 'var(--green)'], ['outSum', 'var(--red)']].forEach(([k, color]) => {
+      const ys = totals.map(t => yAt(t[k]));
+      svgContent += `<path d="${monotonePathD(xs, ys)}" style="fill:none; stroke:${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+      ys.forEach((y, i) => { svgContent += `<circle cx="${xs[i].toFixed(1)}" cy="${y.toFixed(1)}" r="${i === ys.length - 1 ? 3.5 : 2.5}" style="fill:${color}"></circle>`; });
     });
-    svgContent += `<line x1="${padSide}" y1="${padTop + chartH}" x2="${W - padSide}" y2="${padTop + chartH}" class="svg-stroke-line" stroke-width="1"></line>`;
+    buckets.forEach((b, i) => {
+      svgContent += `<text x="${xs[i].toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${bucketAxisLabel(b)}</text>`;
+    });
     svgContent += tooltipGroupSvgMulti('trend-chart', 2);
 
     svg.innerHTML = svgContent;
     chartGeom['trend-chart'] = {
-      days: months, xAt, yAt, W, H, padTop, padBottom, padSide,
+      days: buckets.map(b => b.key), xAt, yAt, W, H, padTop, padBottom, padSide,
       series: [
         { label: 'Pemasukan', values: totals.map(t => t.inSum), color: 'var(--green)' },
         { label: 'Pengeluaran', values: totals.map(t => t.outSum), color: 'var(--red)' }
       ],
       formatValue: v => formatRp(v),
-      formatDate: monthShortLabel
+      formatDate: k => tipByKey[k] || k
     };
     bindChartInteraction('trend-chart');
+
+    const sumEl = $('trend-summary');
+    if (sumEl) {
+      const net = roundMoney(totals.reduce((s, t) => s + t.inSum - t.outSum, 0));
+      sumEl.textContent = `Selisih ${bucketPeriodText(buckets)}: ${trendArrow(net)}${net > 0 ? '+' : (net < 0 ? '−' : '')}${formatRp(Math.abs(net))}`;
+      sumEl.style.color = net > 0 ? 'var(--green-ink)' : (net < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
+    }
   }
 
   function dayShortLabel(dateStr) {
@@ -186,8 +188,8 @@
   const CHART_TITLES = {
     'networth-chart': () => elText('networth-title', 'Kurva kekayaan bersih'),
     'cashflow-chart': () => elText('cashflow-title', 'Kurva cashflow'),
-    'trend-chart': 'Pemasukan dan pengeluaran, 6 bulan terakhir',
-    'debt-trend-chart': 'Tren total utang, 6 bulan terakhir',
+    'trend-chart': () => elText('trend-title', 'Pemasukan vs pengeluaran'),
+    'debt-trend-chart': () => elText('debt-trend-title', 'Tren total utang'),
     'laporan-trend-chart': 'Pemasukan dan pengeluaran pada periode laporan'
   };
   function chartTitleFor(svgId) { const t = CHART_TITLES[svgId]; return typeof t === 'function' ? t() : (t || 'Grafik'); }
@@ -414,14 +416,74 @@
     return d.trim();
   }
 
-  // Satu pemilih periode untuk kurva kekayaan bersih & cashflow.
+  // Kurva mulus yang tidak melampaui nilai antar titik (monotone cubic, Fritsch-Carlson): dipakai untuk grafik bulanan
+  // (tren, utang) supaya kurva tak menembus sumbu bawah seperti Catmull-Rom saat nilainya naik-turun tajam.
+  function monotonePathD(xs, ys) {
+    const n = xs.length;
+    if (n < 3) return smoothPathD(xs, ys);
+    const dx = [], m = [];
+    for (let i = 0; i < n - 1; i++) { dx.push(xs[i + 1] - xs[i]); m.push((ys[i + 1] - ys[i]) / dx[i]); }
+    const t = [m[0]];
+    for (let i = 1; i < n - 1; i++) t.push(m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2);
+    t.push(m[n - 2]);
+    for (let i = 0; i < n - 1; i++) {
+      if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+      const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+      if (s > 9) { const tau = 3 / Math.sqrt(s); t[i] = tau * a * m[i]; t[i + 1] = tau * b * m[i]; }
+    }
+    let d = `M${xs[0].toFixed(2)},${ys[0].toFixed(2)}`;
+    for (let i = 0; i < n - 1; i++) {
+      d += ` C${(xs[i] + dx[i] / 3).toFixed(2)},${(ys[i] + t[i] * dx[i] / 3).toFixed(2)} ${(xs[i + 1] - dx[i] / 3).toFixed(2)},${(ys[i + 1] - t[i + 1] * dx[i] / 3).toFixed(2)} ${xs[i + 1].toFixed(2)},${ys[i + 1].toFixed(2)}`;
+    }
+    return d;
+  }
+
+  // Periode kurva Tren dan Utang (v1.1.125): ikut pemilih periode yang sama dengan kekayaan bersih & cashflow.
+  let trendPeriodDays = 30;
+
+  // Fungsi murni: bucket waktu untuk grafik Tren/Utang menurut periode (hari).
+  //  <= 7 hari: harian; <= 30 hari: tiap 5 hari (6 titik); lebih dari itu: bulanan (hari / 30 bulan kalender, bulan ini terakhir).
+  // Tiap bucket: { key, kind: 'day'|'span'|'month', from, to } (tanggal 'YYYY-MM-DD', inklusif; bucket terakhir berakhir hari ini).
+  function chartBuckets(days, today) {
+    today = today || todayStr();
+    days = Math.max(2, Math.round(Number(days)) || 30);
+    const p2 = n => String(n).padStart(2, '0');
+    const fmt = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+    const [y, m, d0] = today.split('-').map(Number);
+    const out = [];
+    if (days <= 7) {
+      for (let i = days - 1; i >= 0; i--) { const k = fmt(new Date(y, m - 1, d0 - i)); out.push({ key: k, kind: 'day', from: k, to: k }); }
+    } else if (days <= 30) {
+      const n = Math.ceil(days / 5);
+      for (let i = n - 1; i >= 0; i--) {
+        const to = fmt(new Date(y, m - 1, d0 - i * 5)), from = fmt(new Date(y, m - 1, d0 - i * 5 - 4));
+        out.push({ key: to, kind: 'span', from, to });
+      }
+    } else {
+      const n = Math.max(2, Math.round(days / 30));
+      for (let i = n - 1; i >= 0; i--) {
+        const first = new Date(y, m - 1 - i, 1), key = first.getFullYear() + '-' + p2(first.getMonth() + 1);
+        out.push({ key, kind: 'month', from: key + '-01', to: i === 0 ? today : fmt(new Date(first.getFullYear(), first.getMonth() + 1, 0)) });
+      }
+    }
+    return out;
+  }
+  function bucketAxisLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : dayShortLabel(b.to); }
+  function bucketTipLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : (b.from === b.to ? dayShortLabel(b.to) : dayShortLabel(b.from) + ' – ' + dayShortLabel(b.to)); }
+  function bucketPeriodText(buckets) {
+    const k = buckets[0].kind;
+    return k === 'month' ? buckets.length + ' bulan terakhir' : (k === 'span' ? '30 hari terakhir' : (buckets.length === 1 ? 'hari ini' : buckets.length + ' hari terakhir'));
+  }
+
+  // Satu pemilih periode untuk kurva kekayaan bersih, cashflow, tren, dan utang.
   function setChartPeriod(days) {
     networthPeriodDays = days;
     cashflowPeriodDays = days;
+    trendPeriodDays = days;
     document.querySelectorAll('[data-chart-period]').forEach(b => b.classList.toggle('active', Number(b.dataset.chartPeriod) === days));
     // Hanya segmen aktif yang digambar; segmen lain menggambar dengan periode baru saat dipilih.
     const cur = activeChartSegmentId();
-    if (cur === 'kekayaan' || cur === 'cashflow') renderChartSegment(cur, loadData());
+    if (cur === 'kekayaan' || cur === 'cashflow' || cur === 'tren' || cur === 'utang') renderChartSegment(cur, loadData());
   }
 
   // ---------- Tampilan kartu Ringkasan (tampil/sembunyi + sembunyi otomatis kalau kosong) ----------
@@ -437,7 +499,8 @@
     { id: 'networth-chart-card', label: 'Kurva kekayaan bersih' },
     { id: 'cashflow-chart-card', label: 'Kurva cashflow' },
     { id: 'category-chart-card', label: 'Kategori bulan ini' },
-    { id: 'trend-chart-card', label: 'Pemasukan vs pengeluaran (6 bulan)' },
+    { id: 'tag-chart-card', label: 'Label bulan ini' },
+    { id: 'trend-chart-card', label: 'Pemasukan vs pengeluaran' },
     { id: 'debt-trend-card', label: 'Tren total utang' }
   ];
   const RINGKASAN_HIDDEN_KEY = 'keuangan-ringkasan-hidden-v1';
@@ -478,6 +541,7 @@
       'goal-card': !plan.goal,
       'plan-cta-card': plan.budget && plan.sub && plan.emergency && plan.goal,
       'category-chart-card': monthReal.length === 0,
+      'tag-chart-card': !monthReal.some(t => (t.type === 'masuk' || t.type === 'keluar') && txnTags(t).length > 0),
       'trend-chart-card': !data.txns.some(t => sixKeys.has(monthKeyFromDate(t.date || '')) && !isNonOperatingTxn(t) && (t.type === 'masuk' || t.type === 'keluar')),
       'debt-trend-card': !data.accounts.some(a => TYPE_DEBT[a.type]),
       'networth-chart-card': data.txns.length === 0,
@@ -504,9 +568,8 @@
   const CHART_SEGMENTS = [
     { id: 'kekayaan', label: 'Kekayaan', card: 'networth-chart-card', period: true },
     { id: 'cashflow', label: 'Cashflow', card: 'cashflow-chart-card', period: true },
-    { id: 'kategori', label: 'Kategori', card: 'category-chart-card' },
-    { id: 'tren', label: 'Tren', card: 'trend-chart-card' },
-    { id: 'utang', label: 'Utang', card: 'debt-trend-card' }
+    { id: 'tren', label: 'Tren', card: 'trend-chart-card', period: true },
+    { id: 'utang', label: 'Utang', card: 'debt-trend-card', period: true }
   ];
   const CHART_SEGMENT_KEY = 'keuangan-ringkasan-segmen-v1';
   function loadChartSegment() {
@@ -529,7 +592,6 @@
   function renderChartSegment(id, data) {
     if (id === 'kekayaan') renderNetWorthChart(data);
     else if (id === 'cashflow') renderCashflowChart(data);
-    else if (id === 'kategori') renderCategoryChart(data);
     else if (id === 'tren') renderTrendChart(data);
     else if (id === 'utang') renderDebtTrendChart(data);
   }
@@ -570,7 +632,9 @@
     { id: 'plan-cta-card', label: 'Ajakan mengatur rencana' },
     { id: 'account-values-card', label: 'Nilai akun' },
     { id: 'recent-txn-card', label: 'Transaksi terbaru' },
-    { id: 'chart-group', label: 'Grafik' }
+    { id: 'chart-group', label: 'Grafik' },
+    { id: 'category-chart-card', label: 'Kategori bulan ini' },
+    { id: 'tag-chart-card', label: 'Label bulan ini' }
   ];
   const RINGKASAN_ORDER_KEY = 'keuangan-ringkasan-order-v1';
   // Fungsi murni: id dikenal saja, tanpa duplikat, urutan tersimpan dipertahankan. Unit yang belum ada di daftar
@@ -949,32 +1013,18 @@
     renderCategoryChart(loadData());
   }
 
-  function renderCategoryChart(data) {
-    const svg = $('category-pie-chart');
-    const legend = $('category-pie-legend');
-    if (!svg || !legend) return;
-
-    const now = todayGmt8();
-    const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    const monthTxns = data.txns.filter(t => t.type === state.categoryChartType && monthKeyFromDate(t.date) === curMonthKey && (t.type === 'transfer' || !isNonOperatingTxn(t)));
-
-    const sums = {};
-    monthTxns.forEach(t => {
-      const key = t.category || 'Tanpa kategori';
-      sums[key] = (sums[key] || 0) + t.amount;
-    });
-    const items = Object.entries(sums).map(([category, amount]) => ({ category, amount }))
-      .sort((a, b) => b.amount - a.amount);
+  // Pie + legenda bersama (kartu Kategori dan Label). items: [{ category: nama, amount, noPick? }] urut terbesar dulu;
+  // o: { typeLabel, emptyText, onPick(item) }. Klik irisan/baris legenda memanggil onPick (kecuali item.noPick).
+  // Dipasang lewat addEventListener (bukan onclick inline) karena nama kategori/label bisa teks bebas.
+  function drawPieChart(svg, legend, items, o) {
     const total = items.reduce((s, it) => s + it.amount, 0);
-
     if (items.length === 0 || total <= 0) {
       svg.innerHTML = `<circle cx="60" cy="60" r="52" style="fill:var(--paper-dim)"></circle>`;
       svg.setAttribute('role', 'img');
-      svg.setAttribute('aria-label', describePieChart([], 0, CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori'));
-      legend.innerHTML = '<div class="empty" style="padding:0;">Belum ada transaksi bulan ini.</div>';
+      svg.setAttribute('aria-label', describePieChart([], 0, o.typeLabel));
+      legend.innerHTML = `<div class="empty" style="padding:0;">${escapeHtml(o.emptyText)}</div>`;
       return;
     }
-
     const cx = 60, cy = 60, r = 52;
     let svgContent = '';
     if (items.length === 1) {
@@ -996,13 +1046,14 @@
     }
     svg.innerHTML = svgContent;
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', describePieChart(items, total, CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori'));
+    svg.setAttribute('aria-label', describePieChart(items, total, o.typeLabel));
 
     legend.innerHTML = items.map((item, i) => {
       const colorVar = PIE_COLOR_VARS[i % PIE_COLOR_VARS.length];
       const pct = Math.round((item.amount / total) * 100);
+      const pick = !item.noPick;
       return `
-        <div class="pie-legend-row clickable" data-idx="${i}" role="button" tabindex="0" aria-label="${escapeHtml(item.category)}, ${pct} persen, ${formatRp(item.amount)}. Buka rincian">
+        <div class="pie-legend-row${pick ? ' clickable' : ''}" data-idx="${i}"${pick ? ` role="button" tabindex="0" aria-label="${escapeHtml(item.category)}, ${pct} persen, ${formatRp(item.amount)}. Buka rincian"` : ''}>
           <div class="pie-legend-left">
             <span class="pie-dot" style="background:var(${colorVar})"></span>
             <span>${escapeHtml(item.category)} · ${pct}%</span>
@@ -1012,17 +1063,39 @@
       `;
     }).join('');
 
-    // Klik irisan pie atau baris legenda -> buka daftar transaksi kategori itu. Dipasang lewat
-    // addEventListener (bukan onclick inline) karena nama kategori bisa teks bebas (custom),
-    // jadi berisiko merusak atribut HTML kalau ditulis langsung sebagai string di dalam onclick="".
     svg.querySelectorAll('[data-idx]').forEach(el => {
-      el.addEventListener('click', () => openCategoryDetail(items[+el.dataset.idx].category));
+      const it = items[+el.dataset.idx];
+      if (!it.noPick) el.addEventListener('click', () => o.onPick(it));
     });
-    legend.querySelectorAll('.pie-legend-row[data-idx]').forEach(el => {
-      el.addEventListener('click', () => openCategoryDetail(items[+el.dataset.idx].category));
+    legend.querySelectorAll('.pie-legend-row.clickable').forEach(el => {
+      const it = items[+el.dataset.idx];
+      el.addEventListener('click', () => o.onPick(it));
       el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCategoryDetail(items[+el.dataset.idx].category); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); o.onPick(it); }
       });
+    });
+  }
+
+  function renderCategoryChart(data) {
+    const svg = $('category-pie-chart');
+    const legend = $('category-pie-legend');
+    if (!svg || !legend) return;
+
+    const now = todayGmt8();
+    const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthTxns = data.txns.filter(t => t.type === state.categoryChartType && monthKeyFromDate(t.date) === curMonthKey && (t.type === 'transfer' || !isNonOperatingTxn(t)));
+
+    const sums = {};
+    monthTxns.forEach(t => {
+      const key = t.category || 'Tanpa kategori';
+      sums[key] = (sums[key] || 0) + t.amount;
+    });
+    const items = Object.entries(sums).map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+    drawPieChart(svg, legend, items, {
+      typeLabel: CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori',
+      emptyText: 'Belum ada transaksi bulan ini.',
+      onPick: it => openCategoryDetail(it.category)
     });
   }
 
@@ -1118,10 +1191,10 @@
         color = bal < 0 ? 'var(--red-ink)' : 'var(--ink)';
       }
       return `
-        <div class="txn-row acc-accent" style="--accent-color: var(${colorVar});">
+        <div class="txn-row">
           <div class="txn-left">
             <span class="dot" style="background: var(${colorVar})"></span>
-            <div class="txn-text"><div class="txn-desc">${escapeHtml(acc.name)}</div></div>
+            <div class="txn-text"><div class="txn-desc">${escapeHtml(acc.name)}</div><div class="txn-meta">${escapeHtml(TYPE_LABELS[acc.type] || acc.type)}</div></div>
           </div>
           <div class="txn-right">
             <span class="txn-amount" style="color:${color}">${valueText}</span>

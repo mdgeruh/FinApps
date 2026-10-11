@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.125', d: '11 Okt 2026', items: [
+      'Kategori kini punya kartu sendiri, dan ada kartu Label baru yang menunjukkan pengeluaran atau pemasukan per label bulan ini; ketuk label untuk melihat transaksinya. Grafik Tren dan Utang sekarang mengikuti pilihan periode 1H sampai 360H seperti grafik lain'] },
+    { v: 'v1.1.124', d: '11 Okt 2026', items: [
+      'Grafik Tren dan Tren utang sekarang berupa garis seperti kurva Cashflow, dengan ringkasan di atasnya. Kartu Nilai akun juga dirapikan agar tampilannya sama dengan kartu Transaksi terbaru'] },
     { v: 'v1.1.123', d: '11 Okt 2026', items: [
       'Memperbaiki Edit transaksi: formnya tidak lagi menutup sendiri, dan transaksi berkategori Lainnya bisa disimpan lagi setelah diubah'] },
     { v: 'v1.1.122', d: '11 Okt 2026', items: [

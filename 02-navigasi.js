@@ -91,7 +91,9 @@
           if (!vis.off('plan-cta-card')) renderPlanCta(data);
           const curSeg = applyChartSegments(data, vis);
           applyRingkasanVisibility(data, vis);
-          if (curSeg) renderChartSegment(curSeg, data); }
+          if (curSeg) renderChartSegment(curSeg, data);
+          if (!vis.off('category-chart-card')) renderCategoryChart(data);
+          if (!vis.off('tag-chart-card')) renderTagChart(data); }
         break;
       case 'akun':
         renderAccounts(data, balances);

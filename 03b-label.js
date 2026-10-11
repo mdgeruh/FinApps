@@ -99,3 +99,42 @@
       <span class="cat-amt">${it.keluar > 0 ? '<span class="u-c-red">−' + formatRp(it.keluar) + '</span>' : ''}${it.keluar > 0 && it.masuk > 0 ? ' · ' : ''}${it.masuk > 0 ? '<span class="u-c-green">+' + formatRp(it.masuk) + '</span>' : ''}</span></div></div>`).join('');
     box.innerHTML = `<div class="cat-list"><div class="cat-head"><span class="cat-title">Per label</span></div>${rows}<div class="acc-sub u-mt6">Transaksi dengan beberapa label dihitung di tiap labelnya.</div></div>`;
   }
+
+  // ---------- Kartu "Label bulan ini" di Ringkasan (v1.1.125): pie per label, seperti kartu Kategori ----------
+  const TAG_PIE_MAX = 8;
+  // Fungsi murni: [{ category: '#label', key, amount }] untuk jenis 'keluar'/'masuk' pada txns (sudah disaring bulan ini),
+  // terbesar dulu; di atas TAG_PIE_MAX label sisanya digabung jadi "Label lain" (noPick).
+  function tagChartItems(txns, type) {
+    const items = summarizeTags(txns).map(e => ({ category: '#' + e.tag, key: e.key, amount: e[type] })).filter(e => e.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+    if (items.length <= TAG_PIE_MAX) return items;
+    const head = items.slice(0, TAG_PIE_MAX - 1), rest = items.slice(TAG_PIE_MAX - 1);
+    return head.concat([{ category: 'Label lain', key: '', amount: roundMoney(rest.reduce((s, e) => s + e.amount, 0)), noPick: true }]);
+  }
+  function setTagChartType(t) {
+    state.tagChartType = t === 'masuk' ? 'masuk' : 'keluar';
+    document.querySelectorAll('#tag-chart-card .type-btn').forEach(b => b.classList.toggle('active', b.dataset.tagChart === state.tagChartType));
+    renderTagChart(loadData());
+  }
+  function renderTagChart(data) {
+    const svg = $('tag-pie-chart'), legend = $('tag-pie-legend');
+    if (!svg || !legend) return;
+    const now = todayGmt8();
+    const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthTxns = data.txns.filter(t => (t.type === 'masuk' || t.type === 'keluar') && monthKeyFromDate(t.date || '') === curMonthKey && !isNonOperatingTxn(t));
+    const type = state.tagChartType === 'masuk' ? 'masuk' : 'keluar';
+    document.querySelectorAll('#tag-chart-card .type-btn').forEach(b => b.classList.toggle('active', b.dataset.tagChart === type));
+    drawPieChart(svg, legend, tagChartItems(monthTxns, type), {
+      typeLabel: (type === 'masuk' ? 'Pemasukan' : 'Pengeluaran') + ' per label',
+      emptyText: 'Belum ada ' + (type === 'masuk' ? 'pemasukan' : 'pengeluaran') + ' berlabel bulan ini.',
+      onPick: it => openTagFromChart(it.key, type)
+    });
+  }
+  // Ketuk irisan/baris label: buka tab Transaksi disaring ke label dan jenis itu (bulan ini).
+  function openTagFromChart(key, type) {
+    if (!key) return;
+    state.activeTagFilter = key; state.activeTypeFilter = type; state.txnSearchQuery = ''; state.txnMonth = 'cur';
+    const s = $('txn-search-input'); if (s) s.value = '';
+    setTab('transaksi');
+    refreshTxnList();
+  }

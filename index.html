@@ -196,6 +196,24 @@
       <div class="pie-legend u-mt10" id="cashflow-legend"></div>
     </div>
 
+    <div class="chart-card" id="trend-chart-card">
+      <div class="section-title u-mb6" id="trend-title">Pemasukan vs pengeluaran</div>
+      <div id="trend-summary" style="font-size:13px; font-weight:600; margin:8px 0;"></div>
+      <svg id="trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="chart-legend">
+        <span><i class="u-bg-green"></i>▲ Pemasukan</span>
+        <span><i style="background: var(--red)"></i>▼ Pengeluaran</span>
+      </div>
+    </div>
+
+    <div class="chart-card" id="debt-trend-card">
+      <div class="section-title u-mb6" id="debt-trend-title">Tren total utang</div>
+      <div id="debt-trend-summary" style="font-size:13px; font-weight:600; margin:8px 0;"></div>
+      <svg id="debt-trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="acc-sub u-mt4">Jumlah utang kartu kredit, PayLater, dan pinjaman di akhir tiap bulan, sesuai saldo yang tercatat.</div>
+    </div>
+    </div>
+
     <div class="chart-card" id="category-chart-card">
       <div class="section-title u-mb12">Kategori bulan ini</div>
       <div class="toggle-row" style="margin-bottom:14px;">
@@ -209,21 +227,18 @@
       </div>
     </div>
 
-    <div class="chart-card" id="trend-chart-card">
-      <div class="section-title u-mb12">Pemasukan vs pengeluaran (6 bulan terakhir)</div>
-      <svg id="trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="chart-legend">
-        <span><i class="u-bg-green"></i>▲ Pemasukan</span>
-        <span><i style="background: var(--red)"></i>▼ Pengeluaran</span>
-      </div>
-    </div>
 
-    <div class="chart-card" id="debt-trend-card">
-      <div class="section-title u-mb6">Tren total utang (6 bulan terakhir)</div>
-      <div class="acc-sub u-mb6" id="debt-trend-summary"></div>
-      <svg id="debt-trend-chart" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="acc-sub u-mt4">Jumlah utang kartu kredit, PayLater, dan pinjaman di akhir tiap bulan, sesuai saldo yang tercatat.</div>
-    </div>
+    <div class="chart-card" id="tag-chart-card">
+      <div class="section-title u-mb12">Label bulan ini</div>
+      <div class="toggle-row" style="margin-bottom:14px;">
+        <button class="type-btn active" data-tag-chart="keluar" data-act="setTagChartType" data-a0="keluar">Pengeluaran</button>
+        <button class="type-btn" data-tag-chart="masuk" data-act="setTagChartType" data-a0="masuk">Pemasukan</button>
+      </div>
+      <div class="pie-wrap">
+        <svg id="tag-pie-chart" viewBox="0 0 120 120"></svg>
+        <div class="pie-legend" id="tag-pie-legend"></div>
+      </div>
+      <div class="acc-sub u-mt6">Transaksi dengan beberapa label dihitung di tiap labelnya. Ketuk label untuk melihat transaksinya.</div>
     </div>
   </div>
 
