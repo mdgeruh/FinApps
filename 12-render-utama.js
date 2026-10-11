@@ -3,7 +3,7 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.123';
+  const APP_VERSION = 'v1.1.125';
   const APP_BUILD = '2 Okt 2026';
   // Versi tampil di kartu paling atas tab Profil (renderProfilTab). #app-footer sengaja kosong: hanya jangkar untuk status sinkron.
 

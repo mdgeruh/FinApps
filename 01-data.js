@@ -93,6 +93,7 @@
     titipanSortMode: 'balance',
     titipanSearchQuery: '',
     categoryChartType: 'keluar',
+    tagChartType: 'keluar',
     editingTxnId: null,
     detailTxnId: null,
     detailTitipanId: null,
