@@ -120,6 +120,8 @@
     calcRefresh();
     const a = $('calc-panel').querySelector('.calc-apply'); if (a) a.focus();
   }
+  // Dari tombol kalkulator di dalam kolom: sama dengan membuka papan untuk kolom itu
+  function calcOpenFor(text) { if (!text || !text._cm) return; calc.field = text; calcOpen(); }
   function calcClose() { calc.open = false; const p = document.getElementById('calc-panel'); if (p) p.classList.remove('open'); }
   function calcKey(k) {
     if (!calc.open) return;

@@ -6,6 +6,12 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.122 — 11 Okt 2026
+
+**Perbaikan: kalkulator tidak terlihat di form** (`06-util-ui.js`, `06c-kalkulator.js`, `style.css`)
+- Sebelumnya kalkulator hanya muncul sebagai bar kecil di bawah kolom yang sedang fokus, sehingga mudah tak terlihat (mis. tertutup papan ketik HP). Kini setiap kolom nominal punya **ikon kalkulator permanen di sisi kanan**; ketuk untuk membuka papan hitung layar, lalu **Pakai hasil** mengisi kolom itu. Berlaku di semua form (transaksi, akun, anggaran, target, titipan, dll.). Mengetik rumus langsung di kolom tetap bisa.
+- Kolom nominal kini dibungkus (`.cmoney-wrap`); ikon disembunyikan saat cetak. 1 test baru (248 total); diuji di browser (ikon tampak di form transaksi dan form target, ketuk membuka papan, 250.000+15.000×2 = 280.000 terisi ke kolom).
+
 ## v1.1.121 — 9 Okt 2026
 
 **Baru: label (tag) transaksi** (`03b-label.js`, `04c-akun-aset-tagihan.js`, `03-form-transaksi.js`, `12-render-utama.js`, `07-render-akun-transaksi.js`, `02-navigasi.js`, `11-laporan.js`, `13-import-export.js`, `index.html`, `style.css`, `sw.js`)

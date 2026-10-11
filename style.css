@@ -811,6 +811,12 @@
 
 /* v1.1.104: input nominal dengan titik ribuan; input angka asli disembunyikan */
 .cmoney-native { display: none !important; }
+.cmoney-wrap { position: relative; display: block; flex: 1; min-width: 0; }
+.field-row.has-label > .cmoney-wrap { flex: none; width: 100%; }
+.cmoney-wrap > input.cmoney { width: 100%; padding-right: 46px; }
+.cmoney-calc { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; background: transparent; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; padding: 0; }
+.cmoney-calc:hover, .cmoney-calc:active { background: var(--paper-dim); color: var(--ink); }
+@media print { .cmoney-calc { display: none !important; } }
 
 /* v1.1.105: kontrol angka dan centang tanpa tampilan bawaan browser */
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
