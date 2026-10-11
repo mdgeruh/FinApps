@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.122', d: '11 Okt 2026', items: [
+      'Kalkulator kini punya ikon tetap di sisi kanan setiap kolom nominal, jadi tidak perlu mencarinya lagi. Ketuk ikonnya, hitung, lalu tekan Pakai hasil'] },
     { v: 'v1.1.121', d: '9 Okt 2026', items: [
       'Transaksi kini bisa diberi label, misalnya kebun atau lebaran, selain kategori. Ketik di kolom Label atau ketuk saran. Label bisa dipakai untuk menyaring dan mencari di tab Transaksi, ada ringkasannya di Laporan, dan ikut di file CSV'] },
     { v: 'v1.1.120', d: '9 Okt 2026', items: [

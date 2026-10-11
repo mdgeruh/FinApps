@@ -417,7 +417,19 @@
       if (native.hasAttribute(a)) text.setAttribute(a, native.getAttribute(a));
     });
     if (native.disabled) text.disabled = true;
-    native.parentNode.insertBefore(text, native);
+    // Pembungkus + tombol kalkulator yang selalu tampak di dalam kolom (v1.1.122)
+    const wrap = document.createElement('span');
+    wrap.className = 'cmoney-wrap';
+    native.parentNode.insertBefore(wrap, native);
+    wrap.appendChild(text);
+    const calcBtn = document.createElement('button');
+    calcBtn.type = 'button';
+    calcBtn.className = 'cmoney-calc no-print';
+    calcBtn.setAttribute('aria-label', 'Buka kalkulator');
+    calcBtn.title = 'Kalkulator';
+    calcBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/></svg>';
+    calcBtn.addEventListener('click', () => { if (typeof calcOpenFor === 'function') calcOpenFor(text); });
+    wrap.appendChild(calcBtn);
     native.classList.add('cmoney-native');
     native.setAttribute('tabindex', '-1');
 
@@ -477,7 +489,7 @@
     native.focus = () => text.focus();
     native.select = () => text.select();
     if (typeof MutationObserver !== 'undefined') {
-      new MutationObserver(() => { text.style.display = native.style.display; text.hidden = native.hidden; }).observe(native, { attributes: true, attributeFilter: ['style', 'hidden'] });
+      new MutationObserver(() => { wrap.style.display = native.style.display; wrap.hidden = native.hidden; }).observe(native, { attributes: true, attributeFilter: ['style', 'hidden'] });
     }
     text.value = moneyFromValue(native.value);
   }
