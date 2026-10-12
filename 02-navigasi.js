@@ -234,10 +234,33 @@
   function toggleBalanceVisibility() {
     state.balanceHidden = !state.balanceHidden;
     $('balance-eye-icon').innerHTML = state.balanceHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+    const deskEye = $('desk-eye-icon'); if (deskEye) deskEye.innerHTML = state.balanceHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
     const data = loadData();
     renderBalanceHeader(data);
     if (activeChartSegmentId() === 'kekayaan') renderNetWorthChart(data);
     if (typeof renderAccounts === 'function' && $('akun-total-aset')) { const bal = computeAllBalances(data); renderAccountsSummary(data, bal); renderAccounts(data, bal); }
+  }
+
+  // Dasbor desktop (>=1280 px, disembunyikan lewat CSS di layar lain): tiga kartu angka + panel Akun di kanan.
+  function renderDeskDash(data, balances, totalBalance, ad) {
+    const fmt = v => state.balanceHidden ? '•••••••' : formatRp(v);
+    [['ds-net', totalBalance], ['ds-aset', ad.aset], ['ds-utang', ad.utang]].forEach(([id, v]) => { const el = $(id); if (el) el.textContent = fmt(v); });
+    const list = $('desk-accounts-list'); if (!list) return;
+    const rows = data.accounts.filter(a => !a.archived && a.type !== 'titipan')
+      .sort((a, b) => Math.abs(balances[b.id]) - Math.abs(balances[a.id])).slice(0, 12);
+    list.innerHTML = rows.length ? rows.map(a => {
+      const bal = balances[a.id];
+      return `<div class="da-row" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${escapeHtml(a.id)}" data-keydown-act="openAccountDetail" data-keydown-a0="${escapeHtml(a.id)}" data-keydown-keys="Enter| "><span class="da-name">${escapeHtml(a.name)}</span><span class="da-type">${escapeHtml(TYPE_LABELS[a.type] || '')}</span><span class="da-bal${bal < 0 ? ' neg' : ''}">${fmt(bal)}</span></div>`;
+    }).join('') : '<div class="acc-sub">Belum ada akun.</div>';
+  }
+
+  // Kotak cari di bar atas desktop: lompat ke tab Transaksi dengan kata kunci terisi.
+  function deskSearchSubmit() {
+    const el = $('desk-search-input'); if (!el) return;
+    const q = el.value.trim(); el.value = '';
+    setTab('transaksi');
+    const t = $('txn-search-input');
+    if (t) { t.value = q; onTxnSearchInput(); }
   }
 
   function renderBalanceHeader(data, balances) {
@@ -249,6 +272,7 @@
     $('balance-amount').textContent = state.balanceHidden ? '•••••••' : formatRp(totalBalance);
     $('total-in').textContent = state.balanceHidden ? '•••••••' : formatRp(ad.aset);
     $('total-out').textContent = state.balanceHidden ? '•••••••' : formatRp(ad.utang);
+    renderDeskDash(data, balances, totalBalance, ad);
     $('balance-scope').textContent = 'Saldo semua akun (aset − utang) saat ini';
     // Bunga kontrak pinjaman flat yang belum jatuh tempo tidak ada di saldo akun (saldo = sisa pokok);
     // ditampilkan sebagai catatan supaya kekayaan bersih tidak terkesan lebih tinggi dari kenyataan.

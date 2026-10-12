@@ -6,6 +6,22 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.129 — 12 Okt 2026
+
+**Tampilan desktop: dasbor Ringkasan (kotak cari, 3 kartu angka, grafik lebar, panel Akun)** (`index.html`, `style.css`, `02-navigasi.js`)
+- **Bar atas (≥1024 px):** kotak cari di tengah. Ketik lalu Enter → pindah ke tab Transaksi dengan kata kunci terisi (`deskSearchSubmit`, memakai pencarian tab Transaksi yang sudah ada).
+- **Ringkasan (≥1280 px):** blok hijau diganti tiga kartu angka berjajar (Kekayaan bersih, Total aset, Total utang; tombol mata ikut menyembunyikan angka) lewat `renderDeskDash`, dipanggil dari `renderBalanceHeader`. Grafik memakai lebar penuh kolom kiri (tinggi dibatasi 320 px). Panel **Akun** menempel di kanan: maksimal 12 akun aktif (tanpa arsip dan titipan), urut nilai terbesar, ketuk untuk membuka detail; utang merah.
+- Layar ≥1600 px: kartu lain di bawah grafik mengalir dua kolom. Layar ≥1440 px: lebar isi maksimal 1360 px.
+- Mobile, tablet, dan 1024–1279 px tidak berubah (blok hijau lama tetap dipakai di sana). Catatan: di ≥1280 px grup Grafik selalu tepat di bawah kartu angka (urutan ▲ ▼ tidak berlaku untuk grup itu).
+- Diperiksa di 1100, 1440, dan 1920 px untuk semua tab: tanpa scroll horizontal dan tanpa error JS. 1 test baru (260 total).
+
+## v1.1.128 — 12 Okt 2026
+
+**Tampilan desktop: tombol Catat transaksi di sidebar, tab Tagihan dua kolom** (`style.css`)
+- Layar ≥1024 px: tombol "+ Catat transaksi" pindah dari pojok kanan bawah (menutupi nominal dan tombol hapus di kolom isi) ke dasar sidebar kiri. Mobile dan tablet tetap tombol bulat melayang.
+- Layar ≥1280 px: tab Tagihan dua kolom, kartu Jatuh tempo menempel di kiri (420 px) dan kalender bulanan di kanan; bila tak ada tagihan jatuh tempo, kalender memakai lebar penuh.
+- Diperiksa di 1100, 1440, dan 1920 px untuk semua tab: tanpa scroll horizontal dan tanpa error JS. Tanpa perubahan logika, jadi jumlah test tetap 259.
+
 ## v1.1.127 — 12 Okt 2026
 
 **Perbaikan: daftar Tagihan kartu kredit ikut berubah setelah dibayar** (`01-data.js`)
