@@ -10,7 +10,8 @@
 
   function computeAttentionItems(data, balances, monthKey) {
     const out = [];
-    const dues = computeUpcomingDues(data, balances, ATTENTION_DUE_DAYS);
+    // Kartu kredit yang minimumnya sudah dibayar tidak lagi memicu peringatan (sisa tagihan tetap tampil di kartu Jatuh tempo dan tab Tagihan).
+    const dues = computeUpcomingDues(data, balances, ATTENTION_DUE_DAYS).filter(d => !d.minMet);
     const late = dues.filter(d => d.days < 0), soon = dues.filter(d => d.days >= 0);
     const sum = arr => roundMoney(arr.reduce((s, d) => s + d.amount, 0));
     const dueRow = (kind, arr, level, plural, whenOf) => {

@@ -27,9 +27,9 @@
       return;
     }
     card.innerHTML = header + items.map(it => {
-      const late = it.days < 0;
+      const late = it.days < 0 && !it.minMet;
       const when = late ? 'Lewat ' + (-it.days) + ' hari' : (it.days === 0 ? 'Hari ini' : (it.days === 1 ? 'Besok' : it.days + ' hari lagi'));
-      const color = late ? 'var(--red-ink)' : (it.days <= 3 ? 'var(--amber-ink)' : 'var(--ink-soft)');
+      const color = late ? 'var(--red-ink)' : (it.days <= 3 && !it.minMet ? 'var(--amber-ink)' : 'var(--ink-soft)');
       return `
         <div class="txn-row clickable" data-act="openAccountDetail" data-a0="${escapeHtml(it.id)}">
           <div class="txn-left">
