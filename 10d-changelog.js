@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.127', d: '12 Okt 2026', items: [
+      'Daftar di tab Tagihan kini ikut berubah setelah kartu kredit dibayar: jumlahnya turun sesuai pembayaran minimum, sebagian, atau penuh, dan hilang kalau sudah lunas. Kartu yang belum diisi tanggal cetaknya juga sekarang muncul di tab Tagihan'] },
     { v: 'v1.1.126', d: '11 Okt 2026', items: [
       'Kartu kredit yang tagihannya sudah dibayar sebesar minimum tidak lagi menampilkan peringatan telat atau jatuh tempo. Sisa tagihan tetap terlihat, tetapi tanpa warna merah atau kuning'] },
     { v: 'v1.1.125', d: '11 Okt 2026', items: [

@@ -999,8 +999,20 @@
         });
       } else if (acc.type === 'kartu_kredit' && acc.feeDay && b < 0) {
         const ci = cardStatementInfo(data, acc, today);
-        if (ci && ci.remaining > 0) {
-          addItem(monthKeyFromDate(ci.dueDate), { accId: acc.id, accName: acc.name, label: 'Tagihan kartu' + (ci.minRemaining > 0 ? ' · min ' + formatRp(ci.minRemaining) : ''), amount: ci.remaining, due: ci.dueDate });
+        if (ci) {
+          // Jumlah = sisa tagihan cetak setelah pembayaran sejak cetak (minimum, nominal, atau penuh); lunas = tidak tampil.
+          if (ci.remaining > 0) {
+            const note = ci.minRemaining > 0 ? ' · min ' + formatRp(ci.minRemaining) : ' · minimum terbayar';
+            const paidNote = ci.paid > 0 ? ' · sudah dibayar ' + formatRp(ci.paid) : '';
+            addItem(monthKeyFromDate(ci.dueDate), { accId: acc.id, accName: acc.name, label: 'Tagihan kartu' + note + paidNote, amount: ci.remaining, due: ci.dueDate, minMet: !(ci.minRemaining > 0) });
+          }
+        } else {
+          // Tanpa tanggal cetak: tagihan = seluruh hutang saat ini (otomatis turun setelah dibayar), jatuh tempo berikutnya tgl feeDay.
+          const now = new Date(today + 'T00:00:00');
+          const mk = (yy, mm) => { const dim = new Date(yy, mm + 1, 0).getDate(); return yy + '-' + padMonth(mm + 1) + '-' + padMonth(Math.min(acc.feeDay, dim)); };
+          let ds = mk(now.getFullYear(), now.getMonth());
+          if (ds < today) ds = mk(now.getFullYear(), now.getMonth() + 1);
+          addItem(monthKeyFromDate(ds), { accId: acc.id, accName: acc.name, label: 'Tagihan kartu', amount: Math.abs(b), due: ds });
         }
       } else if (acc.type === 'paylater' && acc.feeDay) {
         paylaterMonthlyBreakdown(data, acc, b).forEach(g => {
