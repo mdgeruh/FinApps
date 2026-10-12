@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.129', d: '12 Okt 2026', items: [
+      'Di layar lebar (laptop dan komputer), halaman Ringkasan kini berupa dasbor: ada kotak cari di bagian atas, tiga kartu angka (Kekayaan bersih, Total aset, Total utang), grafik yang lebih lebar, dan daftar Akun di sisi kanan. Ketuk akun untuk membuka detailnya. Tampilan di HP dan tablet tidak berubah'] },
+    { v: 'v1.1.128', d: '12 Okt 2026', items: [
+      'Tampilan di layar lebar (laptop dan komputer) dirapikan: tombol Catat transaksi pindah ke bagian bawah menu samping sehingga tidak lagi menutupi angka, dan halaman Tagihan memakai dua kolom'] },
     { v: 'v1.1.127', d: '12 Okt 2026', items: [
       'Daftar di tab Tagihan kini ikut berubah setelah kartu kredit dibayar: jumlahnya turun sesuai pembayaran minimum, sebagian, atau penuh, dan hilang kalau sudah lunas. Kartu yang belum diisi tanggal cetaknya juga sekarang muncul di tab Tagihan'] },
     { v: 'v1.1.126', d: '11 Okt 2026', items: [

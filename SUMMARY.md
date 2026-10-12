@@ -1,6 +1,7 @@
 # Ringkasan & Todolist: Keuangan Pribadi
 
 Status per **v1.1.084** (2 Okt 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
+Terbaru v1.1.129: dasbor desktop Ringkasan (kotak cari, 3 kartu angka, panel Akun di kanan); lihat CHANGELOG.
 Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
 
 ## 1. Gambaran singkat
