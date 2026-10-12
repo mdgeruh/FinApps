@@ -6,6 +6,13 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.127 — 12 Okt 2026
+
+**Perbaikan: daftar Tagihan kartu kredit ikut berubah setelah dibayar** (`01-data.js`)
+- Di `computeBillCalendar`, tagihan kartu kredit kini menampilkan sisa tagihan cetak setelah pembayaran sejak cetak (minimum, nominal, atau penuh). Label menjelaskan keadaannya: "min Rp…", "minimum terbayar", dan "sudah dibayar Rp…". Lunas penuh = hilang dari daftar.
+- Kartu tanpa tanggal cetak sebelumnya tidak muncul sama sekali di tab Tagihan; kini tampil sebagai seluruh hutang dengan jatuh tempo tgl `feeDay` berikutnya, dan turun otomatis saat dibayar.
+- 1 test baru (259 total).
+
 ## v1.1.126 — 11 Okt 2026
 
 **Perbaikan: peringatan kartu kredit hilang setelah minimum dibayar** (`01-data.js`, `10j-perhatian.js`, `07-render-akun-transaksi.js`, `04b-akun-detail.js`)
