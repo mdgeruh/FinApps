@@ -76,7 +76,7 @@
         const rows = [
           ['Cetak terakhir · ' + fmtTgl(ci.statementDate), formatRp(ci.statement), 'var(--ink)'],
           ['Sudah dibayar sejak cetak', formatRp(ci.paid), 'var(--green)'],
-          ['Sisa tagihan cetak · jatuh tempo ' + fmtTgl(ci.dueDate) + (late ? ' (lewat)' : ''), formatRp(ci.remaining), ci.remaining > 0 ? 'var(--red)' : 'var(--green)'],
+          ['Sisa tagihan cetak · jatuh tempo ' + fmtTgl(ci.dueDate) + (late && ci.minRemaining > 0 ? ' (lewat)' : ''), formatRp(ci.remaining), ci.remaining > 0 && ci.minRemaining > 0 ? 'var(--red)' : (ci.remaining > 0 ? 'var(--ink)' : 'var(--green)')],
           ['Minimum yang masih harus dibayar', formatRp(ci.minRemaining), 'var(--ink)'],
           ['Belanja setelah cetak (masuk tagihan berikutnya)', formatRp(newCharges), 'var(--ink-soft)'],
           ['Cetak berikutnya', fmtTgl(ci.nextStatement), 'var(--ink-soft)']

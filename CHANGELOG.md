@@ -6,6 +6,13 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.126 — 11 Okt 2026
+
+**Perbaikan: peringatan kartu kredit hilang setelah minimum dibayar** (`01-data.js`, `10j-perhatian.js`, `07-render-akun-transaksi.js`, `04b-akun-detail.js`)
+- Kartu kredit yang tagihan cetaknya sudah dibayar sebesar minimum (`minRemaining` = 0) tidak lagi memicu strip "Perlu perhatian" (telat/jatuh tempo), tidak lagi merah/amber di kartu Jatuh tempo dan kartu Akun, dan tidak lagi bertanda "(lewat)" di detail akun. Sisa tagihan tetap tampil netral ("Minimum terbayar · sisa tagihan cetak ...") dan tetap ada di tab Tagihan.
+- `computeUpcomingDues` memberi penanda `minMet` pada item tagihan cetak.
+- 1 test baru (258 total).
+
 ## v1.1.125 — 11 Okt 2026
 
 **Grafik: kartu Kategori terpisah, kartu Label baru, Tren dan Utang ikut filter periode** (`09-grafik.js`, `10f-tren-utang.js`, `03b-label.js`, `02-navigasi.js`, `index.html`)

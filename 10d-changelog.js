@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.126', d: '11 Okt 2026', items: [
+      'Kartu kredit yang tagihannya sudah dibayar sebesar minimum tidak lagi menampilkan peringatan telat atau jatuh tempo. Sisa tagihan tetap terlihat, tetapi tanpa warna merah atau kuning'] },
     { v: 'v1.1.125', d: '11 Okt 2026', items: [
       'Kategori kini punya kartu sendiri, dan ada kartu Label baru yang menunjukkan pengeluaran atau pemasukan per label bulan ini; ketuk label untuk melihat transaksinya. Grafik Tren dan Utang sekarang mengikuti pilihan periode 1H sampai 360H seperti grafik lain'] },
     { v: 'v1.1.124', d: '11 Okt 2026', items: [

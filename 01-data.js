@@ -771,6 +771,7 @@
     if (acc.type === 'kartu_kredit') {
       const ci = cardStatementInfo(data, acc, today);
       if (info.used <= 0) lines.push({ text: 'Tidak ada tagihan', tone: '' });
+      else if (ci && ci.remaining > 0 && !(ci.minRemaining > 0)) lines.push({ text: 'Minimum terbayar · sisa tagihan cetak ' + formatRp(ci.remaining) + ' · jatuh tempo ' + fmtTgl(ci.dueDate), tone: '' });
       else if (ci && ci.remaining > 0) lines.push(dueLine(ci.dueDate, 'Sisa tagihan cetak ' + formatRp(ci.remaining)));
       else if (ci) lines.push({ text: 'Tagihan cetak lunas', tone: '' });
       else if (acc.feeDay) lines.push({ text: 'Jatuh tempo tgl ' + acc.feeDay, tone: '' });
@@ -941,7 +942,7 @@
         const ci = cardStatementInfo(data, acc, today);
         if (ci) {
           if (ci.remaining > 0) {
-            out.push({ id: acc.id, name: acc.name, label: 'Tagihan cetak ' + fmtTgl(ci.statementDate) + (ci.minRemaining > 0 ? ' · min ' + formatRp(ci.minRemaining) : ' · minimum terpenuhi'), amount: ci.remaining, due: ci.dueDate, days: daysTo(ci.dueDate), payKind: true });
+            out.push({ id: acc.id, name: acc.name, label: 'Tagihan cetak ' + fmtTgl(ci.statementDate) + (ci.minRemaining > 0 ? ' · min ' + formatRp(ci.minRemaining) : ' · minimum terpenuhi'), amount: ci.remaining, due: ci.dueDate, days: daysTo(ci.dueDate), payKind: true, minMet: !(ci.minRemaining > 0) });
           }
           return;
         }
