@@ -6,6 +6,24 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.138 — 13 Okt 2026
+
+**Warna dan bayangan sidebar desktop** (`style.css`)
+- `.bottom-nav-wrap` (≥1024 px): latar `linear-gradient(180deg, var(--teal-soft) 0, var(--card) 190px)` (semburat teal di atas, memudar ke permukaan kartu), garis tepi kanan diganti `box-shadow: 8px 0 32px rgba(8,18,15,.08)` plus garis 1 px halus. Memakai variabel tema, jadi tema gelap otomatis mengikuti (sidebar tampil lebih terang daripada halaman).
+- Menu aktif: pil `--teal-soft` dengan bayangan tipis dan penanda garis teal 3 px di sisi kiri (`.nav-btn.active::before`); hover menu non-aktif memakai `--paper-dim`.
+- Bayangan berwarna teal untuk tombol "Catat transaksi" (`.nav-fab`) dan logo (`.sb-logo`).
+- HP dan tablet (<1024 px) tidak berubah. Diperiksa di 1440 px: terang, gelap, terbuka, dan diciutkan. 275 test lulus (test versi disesuaikan; tidak ada logika baru).
+
+## v1.1.137 — 13 Okt 2026
+
+**Sidebar desktop lebih modern dan bersih; tombol ciut tanpa label** (`index.html`, `style.css`)
+- Tombol "Ciutkan menu" (ikon + teks di dalam sidebar) diganti **tombol ikon bulat 26 px di tepi kanan sidebar** (chevron ‹ / ›, berputar saat diciutkan; `aria-label` dan `aria-expanded` tetap diperbarui `applySidebar`; pintasan `[` dan penyimpanan `kp_sidebar` tidak berubah).
+- Kepala sidebar baru: logo huruf K (teal, 34 px) + "Keuangan / Pribadi" (`.sb-brand`) dan judul kecil "Menu" (`.sb-caption`). Saat diciutkan nama dan judul disembunyikan, logo tetap di tengah.
+- Item menu: padding 10×12, ukuran 14 px, bobot 500 (aktif 600) dengan latar pil teal lembut; tombol "Catat transaksi" di dasar tidak berubah.
+- Enam tombol menu diberi atribut `title` supaya nama muncul sebagai tooltip saat sidebar hanya berisi ikon.
+- `.sb-brand` dan `.sb-caption` disembunyikan di <1024 px (HP dan tablet tidak berubah). Diperiksa di 1440 px (terbuka, diciutkan, dibuka lagi, pintasan `[`) dan 390 px; tanpa error JS.
+- 1 test baru (275 total); test versi disesuaikan.
+
 ## v1.1.136 — 13 Okt 2026
 
 **Cetak / PDF laporan: perataan tepi dan elemen layar yang ikut tercetak** (`style.css`, `11b-laporan-utang.js`)
