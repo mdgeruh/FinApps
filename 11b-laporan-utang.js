@@ -55,7 +55,7 @@
   // Daftar panjang: tampilkan `show` baris pertama, sisanya di "Tampilkan N lagi".
   function lapMore(items, show) {
     const top = items.slice(0, show), rest = items.slice(show);
-    return top.join('') + (rest.length ? `<details class="adv-more"><summary class="acc-sub" style="padding:8px 0; cursor:pointer;">Tampilkan ${rest.length} lagi</summary>${rest.join('')}</details>` : '');
+    return top.join('') + (rest.length ? `<details class="adv-more"><summary class="acc-sub adv-more-toggle" style="padding:8px 0; cursor:pointer;">Tampilkan ${rest.length} lagi</summary>${rest.join('')}</details>` : '');
   }
   function lapNote(text) { return `<div class="acc-sub" style="margin-top:8px; font-size:11px; line-height:1.45;">${text}</div>`; }
 
@@ -282,7 +282,7 @@
     const nRed = items.filter(i => i.level === 'red').length, nAmber = items.filter(i => i.level === 'amber').length;
     const badge = (nRed ? `<span style="color:var(--red-ink); font-size:11.5px; font-weight:600; margin-left:8px;">${nRed} segera</span>` : '') + (nAmber ? `<span style="color:var(--amber-ink); font-size:11.5px; font-weight:600; margin-left:8px;">${nAmber} waspada</span>` : '');
     const body = top.map(one).join('') +
-      (rest.length ? `<details class="adv-more"><summary class="acc-sub" style="padding:8px 0; cursor:pointer;">Tampilkan ${rest.length} lagi</summary>${rest.map(one).join('')}</details>` : '') +
+      (rest.length ? `<details class="adv-more"><summary class="acc-sub adv-more-toggle" style="padding:8px 0; cursor:pointer;">Tampilkan ${rest.length} lagi</summary>${rest.map(one).join('')}</details>` : '') +
       '<div class="acc-sub" style="margin-top:8px; font-size:11px;">Otomatis dari data yang dicatat, bukan nasihat keuangan profesional.</div>';
     return card('Saran' + badge, body);
   }

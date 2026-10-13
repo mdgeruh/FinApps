@@ -40,8 +40,8 @@
           <div class="txn-left">
             <span class="dot ${t.type}"></span>
             <div class="txn-text">
-              <div class="txn-desc">${escapeHtml(descText)}</div>
-              <div class="txn-meta">${escapeHtml(metaText)}</div>
+              <div class="txn-desc" title="${escapeHtml(descText)}">${escapeHtml(descText)}</div>
+              <div class="txn-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
             </div>
           </div>
           <div class="txn-right">

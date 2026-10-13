@@ -71,7 +71,7 @@
       }
     }
     // Garis seperti kurva cashflow (v1.1.124): garis mulus + area tipis, titik per bucket, nilai terakhir tertulis.
-    const W = 320, H = 170, padBottom = 22, padTop = 26, padSide = 18;
+    const { W, H } = chartDims(svg, 170, 230), padBottom = 22, padTop = 26, padSide = 18;
     const chartH = H - padBottom - padTop;
     const maxVal = Math.max(1, ...trend.map(t => t.total));
     const stepX = (W - padSide * 2) / Math.max(1, trend.length - 1);

@@ -11,6 +11,17 @@
     return d.toLocaleDateString('id-ID', { month: 'short' });
   }
 
+  // Ukuran kanvas grafik: HP/tablet tetap 320 px; dasbor desktop (>=1280 px) memakai lebar kartu sebenarnya
+  // (1 satuan = 1 px, jadi teks tidak membesar) dan sedikit lebih tinggi. Fallback 320 bila kartu tersembunyi.
+  function chartDims(svg, defH, deskH) {
+    let W = 320, H = defH;
+    try {
+      if (isDeskWide()) { const w = Math.round(svg.getBoundingClientRect().width); if (w > 320) { W = Math.min(960, w); H = deskH; } }
+    } catch (e) { /* lingkungan uji tanpa layout */ }
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    return { W, H };
+  }
+
   function renderTrendChart(data) {
     const svg = $('trend-chart');
     if (!svg) return;
@@ -30,7 +41,7 @@
     if (titleEl) titleEl.textContent = `Pemasukan vs pengeluaran (${bucketPeriodText(buckets)})`;
 
     const maxVal = Math.max(1, ...totals.flatMap(t => [t.inSum, t.outSum]));
-    const W = 320, H = 170;
+    const { W, H } = chartDims(svg, 170, 230);
     const padBottom = 22, padTop = 14, padSide = 18;
     const chartH = H - padBottom - padTop;
     const stepX = (W - padSide * 2) / Math.max(1, buckets.length - 1);
@@ -721,14 +732,8 @@
 
   let networthPeriodDays = 30;
 
-  function renderNetWorthChart(data) {
-    const svg = $('networth-chart');
-    const summaryEl = $('networth-summary');
-    const titleEl = $('networth-title');
-    if (!svg) return;
-
-    const DAYS = Math.max(networthPeriodDays, 2);
-    if (titleEl) titleEl.textContent = `Kurva kekayaan bersih (${networthPeriodDays} hari terakhir)`;
+  // Kekayaan bersih per hari untuk DAYS hari terakhir (dipakai kurva dan kartu angka desktop).
+  function netWorthSeries(data, DAYS) {
     const today = todayGmt8();
     today.setHours(0, 0, 0, 0);
     const days = [];
@@ -771,12 +776,24 @@
     });
     let runningNetWorth = baseBeforeWindow;
     const points = days.map(k => { runningNetWorth += (deltaByDate.get(k) || 0); return runningNetWorth; });
+    return { days, points };
+  }
+
+  function renderNetWorthChart(data) {
+    const svg = $('networth-chart');
+    const summaryEl = $('networth-summary');
+    const titleEl = $('networth-title');
+    if (!svg) return;
+
+    const DAYS = Math.max(networthPeriodDays, 2);
+    if (titleEl) titleEl.textContent = `Kurva kekayaan bersih (${networthPeriodDays} hari terakhir)`;
+    const { days, points } = netWorthSeries(data, DAYS);
 
     const minV = Math.min(0, ...points);
     const maxV = Math.max(0, ...points);
     const range = (maxV - minV) || 1;
 
-    const W = 320, H = 170;
+    const { W, H } = chartDims(svg, 170, 240);
     const padTop = 28, padBottom = 20, padSide = 4;
     const chartH = H - padTop - padBottom;
     const chartW = W - padSide * 2;
@@ -924,7 +941,7 @@
     const maxV = Math.max(0, ...allValuesForRange);
     const range = (maxV - minV) || 1;
 
-    const W = 320, H = 150;
+    const { W, H } = chartDims(svg, 150, 220);
     const padTop = 26, padBottom = 20, padSide = 4;
     const chartH = H - padTop - padBottom;
     const chartW = W - padSide * 2;

@@ -666,6 +666,28 @@
     if (!count) return null;
     return { used, limit, count, pct: Math.round(used / limit * 100) };
   }
+  // D4: isi panel Akun di dasbor desktop. Dua kelompok: Aset (kas, bank, e-wallet, aset) dan Utang (kartu kredit, PayLater,
+  // pinjaman). Akun arsip dan titipan tidak ikut. Urut nilai terbesar, maksimal `max` per kelompok; `lebih` = jumlah yang tidak
+  // tampil. Kartu kredit/PayLater berlimit membawa `usage` (terpakai, limit, pct) dengan definisi yang sama dengan computeLimitUsage.
+  function deskAccountGroups(data, balances, max) {
+    max = max > 0 ? max : 8;
+    const item = acc => {
+      const bal = balances[acc.id] || 0;
+      let usage = null;
+      if ((acc.type === 'kartu_kredit' || acc.type === 'paylater') && acc.limit > 0) {
+        const used = acc.type === 'paylater' ? paylaterCreditUsed(data, acc, bal) : (bal < 0 ? Math.abs(bal) : 0);
+        usage = { used, limit: acc.limit, pct: Math.round(used / acc.limit * 100) };
+      }
+      return { id: acc.id, name: acc.name, type: acc.type, bal, usage };
+    };
+    const build = (key, label, pred) => {
+      const all = data.accounts.filter(a => !a.archived && a.type !== 'titipan' && pred(a)).map(item)
+        .sort((x, y) => Math.abs(y.bal) - Math.abs(x.bal));
+      const total = all.reduce((s, r) => s + (key === 'utang' ? (r.bal < 0 ? Math.abs(r.bal) : 0) : (r.bal > 0 ? r.bal : 0)), 0);
+      return { key, label, total, rows: all.slice(0, max), lebih: Math.max(0, all.length - max) };
+    };
+    return [build('aset', 'Aset', a => !TYPE_DEBT[a.type]), build('utang', 'Utang', a => !!TYPE_DEBT[a.type])].filter(g => g.rows.length);
+  }
   // A6: aksi cepat yang berlaku untuk sebuah akun. Catat transaksi: bukan aset (pakai Transfer) dan bukan titipan
   // (punya form sendiri). Transfer dari sini: bukan akun utang (bayar utang = Transfer KE akun utang) dan bukan titipan.
   function accountQuickActions(acc) {

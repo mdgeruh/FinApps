@@ -3,8 +3,8 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.129';
-  const APP_BUILD = '2 Okt 2026';
+  const APP_VERSION = 'v1.1.136';
+  const APP_BUILD = '13 Okt 2026';
   // Versi tampil di kartu paling atas tab Profil (renderProfilTab). #app-footer sengaja kosong: hanya jangkar untuk status sinkron.
 
   function render() {
@@ -35,6 +35,7 @@
   // Dipisah dari render() supaya bisa dipanggil sendiri (lihat refreshTxnList)
   // tanpa perlu menghitung ulang akun/grafik/laporan yang tidak berubah.
   function renderTxnListSection(data) {
+    updateTxnHead();
     const accById = {};
     data.accounts.forEach(a => accById[a.id] = a);
 
@@ -98,11 +99,12 @@
       row.className = 'txn-row clickable';
       row.onclick = (e) => { if (e.target.closest && e.target.closest('.del-btn')) return; openTxnDetail(t.id); }; // tombol hapus ditangani delegasi (data-act)
       const accName = accById[t.accountId] ? accById[t.accountId].name : '?';
-      let metaText, descText, sign;
+      let metaText, descText, sign, accCell = accName;
       if (t.type === 'transfer') {
         const toName = accById[t.toAccountId] ? accById[t.toAccountId].name : '?';
         descText = (t.desc && t.desc !== 'Transfer') ? t.desc : 'Transfer';
         metaText = accName + ' → ' + toName;
+        accCell = accName + ' → ' + toName;
         sign = '⇄';
       } else {
         descText = t.desc;
@@ -113,14 +115,22 @@
       if (txnTags(t).length) metaText += ' · ' + tagsText(txnTags(t));
       if (t.planId) metaText += ' · Cicilan'; else if (t.method === 'nanti') metaText += ' · Bayar nanti';
       if (showDate) metaText += ' · ' + formatDayLabel(t.date);
+      // Sel tambahan untuk tampilan tabel desktop (disembunyikan CSS di layar <1280 px).
+      const extra = [txnTags(t).length ? tagsText(txnTags(t)) : '', t.planId ? 'Cicilan' : (t.method === 'nanti' ? 'Bayar nanti' : '')].filter(Boolean).join(' · ');
+      const dateCell = t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
       row.innerHTML = `
+        <span class="tc tc-date">${escapeHtml(dateCell)}</span>
         <div class="txn-left">
           <span class="dot ${t.type}"></span>
           <div class="txn-text">
-            <div class="txn-desc">${escapeHtml(descText)}</div>
+            <div class="txn-desc" title="${escapeHtml(descText)}">${escapeHtml(descText)}</div>
             <div class="txn-meta">${escapeHtml(metaText)}</div>
+            <div class="txn-extra x-both">${escapeHtml(accCell + (extra ? ' · ' + extra : ''))}</div>
+            <div class="txn-extra x-only">${escapeHtml(extra)}</div>
           </div>
         </div>
+        <span class="tc tc-cat" title="${escapeHtml(t.type === 'transfer' ? 'Transfer' : (t.category || '—'))}">${escapeHtml(t.type === 'transfer' ? 'Transfer' : (t.category || '—'))}</span>
+        <span class="tc tc-acc" title="${escapeHtml(accCell)}">${escapeHtml(accCell)}</span>
         <div class="txn-right">
           <span class="txn-amount ${t.type}">${sign} ${formatRp(t.amount)}</span>
           <button class="del-btn" data-act="deleteTxn" data-a0="${escapeHtml(String(t.id))}" data-stop aria-label="Hapus">×</button>

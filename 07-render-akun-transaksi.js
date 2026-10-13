@@ -345,6 +345,24 @@
     refreshTxnList();
   }
 
+  // Tabel Transaksi desktop: klik judul kolom mengurutkan; klik lagi membalik arah.
+  const TXN_SORT_PAIRS = { date: ['date-desc', 'date-asc'], alpha: ['alpha-asc', 'alpha-desc'], amount: ['amount-desc', 'amount-asc'] };
+  function sortTxnBy(key) {
+    const pair = TXN_SORT_PAIRS[key]; if (!pair) return;
+    state.sortMode = state.sortMode === pair[0] ? pair[1] : pair[0];
+    const sel = $('sort-select'); if (sel) sel.value = state.sortMode;
+    refreshTxnList();
+  }
+  function updateTxnHead() {
+    const head = $('txn-thead'); if (!head) return;
+    head.querySelectorAll('[data-th]').forEach(b => {
+      const pair = TXN_SORT_PAIRS[b.dataset.th], idx = pair.indexOf(state.sortMode);
+      b.classList.toggle('active', idx >= 0);
+      b.setAttribute('aria-sort', idx < 0 ? 'none' : (state.sortMode.endsWith('-asc') ? 'ascending' : 'descending'));
+      const ar = b.querySelector('.th-arrow'); if (ar) ar.textContent = idx < 0 ? '' : (state.sortMode.endsWith('-asc') ? ' ▲' : ' ▼');
+    });
+  }
+
   let txnSearchDebounceTimer = null;
   function onTxnSearchInput() {
     const raw = $('txn-search-input').value;

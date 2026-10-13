@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.129** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.136** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
@@ -59,6 +59,8 @@ Tidak ada proses instalasi. Tiga cara pakai:
 ## Tab & Fitur
 
 **Tampilan:** ponsel memakai satu kolom dengan navigasi bawah. Tablet (768px ke atas) memakai dialog di tengah layar. Desktop (1024px ke atas) memakai sidebar kiri, dan Ringkasan tampil dua kolom mulai 1280px. Mulai 1024px, Transaksi, Titipan, dan Laporan memakai dua panel (filter atau ringkasan menempel di kiri, isi di kanan). Mulai 1280px, Ringkasan, grup akun, dan kartu pengaturan (Data, Profil) tampil dua kolom, dan isi Laporan ikut dua kolom di Data & Profil. Di 1024–1279px tab-tab ini tetap satu kolom selebar maksimal 760px.
+
+**Desktop (≥1280px):** bar atas menempel (judul tab, kotak cari, tanggal, tema, profil). Form Catat transaksi dan form akun muncul sebagai panel dari kanan. Panel Akun di Ringkasan dibagi Aset/Utang, ada ikon per jenis dan bar pemakaian limit kartu kredit/PayLater. Pintasan keyboard (tidak aktif saat mengetik atau saat dialog terbuka): `/` fokus kotak cari, `N` catat transaksi, `[` buka/ciutkan menu samping.
 
 Header menampilkan sapaan sesuai jam (GMT+8), tanggal singkat, ikon tampilan (sistem/terang/gelap), dan ikon Profil. Footer di tab Profil menampilkan nama app, nomor versi, dan tanggal build.
 
@@ -249,7 +251,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config
 ## Ide yang Belum Dibuat
 
 - Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
-- Layout desktop tahap 3 dan akun forex USD/cent dengan kurs
+- Akun forex USD/cent dengan kurs
 
 Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](SUMMARY.md).
 

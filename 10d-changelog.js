@@ -7,6 +7,24 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.136', d: '13 Okt 2026', items: [
+      'Hasil cetak / PDF laporan lebih rapi: semua bagian (ringkasan, daftar kategori, posisi akun, dan analisis) kini lurus dengan kepala laporan, tidak lagi menjorok ke dalam. Tanda panah buka-tutup dan tulisan "Tampilkan N lagi" yang tidak berguna di kertas juga tidak ikut tercetak'] },
+    { v: 'v1.1.135', d: '12 Okt 2026', items: [
+      'Di tabel Transaksi (layar lebar), nama kategori atau keterangan yang panjang dan terpotong sekarang bisa dilihat utuh dengan mengarahkan kursor (atau tekan-tahan di layar sentuh) ke tulisannya'] },
+    { v: 'v1.1.134', d: '12 Okt 2026', items: [
+      'Di layar lebar, kartu-kartu di bawah grafik Ringkasan kini tersusun dua kolom mulai lebar 1440 px, dan kartu Nilai akun disembunyikan karena isinya sudah ada di daftar Akun di kanan. Kalender di tab Tagihan juga dua kolom',
+      'Memperbaiki keterangan "Rata-rata harian × sisa hari" di kartu Bulan ini yang menimpa garis pemisah, dan tanggal build di tab Profil kini ikut rilis'] },
+    { v: 'v1.1.133', d: '12 Okt 2026', items: [
+      'Di layar lebar, daftar Akun di Ringkasan kini dibagi jadi Aset dan Utang lengkap dengan subtotalnya, tiap akun punya ikon sesuai jenisnya, dan kartu kredit atau PayLater berlimit menampilkan bar pemakaian limit (kuning mulai 70%, merah mulai 90%)',
+      'Bar di bagian atas kini menempel saat halaman digulir, dan judul halaman, kotak cari, tanggal, tema, serta profil berada dalam satu baris',
+      'Form Catat transaksi dan form akun kini meluncur dari sisi kanan layar, bukan lagi kotak di tengah',
+      'Pintasan keyboard: tekan / untuk mencari, N untuk mencatat transaksi, dan [ untuk membuka atau menciutkan menu samping (tidak aktif saat sedang mengetik). Tampilan gelap di layar lebar juga sudah diperiksa. Tampilan di HP tidak berubah'] },
+    { v: 'v1.1.132', d: '12 Okt 2026', items: [
+      'Di layar lebar, daftar di tab Transaksi kini berbentuk tabel dengan kolom Tanggal, Keterangan, Kategori, dan Jumlah (plus Akun di layar yang sangat lebar). Klik judul kolom untuk mengurutkan, klik lagi untuk membalik arah. Tampilan di HP tidak berubah'] },
+    { v: 'v1.1.131', d: '12 Okt 2026', items: [
+      'Di layar lebar, grafik di Ringkasan kini memenuhi lebar kartunya dan sedikit lebih tinggi. Tiga kartu angka di atas juga menampilkan perubahan 30 hari terakhir (persen) dan garis mini. Tampilan di HP tidak berubah'] },
+    { v: 'v1.1.130', d: '12 Okt 2026', items: [
+      'Di layar lebar, menu samping kini bisa diciutkan jadi deretan ikon lewat tombol di bagian atasnya, dan dibuka lagi dengan tombol yang sama. Pilihanmu diingat di perangkat itu'] },
     { v: 'v1.1.129', d: '12 Okt 2026', items: [
       'Di layar lebar (laptop dan komputer), halaman Ringkasan kini berupa dasbor: ada kotak cari di bagian atas, tiga kartu angka (Kekayaan bersih, Total aset, Total utang), grafik yang lebih lebar, dan daftar Akun di sisi kanan. Ketuk akun untuk membuka detailnya. Tampilan di HP dan tablet tidak berubah'] },
     { v: 'v1.1.128', d: '12 Okt 2026', items: [
