@@ -1,7 +1,7 @@
 # Ringkasan & Todolist: Keuangan Pribadi
 
 Status per **v1.1.084** (2 Okt 2026). `[x]` selesai, `[~]` sebagian, `[-]` sengaja tidak dikerjakan, `[ ]` belum.
-Terbaru v1.1.129: dasbor desktop Ringkasan (kotak cari, 3 kartu angka, panel Akun di kanan); lihat CHANGELOG.
+Terbaru v1.1.136 (cetak/PDF laporan lebih rata: tepi blok diluruskan dengan kepala laporan, panah dan "Tampilkan N lagi" tidak tercetak); sebelumnya v1.1.135 (jaring pengaman tooltip untuk kategori/keterangan terpotong di tabel Transaksi desktop — ditemukan lewat pengujian ulang D1–D11 dengan data sintetis lebih padat, tanpa regresi), v1.1.134 (perapian desktop: Ringkasan dan Tagihan dua kolom, perbaikan teks proyeksi), v1.1.133 (desktop D4 s.d. D8: panel Akun kelompok + bar limit, bar atas menempel, form panel samping, pintasan keyboard, uji tema gelap), v1.1.132 (tab Transaksi jadi tabel), v1.1.131 (grafik pas lebar + kartu angka dengan persen), v1.1.130 (menu samping bisa diciutkan), v1.1.129: dasbor desktop Ringkasan (kotak cari, 3 kartu angka, panel Akun di kanan); lihat CHANGELOG.
 Detail perubahan: [CHANGELOG.md](CHANGELOG.md). Panduan pemakaian dan struktur kode: [README.md](README.md).
 
 ## 1. Gambaran singkat
@@ -71,6 +71,23 @@ Usulan perbaikan (dikerjakan berurutan, tiap batch satu rilis dengan test):
 
 Urutan kerja yang disarankan: A1 (selesai) → A2 (selesai) → A3 (selesai) → A5 + A6 (selesai) → A4 (selesai) → A7 (selesai) → A8 (selesai) → A9. Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, SUMMARY, serta menambah test.
 
+### Roadmap tampilan desktop (D1–D12; layar ≥1280 px, HP dan tablet tidak berubah)
+
+Acuan: screenshot dashboard keuangan (sidebar, kotak cari, kartu angka, grafik lebar, panel akun kanan). Dasar sudah selesai di v1.1.128–130 (sidebar, kotak cari, kartu angka, panel Akun, sidebar bisa diciutkan). Urutan kerja: D1 + D2 → D3 → D4 + D5 → D6 → D7 → D8 → D9 + D10 + D11 → D12.
+
+- [x] **D1 [F] (selesai v1.1.131) Grafik pas lebar kartu**: kanvas mengikuti lebar kartu di desktop (`chartDims`), digambar ulang saat ukuran/sidebar berubah. Tooltip sentuh/kursor yang sudah ada tetap dipakai
+- [x] **D2 [F] (selesai v1.1.131) Kartu angka**: persen perubahan 30 hari + garis mini (`netWorthSeries`, `computeDebtAtDates`)
+- [x] **D3 [F] (selesai v1.1.132) Tab Transaksi berbentuk tabel**: kolom tanggal, keterangan, kategori, akun, jumlah; judul kolom bisa diklik untuk mengurutkan; baris tetap membuka detail/edit seperti sekarang
+- [x] **D4 [F] (selesai v1.1.133) Panel Akun lebih kaya**: kelompok Aset dan Utang, ikon per jenis akun, bar pemakaian limit kartu kredit/PayLater
+- [x] **D5 [Q] (selesai v1.1.133) Bar atas menempel (sticky)**: judul tab, kotak cari, tanggal, tema, profil dalam satu baris
+- [x] **D6 [F] (selesai v1.1.133) Form sebagai panel samping**: Catat transaksi (dan form akun) meluncur dari kanan, bukan dialog tengah
+- [x] **D7 [F] (selesai v1.1.133) Pintasan keyboard**: `/` fokus cari, `N` catat transaksi, `[` tutup/buka sidebar
+- [x] **D8 [Q] (selesai v1.1.133) Uji tema gelap di layar lebar**: dasbor baru, tabel, panel samping (catatan A3: belum teruji)
+- [x] **D9 [F] (selesai v1.1.134) Ringkasan dua kolom kartu**: aturan tiga kolom (`1fr 1fr 340px`) dipindah dari ≥1600 ke ≥1440 px; kartu Nilai akun disembunyikan di ≥1280 px (dobel dengan panel Akun kanan)
+- [x] **D10 [F] (selesai v1.1.134) Kalender Tagihan dua kolom**: `#tagihan-calendar-list` jadi grid dua kolom mulai ≥1440 px
+- [x] **D11 [Q] (selesai v1.1.134) Perbaikan kecil**: catatan proyeksi "Rata-rata harian × sisa hari" dipindah ke dalam baris (dulu menimpa garis pemisah), tanggal build disamakan dengan tanggal rilis
+- [x] **D12 [Q] (selesai v1.1.135) Uji ulang D1–D11 dengan data lebih padat (10 akun, 400+ transaksi sintetis) di 1280/1440/1920 px.** Satu temuan: kolom Kategori tabel Transaksi (130px tetap, 1280–1599px) memotong nama kategori panjang (mis. "Biaya admin & materai pinjaman") tanpa cara membaca teks penuh — melebarkan kolom itu mempersempit Keterangan yang sudah pas, jadi solusinya `title=""` (tooltip hover/tekan-tahan) di `.tc-cat`, `.tc-acc`, `.txn-desc` (tabel) dan `.txn-desc`/`.txn-meta` (kartu Transaksi terbaru di Ringkasan) — bukan ubah lebar kolom
+
 ### Perbaikan tab Ringkasan (R1–R9 selesai semua; dicatat sebagai arsip)
 
 Dasar temuan: Ringkasan menumpuk **14 kartu** dalam satu gulir panjang. **Tidak ada peringatan tagihan** di sini (pengingat jatuh tempo ada di tab Tagihan). Semua kartu dihitung walau disembunyikan atau kosong, karena `applyRingkasanVisibility` baru jalan setelah render. Grafik tidak punya label aksesibilitas. Kartu hanya bisa disembunyikan, tidak bisa diurutkan. Performa hitung ternyata bukan masalah: pada 20.000 transaksi, `computeDebtTrend` ±19 ms, `computeBudgetStatus` ±10 ms, `emergencyMonthlyExpense` ±4 ms (native; ±4x lebih lambat di HP), jadi optimasi hitung ditaruh paling bawah.
@@ -97,7 +114,7 @@ Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas
 
 ### Butuh keputusanmu
 - [ ] [K] Enkripsi data cloud. Enkripsi klien berarti lupa passphrase = data tidak bisa dipulihkan, dan data tidak bisa dibaca di dashboard Supabase
-- [ ] [F] Desktop tahap 3 (belum ada rinciannya di dokumen mana pun)
+- [-] [F] Desktop tahap 3: terwujud sebagai roadmap D1–D12 (semua selesai v1.1.135)
 - [ ] [F] Akun forex USD/cent dengan kurs (sekarang lewat aset + trik harga per satuan)
 - [ ] [K] Sapaan: kode dan CHANGELOG mengikuti v1.1.041 (sapaan tanpa nama). Kalau ingin sapaan dengan nama, bilang saja
 

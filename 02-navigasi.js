@@ -205,6 +205,25 @@
     applyTheme(next);
   }
 
+  // Menu samping desktop bisa diciutkan jadi deretan ikon; pilihan diingat per perangkat.
+  const SIDEBAR_KEY = 'kp_sidebar';
+  function applySidebar(collapsed) {
+    document.documentElement.classList.toggle('sb-collapsed', collapsed);
+    const b = $('sb-toggle');
+    if (b) { const t = collapsed ? 'Buka menu samping' : 'Ciutkan menu samping'; b.setAttribute('aria-label', t); b.setAttribute('aria-expanded', String(!collapsed)); }
+  }
+  function toggleSidebar() {
+    const next = !document.documentElement.classList.contains('sb-collapsed');
+    applySidebar(next);
+    try { localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0'); } catch (e) {}
+    deskRelayout(260);   // tunggu animasi lebar sidebar selesai
+  }
+  (function initSidebar() {
+    let c = false;
+    try { c = localStorage.getItem(SIDEBAR_KEY) === '1'; } catch (e) {}
+    applySidebar(c);
+  })();
+
   (function initTheme() {
     let saved = 'system';
     try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
@@ -241,18 +260,74 @@
     if (typeof renderAccounts === 'function' && $('akun-total-aset')) { const bal = computeAllBalances(data); renderAccountsSummary(data, bal); renderAccounts(data, bal); }
   }
 
-  // Dasbor desktop (>=1280 px, disembunyikan lewat CSS di layar lain): tiga kartu angka + panel Akun di kanan.
+  // Dasbor desktop = layar >=1280 px. Di bawah itu kartu angka/panel Akun disembunyikan CSS dan tidak dihitung.
+  function isDeskWide() { try { return !!(window.matchMedia && window.matchMedia('(min-width: 1280px)').matches); } catch (e) { return false; } }
+
+  // Garis mini (tanpa sumbu) untuk kartu angka desktop; lebar penuh kartu, tinggi 30 px.
+  function sparkSvg(points, color) {
+    if (!points || points.length < 2) return '';
+    const mn = Math.min(...points), mx = Math.max(...points), rg = (mx - mn) || 1;
+    const xs = points.map((_, i) => 2 + i * (96 / (points.length - 1)));
+    const ys = points.map(v => 27 - ((v - mn) / rg) * 24);
+    return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${smoothPathD(xs, ys)}" style="fill:none; stroke:${color}" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke"></path></svg>`;
+  }
+
+  // D4: ikon kecil per jenis akun untuk panel Akun desktop (isi <svg viewBox="0 0 24 24">, garis saja; warna mengikuti teks).
+  const DESK_TYPE_ICONS = {
+    kas: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14.5h2"/>',
+    bank: '<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+    ewallet: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+    aset: '<path d="M4 19V9l8-5 8 5v10zM9 19v-5h6v5"/>',
+    kartu_kredit: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/>',
+    paylater: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    pinjaman: '<path d="M4 10l8-5 8 5M6 10v7M12 10v7M18 10v7M3 20h18"/><path d="M12 12.5v2"/>',
+    pinjaman_online: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'
+  };
+  function deskTypeIcon(type) {
+    return '<svg viewBox="0 0 24 24" focusable="false">' + (DESK_TYPE_ICONS[type] || DESK_TYPE_ICONS.kas) + '</svg>';
+  }
+
+  // Dasbor desktop: tiga kartu angka (dengan perubahan 30 hari dan garis mini) + panel Akun di kanan.
   function renderDeskDash(data, balances, totalBalance, ad) {
-    const fmt = v => state.balanceHidden ? '•••••••' : formatRp(v);
+    if (!isDeskWide()) return;
+    const hid = state.balanceHidden, fmt = v => hid ? '•••••••' : formatRp(v);
     [['ds-net', totalBalance], ['ds-aset', ad.aset], ['ds-utang', ad.utang]].forEach(([id, v]) => { const el = $(id); if (el) el.textContent = fmt(v); });
+    // Perubahan 30 hari: aset = kekayaan bersih + utang (utang = jumlah saldo negatif akun utang).
+    const nw = netWorthSeries(data, 31), debt = computeDebtAtDates(data, nw.days);
+    const aset = nw.points.map((v, i) => v + debt[i]);
+    [['ds-net', nw.points, false, 'var(--teal)'], ['ds-aset', aset, false, 'var(--green)'], ['ds-utang', debt, true, 'var(--red)']].forEach(([id, pts, inverse, color]) => {
+      const d = $(id + '-d'), sp = $(id + '-s');
+      if (sp) sp.innerHTML = sparkSvg(pts, color);
+      if (!d) return;
+      const first = pts[0], last = pts[pts.length - 1], delta = last - first;
+      const pct = first !== 0 ? (delta / Math.abs(first)) * 100 : (delta !== 0 ? 100 : 0);
+      const good = inverse ? delta < 0 : delta > 0, bad = inverse ? delta > 0 : delta < 0;
+      d.style.color = good ? 'var(--green-ink)' : (bad ? 'var(--red-ink)' : 'var(--ink-soft)');
+      d.textContent = hid ? '' : (delta === 0 ? 'Tetap · 30 hari' : `${trendArrow(delta)}${delta > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}% · 30 hari`);
+    });
     const list = $('desk-accounts-list'); if (!list) return;
-    const rows = data.accounts.filter(a => !a.archived && a.type !== 'titipan')
-      .sort((a, b) => Math.abs(balances[b.id]) - Math.abs(balances[a.id])).slice(0, 12);
-    list.innerHTML = rows.length ? rows.map(a => {
-      const bal = balances[a.id];
-      return `<div class="da-row" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${escapeHtml(a.id)}" data-keydown-act="openAccountDetail" data-keydown-a0="${escapeHtml(a.id)}" data-keydown-keys="Enter| "><span class="da-name">${escapeHtml(a.name)}</span><span class="da-type">${escapeHtml(TYPE_LABELS[a.type] || '')}</span><span class="da-bal${bal < 0 ? ' neg' : ''}">${fmt(bal)}</span></div>`;
+    const groups = deskAccountGroups(data, balances, 8);
+    list.innerHTML = groups.length ? groups.map(g => {
+      const head = `<div class="da-group"><span>${g.label}</span><span class="da-group-total${g.key === 'utang' ? ' neg' : ''}">${fmt(g.total)}</span></div>`;
+      const rows = g.rows.map(r => {
+        const bal = r.bal;
+        const pct = r.usage ? Math.min(100, Math.max(0, r.usage.pct)) : 0;
+        const lvl = r.usage ? (r.usage.pct >= 90 ? 'hi' : (r.usage.pct >= 70 ? 'mid' : 'lo')) : '';
+        const bar = r.usage && !hid ? `<span class="da-bar" role="img" aria-label="Limit terpakai ${r.usage.pct}%"><span class="da-bar-fill ${lvl}" style="width:${pct}%"></span></span><span class="da-use ${lvl}">${r.usage.pct >= 90 ? '▲ ' : ''}${r.usage.pct}% dari ${formatRp(r.usage.limit)}</span>` : '';
+        return `<div class="da-row${r.usage ? ' has-bar' : ''}" role="button" tabindex="0" data-act="openAccountDetail" data-a0="${escapeHtml(r.id)}" data-keydown-act="openAccountDetail" data-keydown-a0="${escapeHtml(r.id)}" data-keydown-keys="Enter| "><span class="da-ico" aria-hidden="true">${deskTypeIcon(r.type)}</span><span class="da-name">${escapeHtml(r.name)}</span><span class="da-type">${escapeHtml(TYPE_LABELS[r.type] || '')}</span><span class="da-bal${bal < 0 ? ' neg' : ''}">${fmt(bal)}</span>${bar}</div>`;
+      }).join('');
+      const more = g.lebih ? `<button type="button" class="da-more" data-act="setTab" data-a0="akun">+${g.lebih} akun lagi ›</button>` : '';
+      return head + rows + more;
     }).join('') : '<div class="acc-sub">Belum ada akun.</div>';
   }
+
+  // Lebar kolom isi berubah (jendela diubah atau sidebar dibuka/ciutkan): gambar ulang supaya grafik pas lebar kartu.
+  let deskResizeTimer = null;
+  function deskRelayout(delay) {
+    clearTimeout(deskResizeTimer);
+    deskResizeTimer = setTimeout(() => { if (isDeskWide() && typeof render === 'function') render(); }, delay || 220);
+  }
+  try { window.addEventListener('resize', () => deskRelayout(250)); } catch (e) { /* uji */ }
 
   // Kotak cari di bar atas desktop: lompat ke tab Transaksi dengan kata kunci terisi.
   function deskSearchSubmit() {
@@ -262,6 +337,33 @@
     const t = $('txn-search-input');
     if (t) { t.value = q; onTxnSearchInput(); }
   }
+
+  // D7: pintasan keyboard di layar lebar (>=1280 px). "/" = fokus kotak cari, "N" = catat transaksi, "[" = buka/ciutkan menu samping.
+  // Murni (bisa diuji): ctx = { wide, typing (sedang mengetik di kolom isian), mod (Ctrl/Alt/Meta), overlay (dialog/lembar terbuka) }.
+  function deskShortcutAction(key, ctx) {
+    if (!ctx || !ctx.wide || ctx.typing || ctx.mod || ctx.overlay) return '';
+    if (key === '/') return 'cari';
+    if (key === 'n' || key === 'N') return 'catat';
+    if (key === '[') return 'sidebar';
+    return '';
+  }
+  function onDeskShortcut(e) {
+    if (e.defaultPrevented) return;
+    const t = e.target, tag = t && t.tagName ? String(t.tagName).toLowerCase() : '';
+    const ctx = {
+      wide: isDeskWide(),
+      typing: tag === 'input' || tag === 'textarea' || tag === 'select' || !!(t && t.isContentEditable),
+      mod: !!(e.ctrlKey || e.altKey || e.metaKey),
+      overlay: !!document.querySelector('.sheet-overlay.open, .modal-overlay.open, .lock-screen.open, .calc-panel.open, .sync-overlay.open')
+    };
+    const act = deskShortcutAction(e.key, ctx);
+    if (!act) return;
+    e.preventDefault();
+    if (act === 'cari') { const el = $('desk-search-input'); if (el) el.focus(); }
+    else if (act === 'catat') { if (typeof openAddTxnForm === 'function') openAddTxnForm(); }
+    else if (act === 'sidebar') toggleSidebar();
+  }
+  try { document.addEventListener('keydown', onDeskShortcut); } catch (e) { /* uji */ }
 
   function renderBalanceHeader(data, balances) {
     if (!balances) balances = computeAllBalances(data);

@@ -6,6 +6,66 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.136 — 13 Okt 2026
+
+**Cetak / PDF laporan: perataan tepi dan elemen layar yang ikut tercetak** (`style.css`, `11b-laporan-utang.js`)
+- Ditemukan dengan membuat PDF A4 dari tab Laporan (Chromium, media cetak, data sintetis 120–260 transaksi, periode bulanan dan 3 bulan, ada akun utang) lalu mengukur tepi tiap blok: kepala laporan mulai di x=0, tetapi ringkasan, daftar kategori, dan seluruh kartu analisis menjorok **12 px** di kiri-kanan. Akibatnya garis pemisah ringkasan lebih lebar daripada teksnya dan angka di baris kedua ringkasan tidak lurus dengan judulnya.
+- Penyebab 1: `#tab-laporan .chart-card { padding: 12px 12px 8px }` (aturan layar, spesifisitas id) mengalahkan `.chart-card { padding: 0 }` di blok cetak. Perbaikan: `#tab-laporan .chart-card { padding: 0 }` di blok cetak.
+- Penyebab 2: `.cat-list` dasar (`padding: 4px 12px`) ditulis **setelah** blok `@media print`, jadi menang walau spesifisitasnya sama. Perbaikan: `.laporan-cats .cat-list { padding: 0 }` di blok cetak.
+- Tanda panah buka-tutup (`.adv-chev`) dan tombol "Tampilkan N lagi" (kelas baru `.adv-more-toggle` di `11b-laporan-utang.js`, 2 tempat) disembunyikan saat cetak, karena isi lipat sudah dibuka otomatis lewat `beforeprint`.
+- Setelah perbaikan: kepala, ringkasan, daftar kategori, dan kartu analisis semuanya x=0..lebar penuh (diukur di lebar 703 px = isi A4); PDF dengan 4 akun utang 4 halaman, tanpa panah. Tampilan layar tidak berubah.
+- 1 test baru (274 total).
+
+## v1.1.135 — 12 Okt 2026
+
+**Lanjutan perapian desktop: jaring pengaman untuk teks terpotong** (`12-render-utama.js`, `10-render-beranda.js`)
+- Diperiksa ulang D1–D11 di 1280/1440/1920 px dengan data sintetis yang lebih padat (10 akun campuran, >30 transaksi) — semua tahap sebelumnya masih utuh, tidak ada regresi.
+- Temuan: kolom **Kategori** di tabel Transaksi desktop (lebar tetap 130 px di 1280–1599 px) memotong nama kategori yang lebih panjang dari ~16 karakter (mis. "Biaya admin & materai pinjaman", "Tagihan & langganan") tanpa cara melihat teks penuhnya. Melebarkan kolom itu dicoba tapi malah mempersempit kolom **Keterangan** yang sudah pas-pasan di 1280 px — jadi dibatalkan.
+- Perbaikan yang dipakai: tambahkan atribut `title` (tooltip bawaan browser) ke `.tc-cat`, `.tc-acc`, dan `.txn-desc` di baris tabel Transaksi, serta ke `.txn-desc`/`.txn-meta` di kartu "Transaksi terbaru" (Ringkasan) — teks penuh tetap bisa dibaca lewat hover/tap-tahan tanpa mengubah lebar kolom manapun.
+- (Ditemukan saat pengujian, bukan bug asli: screenshot `fullPage: true` Puppeteer pada elemen `position: sticky` menampilkan posisi yang salah secara visual — dikonfirmasi lewat `getBoundingClientRect()` langsung bahwa tampilan sebenarnya di browser normal. Tidak ada perubahan kode untuk ini.)
+- Tidak ada test baru (perubahan murni atribut HTML, tidak ada logika baru untuk diuji); 273 test lama tetap lulus semua.
+
+## v1.1.134 — 12 Okt 2026
+
+**Perapian tampilan desktop, tahap D9 s.d. D11** (`index.html`, `style.css`, `12-render-utama.js`, `tests/run.js`)
+- **D9:** aturan tiga kolom Ringkasan (`1fr 1fr 340px`) dipindah dari ≥1600 ke ≥1440 px. Lebar isi sama karena `.wrap` dibatasi 1360 px di ≥1440, jadi kartu di bawah grafik (Bulan ini, Atur rencana, Transaksi terbaru, Kategori, Label) mengalir dua kolom di laptop besar. Kartu **Nilai akun** disembunyikan di ≥1280 px (`!important` karena display-nya juga diatur inline oleh pengaturan kartu) sebab sama dengan panel Akun di kanan.
+- **D10:** `#tagihan-calendar-list` jadi grid dua kolom di ≥1440 px (10 bulan jadi 5 baris).
+- **D11:** keterangan `month-projection-note` ("Rata-rata harian × sisa N hari") dipindah ke dalam `.txn-text` baris Proyeksi; sebelumnya memakai margin −4px sehingga menimpa garis pemisah (juga di HP). `APP_BUILD` selama ini tertinggal di "2 Okt 2026" (tampil di tab Profil); diperbarui ke 12 Okt 2026. **Catatan rilis:** tanggal build perlu ikut diperbarui tiap rilis.
+- Diperiksa di Chromium 1280 dan 1440 px: tanpa scroll horizontal dan tanpa error JS. 3 test baru (273 total).
+
+## v1.1.133 — 12 Okt 2026
+
+**Tampilan desktop, tahap D4 s.d. D8 (satu rilis)** (`01-data.js`, `02-navigasi.js`, `index.html`, `style.css`, `tests/run.js`)
+- **D4, panel Akun lebih kaya:** `deskAccountGroups(data, balances, max)` (murni, di `01-data.js`) membagi akun jadi kelompok **Aset** (kas, bank, e-wallet, aset) dan **Utang** (kartu kredit, PayLater, pinjaman), tanpa akun arsip dan titipan, urut nilai terbesar, maksimal 8 per kelompok (sisanya jadi tombol "+N akun lagi ›" ke tab Akun). Tiap kelompok punya subtotal (aset = saldo positif, utang = saldo negatif). Ikon per jenis akun (`DESK_TYPE_ICONS`/`deskTypeIcon`, garis saja, mengikuti warna teks). Kartu kredit dan PayLater berlimit memuat `usage` (`terpakai ÷ limit`, definisi sama dengan `computeLimitUsage`): bar hijau, kuning ≥70%, merah ≥90% (dengan ▲). Bar disembunyikan saat saldo disembunyikan.
+- **D5, bar atas menempel:** layar ≥1280 px, `header` jadi `position: sticky` satu baris (judul tab, kotak cari, tanggal, tema, profil); sapaan disembunyikan. Panel sticky lain (filter Transaksi, Laporan, Tagihan, Titipan, panel Akun, judul kolom tabel) memakai `--desk-top` (84 px di ≥1280, 24 px di bawahnya) supaya tidak tertutup bar atas.
+- **D6, form sebagai panel samping:** di ≥1280 px, `#txn-form` dan `#acc-form` meluncur dari kanan (lebar 460 px, tinggi penuh, animasi 0,22 dtk, dimatikan oleh `prefers-reduced-motion`). Lembar lain tetap dialog tengah. HP dan tablet tidak berubah.
+- **D7, pintasan keyboard** (≥1280 px): `/` fokus kotak cari, `N` catat transaksi, `[` buka/ciutkan menu samping. `deskShortcutAction` murni dan mati saat mengetik di kolom isian, saat Ctrl/Alt/Meta ditekan, atau saat dialog/lembar/kunci/kalkulator terbuka. Petunjuk `/` tampil di kotak cari, `[` di tooltip tombol sidebar.
+- **D8, tema gelap di layar lebar:** diperiksa di Chromium 1440 dan 1920 px (Ringkasan, Transaksi, Akun, panel form samping), tanpa scroll horizontal dan tanpa error JS. Temuan: ubin ikon akun menyatu dengan kartu di tema gelap (warna latarnya sama), diberi garis tepi. Test baru memastikan aturan desktop baru hanya memakai variabel warna.
+- 7 test baru (270 total).
+
+## v1.1.132 — 12 Okt 2026
+
+**Tampilan desktop, tahap D3: tab Transaksi berbentuk tabel** (`index.html`, `style.css`, `07-render-akun-transaksi.js`, `12-render-utama.js`)
+- Layar ≥1280 px: baris transaksi jadi grid Tanggal | Keterangan | Kategori | Jumlah | hapus. Akun tampil sebagai baris kedua di bawah keterangan (bersama label, Cicilan, Bayar nanti); di ≥1600 px Akun jadi kolom sendiri. Titik warna dan baris meta lama disembunyikan; warna jumlah tetap membedakan masuk/keluar/transfer.
+- Judul kolom (`#txn-thead`, menempel di atas saat di-scroll) bisa diklik: Tanggal, Keterangan (abjad), Jumlah. Klik pertama = arah bawaan (terbaru / A-Z / terbesar), klik lagi = dibalik (`sortTxnBy`). Memakai `state.sortMode` yang sama dengan pilihan "Urutkan" di panel filter, jadi keduanya selalu sinkron; `updateTxnHead` memberi tanda ▲/▼ dan `aria-sort`.
+- Baris memuat sel tambahan (`.tc-date`, `.tc-cat`, `.tc-acc`, `.txn-extra`) yang disembunyikan CSS di <1280 px, sehingga HP dan tablet tidak berubah. Pengelompokan per hari, lipat hari, "Muat lebih banyak", klik baris untuk detail, dan hapus tidak berubah.
+- Diperiksa di 1280, 1440, dan 1920 px: tanpa scroll horizontal dan tanpa error JS; judul kolom tersembunyi di 390 px. 262 test lulus (aturan sembunyi lama dipertahankan, aturan baru ditulis terpisah).
+
+## v1.1.131 — 12 Okt 2026
+
+**Tampilan desktop, tahap D1 + D2: grafik pas lebar kartu, kartu angka dengan persen dan garis mini** (`09-grafik.js`, `10f-tren-utang.js`, `02-navigasi.js`, `index.html`, `style.css`)
+- **D1:** `chartDims(svg, tinggiHP, tinggiDesktop)` menggantikan ukuran tetap 320 px di empat grafik garis/batang (Kekayaan, Cashflow, Tren, Utang). Layar ≥1280 px memakai lebar kartu sebenarnya (maks 960; 1 satuan = 1 px, teks tidak membesar) dan tinggi 220–240; HP/tablet tetap 320 × 170/150. Kartu tersembunyi → kembali ke 320. Batas tinggi 320 px dari v1.1.129 dihapus.
+- Grafik digambar ulang bila jendela diubah ukurannya atau sidebar dibuka/ciutkan (`deskRelayout`, ditunda 250 ms, hanya ≥1280 px).
+- **D2:** kartu Kekayaan bersih, Total aset, Total utang menampilkan perubahan 30 hari (▲/▼ + persen, utang berwarna terbalik) dan garis mini. Deret kekayaan bersih dipisah dari kurva jadi `netWorthSeries(data, hari)`, sehingga kurva dan kartu memakai hitungan yang sama; utang memakai `computeDebtAtDates`; aset = kekayaan bersih + utang. Persen disembunyikan saat saldo disembunyikan. `renderDeskDash` tidak menghitung apa pun di layar <1280 px.
+- Diperiksa di 1440 dan 1920 px (dengan dan tanpa sidebar), HP 390 px tidak berubah; tanpa scroll horizontal. 1 test baru (262 total).
+
+## v1.1.130 — 12 Okt 2026
+
+**Tampilan desktop: menu samping bisa dibuka/ciutkan** (`index.html`, `style.css`, `02-navigasi.js`)
+- Layar ≥1024 px: tombol toggle di puncak sidebar (`toggleSidebar`). Diciutkan → lebar 72 px, hanya ikon (label disembunyikan, tombol Catat transaksi jadi ikon +), isi halaman melebar. Pilihan disimpan di `localStorage` (`kp_sidebar`) dan dipulihkan saat app dibuka.
+- Mobile dan tablet tidak berubah (tombol tersembunyi). Aksesibilitas: `aria-label` dan `aria-expanded` ikut berubah.
+- 1 test baru, 1 test lama disesuaikan (261 total).
+
 ## v1.1.129 — 12 Okt 2026
 
 **Tampilan desktop: dasbor Ringkasan (kotak cari, 3 kartu angka, grafik lebar, panel Akun)** (`index.html`, `style.css`, `02-navigasi.js`)
