@@ -7,6 +7,12 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.138', d: '13 Okt 2026', items: [
+      'Menu samping di layar lebar kini lebih modern: permukaannya terang dengan semburat hijau lembut di atas dan bayangan halus ke arah isi halaman (tanpa garis tepi), menu yang sedang dibuka ditandai garis hijau kecil di kirinya, dan logo serta tombol "Catat transaksi" punya bayangan yang lembut. Tampil serasi di tema terang maupun gelap',
+      'Tombol buka-tutup menu berupa ikon bulat kecil di tepi menu (tanpa tulisan), dan hasil cetak / PDF laporan lebih rapi'] },
+    { v: 'v1.1.137', d: '13 Okt 2026', items: [
+      'Menu samping di layar lebar tampil lebih modern dan bersih: ada logo dan nama app di bagian atas, judul "Menu", dan item menu yang lebih ringkas. Tombol buka-tutup kini berupa ikon bulat kecil di tepi menu, tanpa tulisan "Ciutkan menu". Saat menu diciutkan, arahkan kursor ke ikon untuk melihat namanya',
+      'Hasil cetak / PDF laporan lebih rapi: semua bagian lurus dengan kepala laporan, dan tanda panah buka-tutup tidak ikut tercetak'] },
     { v: 'v1.1.136', d: '13 Okt 2026', items: [
       'Hasil cetak / PDF laporan lebih rapi: semua bagian (ringkasan, daftar kategori, posisi akun, dan analisis) kini lurus dengan kepala laporan, tidak lagi menjorok ke dalam. Tanda panah buka-tutup dan tulisan "Tampilkan N lagi" yang tidak berguna di kertas juga tidak ikut tercetak'] },
     { v: 'v1.1.135', d: '12 Okt 2026', items: [
