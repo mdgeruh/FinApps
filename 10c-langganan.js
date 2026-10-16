@@ -33,7 +33,8 @@
       const id = typeof s.id === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(s.id) && !seen.has(s.id) ? s.id : generateId('sub');
       seen.add(id);
       const type = s.type === 'masuk' ? 'masuk' : 'keluar';
-      out.push({ id, name, amount, accountId: s.accountId, day, active: s.active !== false, type, category: subCategoryOf(type, s.category),
+      const tags = sanitizeTags(s.tags);   // label (v1.1.148), 03b-label.js
+      out.push({ id, name, amount, accountId: s.accountId, day, active: s.active !== false, type, category: subCategoryOf(type, s.category), ...(tags.length ? { tags } : {}),
         lastAppliedMonth: typeof s.lastAppliedMonth === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(s.lastAppliedMonth) ? s.lastAppliedMonth : '' });
     });
     return out;
@@ -75,7 +76,9 @@
         const key = subMonthKey(cursor), id = 'sub-' + s.id + '-' + key;
         if (!existing.has(id)) {
           existing.add(id);
-          data.txns.push({ id, date: key + '-' + String(dueDay).padStart(2, '0'), type: s.type, desc: s.name, amount: s.amount, accountId: s.accountId, category: s.category });
+          const tx = { id, date: key + '-' + String(dueDay).padStart(2, '0'), type: s.type, desc: s.name, amount: s.amount, accountId: s.accountId, category: s.category };
+          if (s.tags && s.tags.length) tx.tags = s.tags.slice();
+          data.txns.push(tx);
         }
         s.lastAppliedMonth = key; dirty = true;
         cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
@@ -125,7 +128,7 @@
   function renderSubManageList(data) {
     const subs = sanitizeSubscriptions(data.subscriptions);
     $('sub-manage-list').innerHTML = subs.map(s => `<div class="budget-top sub-row">
-        <span class="budget-name">${escapeHtml(s.name)}<span class="acc-sub"> · ${s.type === 'masuk' ? 'masuk ' : ''}${formatRp(s.amount)} · tgl ${s.day}${s.active ? '' : ' · dijeda'}</span></span>
+        <span class="budget-name">${escapeHtml(s.name)}<span class="acc-sub"> · ${s.type === 'masuk' ? 'masuk ' : ''}${formatRp(s.amount)} · tgl ${s.day}${s.tags && s.tags.length ? ' · ' + escapeHtml(tagsText(s.tags)) : ''}${s.active ? '' : ' · dijeda'}</span></span>
         <span class="sub-actions"><button type="button" class="see-all-btn" data-act="toggleSub" data-a0="${escapeHtml(s.id)}">${s.active ? 'Jeda' : 'Aktifkan'}</button>
         <button type="button" class="see-all-btn" data-act="deleteSub" data-a0="${escapeHtml(s.id)}">Hapus</button></span></div>`).join('');
   }
@@ -133,7 +136,7 @@
   function openSubForm() {
     const data = loadData();
     $('sub-type-input').value = 'keluar';
-    $('sub-name-input').value = ''; $('sub-amount-input').value = ''; $('sub-day-input').value = '';
+    $('sub-name-input').value = ''; $('sub-amount-input').value = ''; $('sub-day-input').value = ''; $('sub-tags-input').value = '';
     onSubTypeChange();
     renderSubManageList(data);
     $('sub-form').classList.add('open');
@@ -155,7 +158,8 @@
     if (!data.accounts.some(a => a.id === accountId)) { msg.textContent = type === 'masuk' ? 'Pilih akun tujuan.' : 'Pilih akun pembayaran.'; return; }
     const subs = sanitizeSubscriptions(data.subscriptions);
     if (subs.length >= SUB_MAX_ITEMS) { msg.textContent = 'Maksimal ' + SUB_MAX_ITEMS + ' transaksi berulang.'; return; }
-    subs.push({ id: generateId('sub'), name: name.slice(0, 60), amount: roundMoney(amount), accountId, day, active: true, type, category, lastAppliedMonth: subInitialLastApplied(day) });
+    const tags = parseTagsInput($('sub-tags-input').value);
+    subs.push({ id: generateId('sub'), name: name.slice(0, 60), amount: roundMoney(amount), accountId, day, active: true, type, category, ...(tags.length ? { tags } : {}), lastAppliedMonth: subInitialLastApplied(day) });
     data.subscriptions = subs;
     saveData(data);
     runRecurringFees(); // kalau hari ini tepat tanggal tagihnya, langsung tercatat

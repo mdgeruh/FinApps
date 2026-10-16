@@ -564,7 +564,7 @@
   function lunasiTitipanFromDetail() { lunasiTitipan(state.detailTitipanId); }
   function clickById(id) { $(id).click(); }
   function onTransferTargetChange() { updateQuickPayButtons(); updateAssetHint(); }
-  function onAmountInput() { state.pendingTransferLabel = null; updatePaylaterPreview(); }
+  function onAmountInput() { state.pendingTransferLabel = null; updatePaylaterPreview(); if (typeof updateSplitRemain === 'function') updateSplitRemain(); }
   function payMonthAndClose(accId, groupIdx) { closePaylaterMonthDetail(); payMonthFromDetail(accId, groupIdx); }
   function openAccountFromTagihanBulan(accId) { closeTagihanBulanDetail(); openAccountDetail(accId); }
   function toggleRingkasanCardFromEl(id) { toggleRingkasanCard(id, this.checked); } // this = <input> (fn.apply(el, ...))

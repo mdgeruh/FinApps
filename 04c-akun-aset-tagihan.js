@@ -512,6 +512,7 @@
   }
 
   async function addTxn() {
+    let photoKey = '';   // kunci foto struk yang menunggu disimpan (03e-foto-struk.js)
     const descEl = $('desc-input');
     const amtEl = $('amount-input');
     const accSel = $('account-select');
@@ -522,13 +523,15 @@
     const amount = parseFloat(amtEl.value);
     const tags = parseTagsInput($('tags-input').value);
 
-    if (!amount || amount <= 0) { amtEl.focus(); return; }
+    if ((!amount || amount <= 0) && !state.splitMode) { amtEl.focus(); return; }
 
     let category = catSel.value;
     if (category === CATEGORY_CUSTOM) {
       // Nilai "Lainnya" juga kategori biasa (transaksi lama berkategori Lainnya dibuka lewat Edit): nama kosong = tetap "Lainnya".
       category = catCustomEl.value.trim() || CATEGORY_CUSTOM;
     }
+
+    if (state.splitMode && state.currentType !== 'transfer' && !state.editingTxnId) { await saveSplitTxn(category, tags); return; }
 
     const date = dateEl.value || todayStr();
     const data = loadData();
@@ -580,7 +583,8 @@
         if (!okCic) return;
         const planId = generateId('plan');
         const base = { date, type: 'keluar', accountId: accSel.value, planId, method: 'cicilan' };
-        data.txns.push(applyTags({ id: generateId('txn'), ...base, desc, amount: c.pokok, category }, tags));
+        const cicTxn = applyTags({ id: generateId('txn'), ...base, desc, amount: c.pokok, category }, tags);
+        data.txns.push(cicTxn);
         if (c.bunga > 0) data.txns.push({ id: generateId('txn'), ...base, desc: 'Bunga cicilan: ' + desc, amount: c.bunga, category: 'Bunga & biaya bank' });
         if (admin > 0) data.txns.push({ id: generateId('txn'), ...base, desc: 'Admin cicilan: ' + desc, amount: admin, category: 'Bunga & biaya bank' });
         if (!Array.isArray(payAcc.plans)) payAcc.plans = [];
@@ -590,6 +594,7 @@
         $('paylater-tenor').value = ''; $('paylater-rate').value = ''; $('paylater-admin').value = ''; $('paylater-method').value = 'nanti';
         saveData(data);
         render();
+        if (typeof commitPendingPhoto === 'function') await commitPendingPhoto(cicTxn.id);
         closeTxnForm();
         return;
       }
@@ -607,6 +612,7 @@
         if (isPaylaterNew) newTxn.method = 'nanti'; // Bayar nanti: bunga 0%
         applyTags(newTxn, tags);
         data.txns.push(newTxn);
+        photoKey = newTxn.id;
       }
       descEl.value = '';
     }
@@ -615,6 +621,7 @@
     saveData(data);
     render();
     if (isEditing) showIoMsg('Transaksi diperbarui.', 'ok');
+    if (photoKey && typeof commitPendingPhoto === 'function') await commitPendingPhoto(photoKey);
     closeTxnForm();
   }
 

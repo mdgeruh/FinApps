@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.138** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.152** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
 
@@ -281,9 +281,14 @@ JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua b
 | `09-grafik` (segmen) | Kartu "Grafik" di Ringkasan: `CHART_SEGMENTS`, `pickChartSegment`, `setChartSegment`; `computeRingkasanVisibility` menentukan kartu mana yang dirender |
 | `10j-perhatian` | Strip "Perlu perhatian" di puncak Ringkasan (`computeAttentionItems`, `renderAttentionStrip`) dan kartu ajakan rencana (`renderPlanCta`; kartu Anggaran/Langganan/Dana darurat yang belum dipakai tersembunyi otomatis, `computePlanUsage`) |
 | `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
+| `03e-foto-struk.js` | Foto struk (v1.1.144): kompres foto, simpan di IndexedDB perangkat (tidak ikut sinkron/ekspor), kotak foto di detail transaksi |
+| `10l-pengingat-cadangan.js` | Pengingat cadangan lewat notifikasi (v1.1.146): `backupDueState`, simpan keadaan ke IndexedDB untuk `sw.js` (periodicsync + notificationclick), pengaturan di Profil |
+| `11d-bandingkan.js` | Perubahan per kategori di Laporan (v1.1.143): `laporanCompareRanges`, `computeCategoryComparison`, `buildComparisonNotes`, `laporanCategoryCompareHtml` |
 | `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
 | `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
 | `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 259 test unit |
+| `03d-kategori-otomatis.js` | Kategori otomatis dari keterangan (v1.1.142): `suggestCategory` menebak dari riwayat transaksi yang keterangannya mirip, lalu dari daftar kata kunci bawaan; tidak menyarankan kategori sistem; pilihan manual menang. |
+| `03c-pecah.js` | Pecah transaksi per keterangan (v1.1.139, diubah v1.1.141): satu struk dengan beberapa barang disimpan sebagai beberapa transaksi biasa (satu kategori, keterangan dan jumlah masing-masing) yang berbagi `splitId`; 2–5 baris, total struk otomatis. Fungsi murni `validateSplitParts`, `splitTotalOf`, `buildSplitTxns`, `splitSiblings`; form pecah di sheet transaksi. |
 | `03b-label.js` | Label (tag) transaksi: `txn.tags` (maks. 5 per transaksi, 24 huruf, huruf besar/kecil dianggap sama). Kolom Label + chip saran di form, `#label` di daftar dan detail, chip filter label dan pencarian di tab Transaksi, kartu "Per label" di Laporan, kolom Label di CSV, ikut ekspor/impor JSON |
 | `10k-target.js` | Target tabungan: nama, nominal, tenggat opsional, sumber dana (saldo satu akun kas/bank/e-wallet, atau setoran manual). Kartu di Ringkasan menampilkan progres, saran setoran per bulan (sisa ÷ sisa bulan kalender, dibulatkan ke atas Rp1.000), status tercapai/lewat tenggat. Ikut ekspor/impor JSON |
 | `06c-kalkulator.js` | Kalkulator kolom nominal: ketik rumus langsung (`25000+15000*2`, `150000/3`, `(1000+500)*2`, `200000+10%`) lalu Enter/pindah kolom; ikon kalkulator permanen di dalam setiap kolom nominal (dan tombol "Kalkulator" di bawah kolom yang fokus) membuka papan hitung layar (untuk HP tanpa tanda operasi) dengan "Pakai hasil". Parser sendiri tanpa eval; titik = ribuan, koma = desimal; kolom tanpa desimal membulatkan, tanpa minus menolak hasil negatif |

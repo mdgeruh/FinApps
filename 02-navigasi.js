@@ -128,6 +128,7 @@
   function renderProfilTab() {
     const el = $('profil-name-input');
     if (el) el.value = getOwnerName();
+    if (typeof renderBackupNotifSettings === 'function') renderBackupNotifSettings();
     const ver = $('profil-version');
     if (ver) ver.textContent = APP_VERSION + ' · ' + APP_BUILD;
 

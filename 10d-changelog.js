@@ -7,12 +7,38 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.152', d: '14 Okt 2026', items: [
+      'Catatan otomatis di kartu Perubahan per kategori (Laporan) kini bisa diatur: buka Atur ambang catatan untuk menentukan kenaikan/penurunan minimal dalam persen dan selisih minimal dalam rupiah. Ada tombol Kembalikan bawaan'] },
+    { v: 'v1.1.151', d: '14 Okt 2026', items: [
+      'Foto struk kini bisa ditambahkan langsung saat mencatat transaksi baru: di form Tambah transaksi ketuk Tambah foto di baris Foto struk, tanpa perlu membuka detail setelahnya. Untuk struk yang dipecah, satu foto berlaku untuk seluruh struk'] },
+    { v: 'v1.1.150', d: '14 Okt 2026', items: [
+      'Struk yang dipecah per keterangan kini bisa dihapus sekaligus: buka salah satu barisnya lalu ketuk Hapus seluruh struk. Tombol Hapus biasa tetap hanya menghapus satu baris'] },
+    { v: 'v1.1.149', d: '14 Okt 2026', items: [
+      'Target tabungan kini bisa diubah: buka kelola target lalu ketuk Ubah untuk mengganti nama, nominal, tenggat, atau sumber dananya, tanpa perlu menghapus dan membuat ulang'] },
+    { v: 'v1.1.148', d: '14 Okt 2026', items: [
+      'Transaksi berulang (langganan dan gaji) kini bisa diberi label. Setiap transaksi yang tercatat otomatis tiap bulan membawa label itu, dan Kelola label ikut mengubah nama atau menghapusnya di transaksi berulang'] },
+    { v: 'v1.1.147', d: '14 Okt 2026', items: [
+      'Label kini bisa dikelola: di tab Transaksi ketuk Kelola label untuk mengganti nama label di semua transaksi sekaligus, menggabungkan dua label (cukup ganti namanya jadi nama label lain), atau menghapus label tanpa menghapus transaksinya'] },
+    { v: 'v1.1.146', d: '14 Okt 2026', items: [
+      'Ada pengingat cadangan lewat notifikasi: di tab Profil ketuk Aktifkan notifikasi. Kalau sudah 14 hari tanpa cadangan JSON, browser akan mengingatkanmu walau aplikasi sedang tertutup (paling andal bila aplikasi dipasang ke layar utama di Chrome atau Edge; di browser lain pengingat tetap muncul sebagai kartu di Ringkasan)'] },
+    { v: 'v1.1.145', d: '14 Okt 2026', items: [
+      'Menu samping di layar lebar tampil lebih modern: ada logo dan nama aplikasi di atas, menu aktif ditandai garis hijau, dan Ciutkan kini berupa tombol bulat melayang di tepi menu'] },
+    { v: 'v1.1.144', d: '14 Okt 2026', items: [
+      'Sekarang bisa menempelkan foto struk ke transaksi: buka detail transaksi lalu ketuk Tambah foto struk. Foto dikecilkan otomatis dan disimpan di perangkat ini saja, jadi tidak ikut backup atau sinkron ke perangkat lain'] },
+    { v: 'v1.1.143', d: '14 Okt 2026', items: [
+      'Laporan kini punya kartu Perubahan per kategori: pengeluaran tiap kategori dibanding bulan lalu (atau periode sebelumnya), lengkap dengan catatan otomatis seperti Makan & minum naik 32%. Kalau bulan ini belum selesai, dibandingkan dengan jumlah hari yang sama di bulan lalu supaya adil'] },
+    { v: 'v1.1.142', d: '14 Okt 2026', items: [
+      'Kategori kini terpilih otomatis sesuai keterangan yang diketik: aplikasi belajar dari transaksimu sebelumnya (mis. keterangan Telur biasanya masuk Belanja harian) dan mengenali kata umum seperti bensin, listrik, atau gaji. Kamu tetap bisa mengganti kategori sendiri, dan pilihanmu yang dipakai'] },
+    { v: 'v1.1.141', d: '14 Okt 2026', items: [
+      'Pecah transaksi diubah sesuai maksudnya: sekarang yang dipecah adalah keterangan (barang) dalam satu struk, misalnya telur, sabun, gula, dengan satu kategori yang sama. Isi keterangan dan jumlah tiap baris, dan Total struk terhitung otomatis'] },
+    { v: 'v1.1.140', d: '14 Okt 2026', items: [
+      'Saat memecah transaksi ke beberapa kategori, Total struk kini terisi otomatis dari jumlah semua bagian, jadi tidak perlu mengetik total lebih dulu dan tidak mungkin tidak pas'] },
+    { v: 'v1.1.139', d: '13 Okt 2026', items: [
+      'Satu struk belanja kini bisa dipecah ke beberapa kategori: di form Tambah transaksi (pemasukan atau pengeluaran) ketuk Pecah ke beberapa kategori, isi jumlah tiap kategori sampai pas dengan total struk. Tiap bagian tercatat sebagai transaksi sendiri, jadi anggaran, laporan, dan grafik kategori otomatis ikut benar'] },
     { v: 'v1.1.138', d: '13 Okt 2026', items: [
-      'Menu samping di layar lebar kini lebih modern: permukaannya terang dengan semburat hijau lembut di atas dan bayangan halus ke arah isi halaman (tanpa garis tepi), menu yang sedang dibuka ditandai garis hijau kecil di kirinya, dan logo serta tombol "Catat transaksi" punya bayangan yang lembut. Tampil serasi di tema terang maupun gelap',
-      'Tombol buka-tutup menu berupa ikon bulat kecil di tepi menu (tanpa tulisan), dan hasil cetak / PDF laporan lebih rapi'] },
+      'Kartu Total aset, Total utang, Kekayaan bersih, dan Limit kartu terpakai di halaman Akun kini juga punya grafik garis kecil untuk 30 hari terakhir, sama seperti kartu tiap akun'] },
     { v: 'v1.1.137', d: '13 Okt 2026', items: [
-      'Menu samping di layar lebar tampil lebih modern dan bersih: ada logo dan nama app di bagian atas, judul "Menu", dan item menu yang lebih ringkas. Tombol buka-tutup kini berupa ikon bulat kecil di tepi menu, tanpa tulisan "Ciutkan menu". Saat menu diciutkan, arahkan kursor ke ikon untuk melihat namanya',
-      'Hasil cetak / PDF laporan lebih rapi: semua bagian lurus dengan kepala laporan, dan tanda panah buka-tutup tidak ikut tercetak'] },
+      'Setiap kartu akun di halaman Akun kini punya grafik garis kecil yang menunjukkan naik turunnya saldo (atau jumlah utang) selama 30 hari terakhir. Akun yang saldonya tidak berubah tidak digambar, dan grafik ikut tersembunyi saat saldo disembunyikan'] },
     { v: 'v1.1.136', d: '13 Okt 2026', items: [
       'Hasil cetak / PDF laporan lebih rapi: semua bagian (ringkasan, daftar kategori, posisi akun, dan analisis) kini lurus dengan kepala laporan, tidak lagi menjorok ke dalam. Tanda panah buka-tutup dan tulisan "Tampilkan N lagi" yang tidak berguna di kertas juga tidak ikut tercetak'] },
     { v: 'v1.1.135', d: '12 Okt 2026', items: [

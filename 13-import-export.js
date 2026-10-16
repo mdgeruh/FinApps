@@ -23,16 +23,15 @@
   function markExported() {
     try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); localStorage.removeItem(BACKUP_SNOOZE_KEY); } catch (e) { /* tidak kritis */ }
     if (typeof renderBackupReminder === 'function') renderBackupReminder(loadData());
+    if (typeof reminderSyncState === 'function') reminderSyncState();
   }
   function renderBackupReminder(data) {
     const el = $('backup-reminder-card');
     if (!el) return;
     let last = null, snooze = 0;
     try { last = localStorage.getItem(LAST_EXPORT_KEY); snooze = Number(localStorage.getItem(BACKUP_SNOOZE_KEY)) || 0; } catch (e) { /* abaikan */ }
-    const nowMs = Date.now();
-    let days = last ? Math.floor((nowMs - new Date(last).getTime()) / 86400000) : null;
-    if (days !== null && isNaN(days)) days = null;
-    const need = data.txns.length >= 10 && (days === null || days >= 14) && nowMs >= snooze;
+    const due = backupDueState({ last: last, snooze: snooze, txnCount: data.txns.length }, Date.now());   // 10l-pengingat-cadangan.js
+    const days = due.days, need = due.need;
     if (!need) { el.style.display = 'none'; el.innerHTML = ''; return; }
     el.style.display = 'block';
     el.innerHTML = `
@@ -47,6 +46,7 @@
   function snoozeBackupReminder() {
     try { localStorage.setItem(BACKUP_SNOOZE_KEY, String(Date.now() + 7 * 86400000)); } catch (e) { /* abaikan */ }
     renderBackupReminder(loadData());
+    if (typeof reminderSyncState === 'function') reminderSyncState();
   }
 
   async function exportJson() {
@@ -200,6 +200,7 @@
       ...(type === 'transfer' && t.planPaymentThrough && typeof t.planPaymentThrough === 'object' ? { planPaymentThrough: Object.fromEntries(Object.entries(t.planPaymentThrough).map(([pid, no]) => [cleanPlanId(pid), no]).filter(([pid]) => pid)) } : {}),
       ...(typeof t.category === 'string' && t.category ? { category: t.category } : {}),
       ...(sanitizeTags(t.tags).length ? { tags: sanitizeTags(t.tags) } : {}),
+      ...(type !== 'transfer' && cleanSplitId(t.splitId) ? { splitId: cleanSplitId(t.splitId) } : {}),
       ...(type === 'keluar' && t.loanId !== undefined && idMap[t.loanId] ? { loanId: idMap[t.loanId] } : {}),
       ...(type === 'keluar' && cleanPlanId(t.planId) ? { planId: cleanPlanId(t.planId) } : {}),
       ...(type === 'keluar' && (t.method === 'nanti' || t.method === 'cicilan') ? { method: t.method } : {})

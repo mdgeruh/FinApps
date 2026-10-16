@@ -327,6 +327,8 @@
         row('Selisih (laba bersih)', formatRp(net) + ' <span style="font-weight:500; font-size:11.5px;">(sebelumnya ' + formatRp(pIn - pOut) + ')</span>', net >= (pIn - pOut) ? 'var(--green-ink)' : 'var(--red-ink)'));
     }
 
+    html += laporanCategoryCompareHtml(data, range);
+
     // 3. Beban utang di periode ini
     const loanIds = {};
     data.accounts.forEach(a => { if (TYPE_DEBT[a.type]) loanIds[a.id] = true; });

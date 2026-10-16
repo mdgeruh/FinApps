@@ -102,6 +102,13 @@
     const hid = !!state.balanceHidden, R = n => hid ? HIDDEN_RP : formatRp(n);
     asetEl.textContent = R(totalAset);
     utangEl.textContent = R(totalUtang);
+    // Grafik kecil 30 hari di kartu ringkasan (aset, utang, kekayaan bersih, limit); disembunyikan bersama saldo
+    const sp = hid ? null : computeSummarySparklines(data, todayStr(), 30, 16);
+    const setSpark = (id, series, o, color) => { const el = $(id); if (!el) return; el.style.setProperty('--accent-color', color); el.innerHTML = sp && series ? sparkHtml(series, false, o) : ''; };
+    setSpark('akun-total-aset-spark', sp && sp.aset, { name: 'Total aset' }, 'var(--green)');
+    setSpark('akun-total-utang-spark', sp && sp.utang, { name: 'Total utang' }, 'var(--red)');
+    setSpark('akun-net-worth-spark', sp && sp.net, { name: 'Kekayaan bersih' }, 'var(--teal)');
+    setSpark('akun-limit-spark', sp && sp.limit, { name: 'Pemakaian limit', pct: true }, 'var(--amber)');
     // A5: kekayaan bersih (aset − utang, definisi utang sama dengan A1) dan pemakaian limit kartu
     const nwEl = $('akun-net-worth');
     if (nwEl) { nwEl.textContent = R(totalAset - totalUtang); nwEl.classList.toggle('neg', totalAset - totalUtang < 0); }
@@ -162,6 +169,22 @@
     }
   }
 
+  // Grafik kecil 30 hari di kartu akun. series = saldo; akun utang digambar sebagai jumlah utang (turun = membaik).
+  // Garis datar (tidak ada perubahan) tidak digambar. Return '' atau markup SVG.
+  function sparkHtml(series, isDebt, opts) {
+    opts = opts || {};
+    if (!Array.isArray(series) || series.length < 2) return '';
+    const v = series.map(x => isDebt ? Math.max(0, -x) : x);
+    const min = Math.min.apply(null, v), max = Math.max.apply(null, v);
+    if (!(max - min > 0.005)) return '';
+    const H = 28, n = v.length;
+    const pts = v.map((x, i) => (i / (n - 1) * 100).toFixed(2) + ',' + (2 + (1 - (x - min) / (max - min)) * (H - 4)).toFixed(2));
+    const diff = v[n - 1] - v[0];
+    const amt = opts.pct ? (Math.round(Math.abs(diff) * 10) / 10) + ' poin persen' : formatRp(Math.abs(diff));
+    const label = (opts.name || (isDebt ? 'Utang' : 'Saldo')) + ' ' + (diff > 0 ? 'naik ' : 'turun ') + amt + ' dalam 30 hari terakhir';
+    return `<svg class="acc-spark" viewBox="0 0 100 ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(label)}"><title>${escapeHtml(label)}</title><polygon class="acc-spark-area" points="0,${H} ${pts.join(' ')} 100,${H}"/><polyline class="acc-spark-line" points="${pts.join(' ')}"/></svg>`;
+  }
+
   function renderAccounts(data, balances) {
     if (!balances) balances = computeAllBalances(data);
     const container = $('accounts-scroll');
@@ -171,6 +194,7 @@
       return;
     }
     const txnStats = computeAccountTxnStats(data);
+    const sparks = state.balanceHidden ? {} : computeAccountSparklines(data, todayStr(), 30, 16);   // saldo disembunyikan = tanpa grafik
 
     // Hitung tampilan tiap akun
     const items = data.accounts.map(acc => {
@@ -183,7 +207,8 @@
       const lines = di.lines.map(l => ({ text: mk(l.text), tone: l.tone }));
       if (!di.isDebt) { if (lines.length) lines[0] = { text: lines[0].text + ' · ' + txnCount + ' transaksi', tone: '' }; else lines.push({ text: txnCount + ' transaksi', tone: '' }); }
       const barHtml = di.bar ? `<div class="acc-bar"><div class="acc-bar-fill" style="width:${di.bar.pct}%; background:var(${di.bar.color});"></div></div>` : '';
-      return { acc, colorVar, valueText: mk(valueText), color, metaExtra: mk(metaExtra), lines, barHtml, txnCount, sortVal, groupVal, canPay, payLabel, payAct, isDebt: di.isDebt };
+      const sparkSvg = sparkHtml(sparks[acc.id], di.isDebt);
+      return { acc, colorVar, sparkSvg, valueText: mk(valueText), color, metaExtra: mk(metaExtra), lines, barHtml, txnCount, sortVal, groupVal, canPay, payLabel, payAct, isDebt: di.isDebt };
     });
 
     // A7: pencarian + chip filter
@@ -203,6 +228,7 @@
           <div class="acc-name">${escapeHtml(it.acc.name)}${it.pinned ? ' <span class="acc-pin-tag">Disematkan</span>' : ''}</div>
           <div class="acc-tile-value" style="color:${it.color}">${it.valueText}</div>
           ${metaHtml}
+          ${it.sparkSvg || ''}
           ${it.barHtml}
           ${it.orderHtml || ''}
           ${it.canPay && !it.orderHtml ? `<button type="button" class="io-btn" style="width:100%; margin-top:10px; padding:8px 10px; font-size:13px;" data-act="${it.payAct}" data-a0="${escapeHtml(it.acc.id)}"${it.payAct === 'payCardFromDetail' ? ' data-a1="tagihan"' : ''} data-stop="1" data-keydown-stop="1">${it.payLabel}</button>` : ''}

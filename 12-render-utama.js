@@ -3,8 +3,8 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.138';
-  const APP_BUILD = '13 Okt 2026';
+  const APP_VERSION = 'v1.1.152';
+  const APP_BUILD = '14 Okt 2026';
   // Versi tampil di kartu paling atas tab Profil (renderProfilTab). #app-footer sengaja kosong: hanya jangkar untuk status sinkron.
 
   function render() {
@@ -113,6 +113,8 @@
       }
       if (t.category) metaText += ' · ' + t.category;
       if (txnTags(t).length) metaText += ' · ' + tagsText(txnTags(t));
+      if (t.splitId) metaText += ' · Pecahan';
+      if (txnHasPhoto(t)) metaText += ' · Foto';
       if (t.planId) metaText += ' · Cicilan'; else if (t.method === 'nanti') metaText += ' · Bayar nanti';
       if (showDate) metaText += ' · ' + formatDayLabel(t.date);
       // Sel tambahan untuk tampilan tabel desktop (disembunyikan CSS di layar <1280 px).

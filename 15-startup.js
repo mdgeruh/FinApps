@@ -18,6 +18,8 @@
     // Sinkron cloud (muat pustaka + login + tarik data). Kalau tidak aktif / gagal, app jalan dengan data lokal.
     try { await syncBoot(); } catch (e) { console.error('sinkron gagal, lanjut mode lokal', e); }
 
+    reminderSyncState();    // 10l-pengingat-cadangan.js: salin keadaan cadangan untuk sw.js
+    photoLoadMeta().then(m => { if (Object.keys(m).length) { render(); photoCleanup(); } });  // 03e-foto-struk.js
     runRecurringFees();     // bunga/biaya bulanan otomatis: setelah sinkron, bukan di dalam render()
     populateCategorySelect();
     render();
@@ -45,3 +47,6 @@
       navigator.serviceWorker.register('sw.js').catch(e => console.warn('service worker gagal daftar', e));
     });
   }
+
+  // Saat aplikasi disembunyikan/ditutup, salin keadaan terbaru supaya sw.js memakai data segar.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') reminderSyncState(); });
