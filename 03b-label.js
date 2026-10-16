@@ -86,6 +86,9 @@
       chip.onclick = () => { state.activeTagFilter = state.activeTagFilter === e.key ? 'all' : e.key; refreshTxnList(); };
       row.appendChild(chip);
     });
+    const mg = document.createElement('button');
+    mg.className = 'chip'; mg.textContent = 'Kelola label'; mg.setAttribute('data-act', 'openTagManager');
+    row.appendChild(mg);
   }
 
   // ---------- Laporan: ringkasan per label ----------
@@ -137,4 +140,90 @@
     const s = $('txn-search-input'); if (s) s.value = '';
     setTab('transaksi');
     refreshTxnList();
+  }
+
+  // ---------- Kelola label (v1.1.147): ubah nama / gabung / hapus di semua transaksi ----------
+  // Murni terhadap daftar txns (mengubah objeknya di tempat dan mengembalikan ringkasan). Mengganti nama menjadi nama label lain
+  // yang sudah ada = menggabungkan (ejaan label yang sudah ada dipakai). Satu transaksi tidak pernah punya label kembar.
+  function renameTagInTxns(txns, fromKey, toRaw) {
+    const to = normalizeTag(toRaw);
+    if (!to) return { changed: 0, error: 'Nama label tidak boleh kosong.' };
+    const from = tagKey(fromKey), toKey = tagKey(to);
+    const existing = collectTags(txns).find(e => e.key === toKey && e.key !== from);
+    const name = existing ? existing.tag : to;
+    let changed = 0;
+    (txns || []).forEach(t => {
+      const list = txnTags(t);
+      if (!list.some(x => tagKey(x) === from)) return;
+      applyTags(t, sanitizeTags(list.map(x => tagKey(x) === from ? name : x)));
+      changed++;
+    });
+    return { changed: changed, merged: !!existing, to: name, toKey: tagKey(name) };
+  }
+  function deleteTagInTxns(txns, key) {
+    const k = tagKey(key);
+    let changed = 0;
+    (txns || []).forEach(t => {
+      const list = txnTags(t);
+      if (!list.some(x => tagKey(x) === k)) return;
+      applyTags(t, list.filter(x => tagKey(x) !== k));
+      changed++;
+    });
+    return { changed: changed };
+  }
+
+  function openTagManager() { state.tagEditKey = null; renderTagManager(); $('tag-manager').classList.add('open'); }
+  function closeTagManager() { $('tag-manager').classList.remove('open'); state.tagEditKey = null; }
+  function setTagManagerMsg(text, kind) { const m = $('tag-manager-msg'); if (m) { m.textContent = text || ''; m.className = 'io-msg ' + (kind || ''); } }
+  function renderTagManager() {
+    const box = $('tag-manager-list');
+    if (!box) return;
+    const d0 = loadData();
+    const all = collectTags(d0.txns.concat(Array.isArray(d0.subscriptions) ? d0.subscriptions : []));   // termasuk label di transaksi berulang
+    if (!all.length) { box.innerHTML = '<div class="empty">Belum ada label.</div>'; return; }
+    box.innerHTML = all.map(e => {
+      if (state.tagEditKey === e.key) {
+        return `<div class="txn-detail-row" style="gap:8px; align-items:center;"><input type="text" id="tag-rename-input" class="u-flex1-min0" maxlength="${TAG_MAX_LEN}" value="${escapeHtml(e.tag)}" aria-label="Nama baru untuk label ${escapeHtml(e.tag)}" data-keydown-act="saveTagRenameFromInput" data-keydown-keys="Enter">
+          <button type="button" class="io-btn" data-act="saveTagRenameFromInput">Simpan</button><button type="button" class="io-btn" data-act="cancelTagRename">Batal</button></div>`;
+      }
+      return `<div class="txn-detail-row" style="gap:8px; align-items:center;"><span class="u-flex1-min0">#${escapeHtml(e.tag)} <span class="acc-sub">${e.count}x</span></span>
+        <button type="button" class="io-btn" data-act="startTagRename" data-a0="${escapeHtml(e.key)}" aria-label="Ubah nama label ${escapeHtml(e.tag)}">Ubah nama</button>
+        <button type="button" class="io-btn danger" data-act="deleteTagEverywhere" data-a0="${escapeHtml(e.key)}" aria-label="Hapus label ${escapeHtml(e.tag)}">Hapus</button></div>`;
+    }).join('');
+    const inp = document.getElementById('tag-rename-input');
+    if (inp) { inp.focus(); inp.select(); }
+  }
+  function startTagRename(key) { state.tagEditKey = key; setTagManagerMsg(''); renderTagManager(); }
+  function cancelTagRename() { state.tagEditKey = null; renderTagManager(); }
+  function saveTagRenameFromInput() {
+    const from = state.tagEditKey, inp = document.getElementById('tag-rename-input');
+    if (!from || !inp) return;
+    const data = loadData();
+    const subsList = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+    const r = renameTagInTxns(data.txns, from, inp.value);
+    if (r.error) { setTagManagerMsg(r.error, 'err'); return; }
+    const rs = renameTagInTxns(subsList, from, r.to);   // transaksi berulang memakai ejaan akhir yang sama
+    r.changed += rs.changed;
+    state.tagEditKey = null;
+    if (r.changed) {
+      saveData(data);
+      if (state.activeTagFilter === tagKey(from)) state.activeTagFilter = r.toKey;
+      render();
+    }
+    renderTagManager();
+    setTagManagerMsg(r.changed ? (r.merged ? 'Digabung ke #' + r.to + ' (' + r.changed + ' transaksi).' : 'Nama label diubah (' + r.changed + ' transaksi).') : 'Tidak ada yang berubah.', 'ok');
+  }
+  async function deleteTagEverywhere(key) {
+    const data = loadData();
+    const subsList = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+    const e = collectTags(data.txns.concat(subsList)).find(x => x.key === tagKey(key));
+    if (!e) return;
+    if (!(await showConfirm('Hapus label #' + e.tag + ' dari ' + e.count + ' transaksi? Transaksinya tetap ada.'))) return;
+    const r = deleteTagInTxns(data.txns, key);
+    r.changed += deleteTagInTxns(subsList, key).changed;
+    saveData(data);
+    if (state.activeTagFilter === tagKey(key)) state.activeTagFilter = 'all';
+    render();
+    renderTagManager();
+    setTagManagerMsg('Label dihapus dari ' + r.changed + ' transaksi.', 'ok');
   }

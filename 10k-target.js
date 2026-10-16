@@ -84,6 +84,7 @@
       const r = computeGoal(g, balances);
       return `<div class="budget-top sub-row"><span class="budget-name">${escapeHtml(g.name)}<span class="acc-sub"> · ${formatRp(r.saved)} / ${formatRp(g.target)}</span></span>
         <span class="sub-actions">${r.linked ? '' : `<button type="button" class="see-all-btn" data-act="openGoalDeposit" data-a0="${escapeHtml(g.id)}">Setor</button>`}
+        <button type="button" class="see-all-btn" data-act="startGoalEdit" data-a0="${escapeHtml(g.id)}">Ubah</button>
         <button type="button" class="see-all-btn" data-act="deleteGoal" data-a0="${escapeHtml(g.id)}">Hapus</button></span></div>`;
     }).join('');
   }
@@ -93,7 +94,36 @@
     $('goal-saved-row').style.display = manual ? '' : 'none';
   }
 
+  // Mode ubah (v1.1.149): formulir yang sama dipakai untuk mengubah target yang sudah ada.
+  let goalEditId = '';
+  function setGoalFormMode(editing) {
+    const t = document.getElementById('goal-form-heading'), b = document.getElementById('goal-submit-btn'), c = document.getElementById('goal-cancel-edit-btn');
+    if (t) t.textContent = editing ? 'Ubah target' : 'Tambah target';
+    if (b) b.textContent = editing ? 'Simpan perubahan' : 'Tambah target';
+    if (c) c.style.display = editing ? '' : 'none';
+  }
+  function startGoalEdit(id) {
+    const data = loadData();
+    const g = sanitizeGoals(data.goals).find(x => x.id === id);
+    if (!g) return;
+    goalEditId = id;
+    let opts = goalAccountList(data).map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
+    const acc = g.accountId ? data.accounts.find(a => a.id === g.accountId) : null;
+    if (acc && !goalAccountList(data).some(a => a.id === acc.id)) opts += `<option value="${escapeHtml(acc.id)}">${escapeHtml(acc.name)} (diarsipkan)</option>`;
+    $('goal-account-input').innerHTML = '<option value="">Tanpa akun (catat setoran manual)</option>' + opts;
+    $('goal-name-input').value = g.name; $('goal-target-input').value = g.target; $('goal-deadline-input').value = g.deadline || '';
+    $('goal-account-input').value = acc ? acc.id : '';
+    $('goal-saved-input').value = g.accountId ? '' : (g.saved || '');
+    $('goal-form-msg').textContent = '';
+    onGoalAccountChange();
+    setGoalFormMode(true);
+    $('goal-name-input').focus();
+  }
+  function cancelGoalEdit() { openGoalForm(); }
+
   function openGoalForm() {
+    goalEditId = '';
+    setGoalFormMode(false);
     const data = loadData();
     const opts = goalAccountList(data).map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
     $('goal-account-input').innerHTML = '<option value="">Tanpa akun (catat setoran manual)</option>' + opts;
@@ -115,12 +145,19 @@
     const saved = accountId ? 0 : (parseFloat($('goal-saved-input').value) || 0);
     if (!name) { msg.textContent = 'Isi nama target.'; return; }
     if (!(target > 0)) { msg.textContent = 'Nominal target harus lebih dari 0.'; return; }
-    if (deadline && deadline < todayStr()) { msg.textContent = 'Tenggat tidak boleh sebelum hari ini.'; return; }
-    if (accountId && !goalAccountList(data).some(a => a.id === accountId)) { msg.textContent = 'Pilih akun yang valid.'; return; }
-    if (saved < 0) { msg.textContent = 'Terkumpul tidak boleh minus.'; return; }
     const goals = sanitizeGoals(data.goals);
-    if (goals.length >= GOAL_MAX_ITEMS) { msg.textContent = 'Maksimal ' + GOAL_MAX_ITEMS + ' target.'; return; }
-    goals.push({ id: generateId('goal'), name: name.slice(0, 60), target: roundMoney(target), deadline, accountId, saved: roundMoney(saved) });
+    const orig = goalEditId ? goals.find(x => x.id === goalEditId) : null;
+    if (goalEditId && !orig) { msg.textContent = 'Target ini sudah tidak ada.'; return; }
+    if (deadline && deadline < todayStr() && !(orig && orig.deadline === deadline)) { msg.textContent = 'Tenggat tidak boleh sebelum hari ini.'; return; }
+    if (accountId && !goalAccountList(data).some(a => a.id === accountId) && !(orig && orig.accountId === accountId)) { msg.textContent = 'Pilih akun yang valid.'; return; }
+    if (saved < 0) { msg.textContent = 'Terkumpul tidak boleh minus.'; return; }
+    if (orig) {
+      Object.assign(orig, { name: name.slice(0, 60), target: roundMoney(target), deadline, accountId, saved: roundMoney(saved) });
+      goalEditId = '';
+    } else {
+      if (goals.length >= GOAL_MAX_ITEMS) { msg.textContent = 'Maksimal ' + GOAL_MAX_ITEMS + ' target.'; return; }
+      goals.push({ id: generateId('goal'), name: name.slice(0, 60), target: roundMoney(target), deadline, accountId, saved: roundMoney(saved) });
+    }
     data.goals = sanitizeGoals(goals);
     saveData(data);
     closeGoalForm();

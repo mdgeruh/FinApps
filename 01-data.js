@@ -360,6 +360,57 @@
     return balances;
   }
 
+  // Grafik kecil di kartu akun (v1.1.137): saldo tiap akun pada `points` tanggal berjarak sama dalam `days` hari terakhir
+  // (tanggal terakhir = today). Satu pass atas transaksi; akun aset berpenilaian memakai assetBalance. Akun titipan dan arsip dilewati.
+  // Return { [accId]: number[] } (saldo apa adanya; akun utang bernilai negatif). Fungsi murni: today dioper dari luar.
+  function sparkDates(today, days, points) {
+    const base = new Date(today + 'T00:00:00Z').getTime(), out = [];
+    for (let i = 0; i < points; i++) out.push(new Date(base - Math.round(days * (points - 1 - i) / (points - 1)) * 86400000).toISOString().slice(0, 10));
+    return out;
+  }
+  function accountBalanceSeries(acc, list, dates) {
+      if (hasValuations(acc)) return dates.map(d => assetBalance(acc, list, d));
+      const deltas = list.map(t => {
+        let d = 0;
+        if (t.type === 'masuk' && t.accountId === acc.id) d = t.amount;
+        else if (t.type === 'keluar' && t.accountId === acc.id) d = -t.amount;
+        else if (t.type === 'transfer') { if (t.accountId === acc.id) d -= t.amount; if (t.toAccountId === acc.id) d += t.amount; }
+        return { date: t.date || '', d };
+      }).sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
+      let bal = acc.initialBalance || 0, k = 0;
+      return dates.map(dt => { while (k < deltas.length && deltas[k].date <= dt) bal += deltas[k++].d; return roundMoney(bal); });
+  }
+  function computeAccountSparklines(data, today, days, points) {
+    const dates = sparkDates(today, days, points), idx = groupTxnsByAccount(data.txns), out = {};
+    data.accounts.forEach(acc => {
+      if (acc.archived || acc.type === 'titipan') return;
+      out[acc.id] = accountBalanceSeries(acc, idx[acc.id] || [], dates);
+    });
+    return out;
+  }
+  // Grafik kecil kartu ringkasan tab Akun: { aset, utang, net, limit } masing-masing array `points` nilai.
+  // Semua akun ikut (termasuk arsip dan titipan) dengan pembagian aset/utang yang sama dengan computeAssetDebt.
+  // limit = persen pemakaian limit kartu kredit + PayLater (null bila tidak ada limit): dihitung dari saldo utang tiap tanggal,
+  // lalu diskalakan agar titik terakhir sama dengan pemakaian sekarang (PayLater memakai pokok kredit yang tidak bisa dihitung mundur).
+  function computeSummarySparklines(data, today, days, points) {
+    const dates = sparkDates(today, days, points), idx = groupTxnsByAccount(data.txns);
+    const aset = dates.map(() => 0), utang = dates.map(() => 0), rawUsed = dates.map(() => 0);
+    let limit = 0, hasLimit = false;
+    data.accounts.forEach(acc => {
+      const ser = accountBalanceSeries(acc, idx[acc.id] || [], dates);
+      const lim = !acc.archived && (acc.type === 'kartu_kredit' || acc.type === 'paylater') && acc.limit > 0;
+      if (lim) { limit += acc.limit; hasLimit = true; }
+      ser.forEach((b, i) => { const p = assetDebtOf(acc, b); aset[i] += p.aset; utang[i] += p.utang; if (lim && b < 0) rawUsed[i] += Math.abs(b); });
+    });
+    let limitPct = null;
+    if (hasLimit) {
+      const now = computeLimitUsage(data, computeAllBalances(data)), rawNow = rawUsed[rawUsed.length - 1];
+      const k = now && rawNow > 0 ? now.used / rawNow : 1;
+      limitPct = rawUsed.map(u => Math.round(u * k / limit * 1000) / 10);
+    }
+    return { aset: aset.map(roundMoney), utang: utang.map(roundMoney), net: aset.map((a, i) => roundMoney(a - utang[i])), limit: limitPct };
+  }
+
   // Hitung jumlah transaksi & tanggal transaksi terakhir untuk SEMUA akun dalam
   // satu kali pass atas txns (bukan sekali per akun via data.txns.filter() di
   // dalam .map()). Dipakai oleh renderAccounts() & renderTitipanList() yang
@@ -626,19 +677,17 @@
   function monthDebtFlows(data, monthKey) {
     return debtFlowsOf(data, data.txns.filter(t => monthKeyFromDate(t.date || '') === monthKey));
   }
+  // Pembagian satu akun ke aset/utang (dipakai computeAssetDebt dan grafik kecil ringkasan Akun).
+  function assetDebtOf(acc, bal) {
+    if (TYPE_DEBT[acc.type]) return { aset: bal > 0 ? bal : 0, utang: bal < 0 ? Math.abs(bal) : 0 };   // lebih bayar dianggap saldo/aset
+    if (acc.type === 'titipan') return { aset: bal > 0 ? bal : 0, utang: bal < 0 ? Math.abs(bal) : 0 };   // piutang / utang balik ke mereka
+    return { aset: bal >= 0 ? bal : 0, utang: bal < 0 ? Math.abs(bal) : 0 };
+  }
   function computeAssetDebt(data, balances) {
     let aset = 0, utang = 0;
     data.accounts.forEach(acc => {
-      const bal = balances[acc.id];
-      if (TYPE_DEBT[acc.type]) {
-        utang += bal < 0 ? Math.abs(bal) : 0;
-        if (bal > 0) aset += bal; // lebih bayar dianggap saldo/aset
-      } else if (acc.type === 'titipan') {
-        if (bal > 0) aset += bal; // orang berutang ke kita = piutang
-        else if (bal < 0) utang += Math.abs(bal); // kita terima lebih = utang balik ke mereka
-      } else {
-        if (bal >= 0) aset += bal; else utang += Math.abs(bal);
-      }
+      const p = assetDebtOf(acc, balances[acc.id]);
+      aset += p.aset; utang += p.utang;
     });
     return { aset, utang };
   }

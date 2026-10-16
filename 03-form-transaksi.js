@@ -8,6 +8,9 @@
     $('txn-cancel-btn').style.display = 'none';
     $('desc-input').value = '';
     setTagsInput([]);
+    resetSplitUI();
+    if (typeof resetFormPhoto === 'function') resetFormPhoto();
+    resetAutoCategory();
     $('amount-input').value = '';
     $('category-custom-input').value = '';
     $('date-input').value = todayStr();
@@ -32,6 +35,9 @@
     if (!t) return;
     if (t.planId) return; // transaksi cicilan tidak diedit satuan (hapus paketnya lalu catat ulang)
     state.editingTxnId = id;
+    resetSplitUI();
+    if (typeof resetFormPhoto === 'function') resetFormPhoto();
+    resetAutoCategory();
 
     const accSel = $('account-select');
     ensureArchivedOption(accSel, data, t.accountId);
@@ -74,6 +80,8 @@
     $('txn-form').classList.remove('open');
     state.editingTxnId = null;
     state.pendingPlanPayment = null;
+    resetSplitUI();
+    if (typeof resetFormPhoto === 'function') resetFormPhoto();
   }
 
   function openTxnDetail(id) {
@@ -111,6 +119,11 @@
     }
     if (t.category) rows.push(['Kategori', t.category]);
     if (txnTags(t).length) rows.push(['Label', tagsText(txnTags(t))]);
+    const sibs = splitSiblings(data.txns, t);
+    if (sibs.length) {
+      rows.push(['Rincian struk', sibs.map(s => (s.desc || s.category || 'Transaksi') + ' ' + formatRp(s.amount)).join(' · ')]);
+      rows.push(['Total struk', formatRp(sibs.reduce((s2, x) => s2 + x.amount, 0))]);
+    }
     rows.push(['Tanggal', formatDayLabel(t.date)]);
     if (t.method === 'nanti') rows.push(['Metode PayLater', 'Bayar nanti (bunga 0%)']);
     if (t.planId) {
@@ -132,6 +145,8 @@
       </div>
     `).join('');
 
+    renderTxnPhotoBox(t);
+    { const da = $('txn-detail-delall'); if (da) { da.style.display = sibs.length ? '' : 'none'; da.textContent = 'Hapus seluruh struk (' + sibs.length + ' baris)'; } }
     const editBtn = document.querySelector('#txn-detail .submit-btn');
     if (editBtn) editBtn.style.display = t.planId ? 'none' : '';
     $('txn-detail').classList.add('open');
@@ -153,7 +168,7 @@
     if (!id) return;
     await deleteTxn(id);
     const data = loadData();
-    if (!data.txns.find(x => x.id === id)) closeTxnDetail();
+    if (!data.txns.find(x => x.id === id)) { closeTxnDetail(); photoCleanup(); }
   }
 
   function setType(t) {
@@ -168,9 +183,12 @@
     $('account-label').textContent = t === 'masuk' ? 'Masuk ke akun' : (t === 'keluar' ? 'Dibayar dari akun' : 'Dari akun');
     $('desc-row').style.display = t === 'transfer' ? 'none' : 'flex';
     populateCategorySelect();
+    if (typeof resetAutoCategory === 'function') { resetAutoCategory(); if ($('desc-input').value.trim()) onDescInput(); }
     updateQuickPayButtons();
     updatePaylaterUI();
     updateAssetHint();
+    if (typeof updateSplitToggle === 'function') updateSplitToggle();
+    if (typeof updateFormPhotoRow === 'function') updateFormPhotoRow();
   }
 
   function populateCategorySelect() {
@@ -181,6 +199,7 @@
   }
 
   function onCategoryChange() {
+    if (this && this.id === 'category-select') { state.catManual = true; const h = $('cat-auto-hint'); if (h) h.style.display = 'none'; }   // dipilih sendiri lewat select (bukan dari kode)
     const sel = $('category-select');
     $('category-custom-row').style.display = sel.value === CATEGORY_CUSTOM ? 'flex' : 'none';
   }

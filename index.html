@@ -258,21 +258,25 @@
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Total aset</div>
           <div class="acc-balance u-mt6" id="akun-total-aset">Rp0</div>
+          <div id="akun-total-aset-spark"></div>
         </div>
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Total utang</div>
           <div class="acc-balance neg u-mt6" id="akun-total-utang">Rp0</div>
+          <div id="akun-total-utang-spark"></div>
         </div>
       </div>
       <div style="display:flex; gap:10px; margin-bottom:14px;">
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Kekayaan bersih</div>
           <div class="acc-balance u-mt6" id="akun-net-worth">Rp0</div>
+          <div id="akun-net-worth-spark"></div>
         </div>
         <div class="acc-card u-flex1-min0" id="akun-limit-card" style="display:none;">
           <div class="acc-type">Limit kartu terpakai</div>
           <div class="acc-balance u-mt6" id="akun-limit-usage">0%</div>
           <div class="acc-tile-meta" id="akun-limit-sub"></div>
+          <div id="akun-limit-spark"></div>
         </div>
       </div>
       <div id="acc-filter-bar" style="display:none; margin-bottom:12px;">
@@ -551,6 +555,7 @@
     <div class="field-row has-label"><label class="field-label" for="sub-amount-input">Nominal per bulan</label><input type="number" data-money="int" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
     <div class="field-row has-label"><label class="field-label" for="sub-day-input" id="sub-day-label">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
     <div class="field-row has-label"><label class="field-label" for="sub-category-input">Kategori</label><select id="sub-category-input" aria-label="Kategori transaksi berulang"></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-tags-input">Label (boleh kosong, pisahkan koma)</label><input type="text" id="sub-tags-input" maxlength="140" placeholder="mis. rumah, bulanan" aria-label="Label transaksi berulang, opsional, pisahkan dengan koma" enterkeyhint="done"></div>
     <div class="field-row has-label"><label class="field-label" for="sub-account-input" id="sub-account-label">Dibayar dari akun</label><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
     <div class="acc-sub u-red" id="sub-form-msg"></div>
     <button type="button" class="submit-btn" id="sub-submit-btn" data-act="saveSubForm">Tambah langganan</button>
@@ -565,14 +570,15 @@
     </div>
     <div class="acc-sub">Hubungkan ke satu akun kas/bank/e-wallet (saldonya dihitung sebagai terkumpul), atau catat setoran sendiri. Dengan tenggat, aplikasi menyarankan setoran per bulan.</div>
     <div id="goal-manage-list"></div>
-    <div class="section-title u-mt14">Tambah target</div>
+    <div class="section-title u-mt14" id="goal-form-heading">Tambah target</div>
     <div class="field-row has-label"><label class="field-label" for="goal-name-input">Nama target</label><input type="text" id="goal-name-input" maxlength="60" placeholder="mis. Beli motor, Modal tanam" aria-label="Nama target"></div>
     <div class="field-row has-label"><label class="field-label" for="goal-target-input">Nominal target</label><input type="number" data-money="int" id="goal-target-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal target"></div>
     <div class="field-row has-label"><label class="field-label" for="goal-deadline-input">Tenggat (boleh kosong)</label><input class="u-w100" type="date" id="goal-deadline-input" aria-label="Tenggat target, boleh kosong"></div>
     <div class="field-row has-label"><label class="field-label" for="goal-account-input">Sumber dana</label><select id="goal-account-input" aria-label="Akun sumber target" data-change-act="onGoalAccountChange"></select></div>
     <div class="field-row has-label" id="goal-saved-row"><label class="field-label" for="goal-saved-input">Sudah terkumpul</label><input type="number" data-money="int" id="goal-saved-input" inputmode="numeric" min="0" step="1" placeholder="Rp, boleh kosong" aria-label="Sudah terkumpul"></div>
     <div class="acc-sub u-red" id="goal-form-msg"></div>
-    <button type="button" class="submit-btn" data-act="saveGoalForm">Tambah target</button>
+    <button type="button" class="submit-btn" id="goal-submit-btn" data-act="saveGoalForm">Tambah target</button>
+    <button type="button" class="io-btn io-btn-full u-mt8" id="goal-cancel-edit-btn" data-act="cancelGoalEdit" style="display:none;">Batal ubah</button>
     </div>
   </div>
 
@@ -926,6 +932,15 @@
     </div>
     <div id="profil-msg" class="io-msg"></div>
     </div>
+    <div class="set-block" id="backup-notif-block">
+    <div class="section-title">Pengingat cadangan</div>
+    <div class="acc-sub u-mb6" id="backup-notif-status"></div>
+    <div class="io-row">
+      <button type="button" class="io-btn u-flex1" id="backup-notif-toggle" data-act="toggleBackupNotif">Aktifkan notifikasi</button>
+      <button type="button" class="io-btn u-flex1" id="backup-notif-test" data-act="testBackupNotif" style="display:none;">Tes notifikasi</button>
+    </div>
+    <div id="backup-notif-msg" class="io-msg"></div>
+    </div>
     <div class="set-block">
     <div class="section-title">Kunci app</div>
     <div class="acc-sub u-mb6" id="lock-status">Kunci app belum aktif.</div>
@@ -1006,19 +1021,17 @@
 </div>
 
 <div class="bottom-nav-wrap">
-  <div class="sb-brand"><span class="sb-logo" aria-hidden="true">K</span><span class="sb-name"><strong>Keuangan</strong><small>Pribadi</small></span></div>
-  <button type="button" class="sb-toggle" id="sb-toggle" data-act="toggleSidebar" aria-label="Ciutkan menu samping" aria-expanded="true" title="Ciutkan / buka menu samping ([)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg></button>
-  <div class="sb-caption">Menu</div>
+  <div class="sb-brand" aria-hidden="true"><span class="sb-logo"><svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H18a2 2 0 0 1 2 2v1"/><path d="M4 8.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 6.5"/><circle cx="16.5" cy="13.5" r="1.1"/></svg></span><span class="sb-brand-text"><strong>Keuangan</strong><small>Pribadi</small></span></div>
   <div class="bottom-nav">
-    <button class="nav-btn active" data-tab="ringkasan" title="Ringkasan" data-act="setTab" data-a0="ringkasan">
+    <button class="nav-btn active" title="Ringkasan" data-tab="ringkasan" data-act="setTab" data-a0="ringkasan">
       <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/></svg>
       <span class="nav-btn-label">Ringkasan</span>
     </button>
-    <button class="nav-btn" data-tab="akun" title="Akun" data-act="setTab" data-a0="akun">
+    <button class="nav-btn" title="Akun" data-tab="akun" data-act="setTab" data-a0="akun">
       <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><line x1="2.5" y1="10.5" x2="21.5" y2="10.5"/></svg>
       <span class="nav-btn-label">Akun</span>
     </button>
-    <button class="nav-btn" data-tab="transaksi" title="Transaksi" data-act="setTab" data-a0="transaksi">
+    <button class="nav-btn" title="Transaksi" data-tab="transaksi" data-act="setTab" data-a0="transaksi">
       <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
       <span class="nav-btn-label">Transaksi</span>
     </button>
@@ -1026,19 +1039,20 @@
       <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="nav-fab-label">Catat transaksi</span>
     </button>
-    <button class="nav-btn" data-tab="titipan" title="Titipan" data-act="setTab" data-a0="titipan">
+    <button class="nav-btn" title="Titipan" data-tab="titipan" data-act="setTab" data-a0="titipan">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.3-5 5-5s5 2 5 5"/><circle cx="17" cy="9.5" r="2.3"/><path d="M15.2 20c.3-1.9 1.6-3.4 3.3-3.8"/></svg>
       <span class="nav-btn-label">Titipan</span>
     </button>
-    <button class="nav-btn" data-tab="tagihan" title="Tagihan" data-act="setTab" data-a0="tagihan">
+    <button class="nav-btn" title="Tagihan" data-tab="tagihan" data-act="setTab" data-a0="tagihan">
       <svg viewBox="0 0 24 24"><path d="M6 2.5h12v19l-2.5-1.6-2.5 1.6-2.5-1.6-2.5 1.6-2.5-1.6z"/><line x1="8.5" y1="8" x2="15.5" y2="8"/><line x1="8.5" y1="12" x2="15.5" y2="12"/><line x1="8.5" y1="16" x2="13" y2="16"/></svg>
       <span class="nav-btn-label">Tagihan</span>
     </button>
-    <button class="nav-btn" data-tab="laporan" title="Laporan" data-act="setTab" data-a0="laporan">
+    <button class="nav-btn" title="Laporan" data-tab="laporan" data-act="setTab" data-a0="laporan">
       <svg viewBox="0 0 24 24"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="15"/></svg>
       <span class="nav-btn-label">Laporan</span>
     </button>
   </div>
+  <button type="button" class="sb-toggle" id="sb-toggle" data-act="toggleSidebar" aria-label="Ciutkan menu samping" aria-expanded="true" title="Ciutkan / buka menu samping ([)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg></button>
 </div>
 
 <div class="sheet-overlay" id="txn-form" data-backdrop="closeTxnForm">
@@ -1061,18 +1075,59 @@
     <label class="field-label" for="category-select">Kategori</label>
     <select id="category-select" data-change-act="onCategoryChange"></select>
   </div>
+  <div class="acc-sub" id="cat-auto-hint" style="display:none;" aria-live="polite"></div>
   <div class="field-row" id="category-custom-row" style="display:none;">
     <input type="text" id="category-custom-input" placeholder="Nama kategori baru (boleh kosong)" aria-label="Nama kategori baru">
   </div>
+  <div class="field-row" id="split-toggle-row" style="display:none;"><button type="button" class="see-all-btn" id="split-toggle-btn" data-act="toggleSplitMode">Pecah per keterangan (rincian struk)</button></div>
+  <div class="split-box" id="split-box" style="display:none;">
+    <div class="field-label">Rincian struk per keterangan (total dihitung otomatis)</div>
+    <div class="split-row" id="split-row-0">
+      <input type="text" id="split-desc-0" maxlength="80" placeholder="Keterangan 1, mis. telur" aria-label="Keterangan baris 1" data-input-act="onSplitDescInput">
+      <input type="number" data-money="int" id="split-amt-0" placeholder="Rp" inputmode="numeric" data-input-act="updateSplitRemain" aria-label="Jumlah baris 1 (Rp)">
+      <button type="button" class="split-del" id="split-del-0" data-act="removeSplitRow" data-n0="0" aria-label="Hapus baris 1">×</button>
+    </div>
+    <div class="split-row" id="split-row-1">
+      <input type="text" id="split-desc-1" maxlength="80" placeholder="Keterangan 2, mis. telur" aria-label="Keterangan baris 2" data-input-act="onSplitDescInput">
+      <input type="number" data-money="int" id="split-amt-1" placeholder="Rp" inputmode="numeric" data-input-act="updateSplitRemain" aria-label="Jumlah baris 2 (Rp)">
+      <button type="button" class="split-del" id="split-del-1" data-act="removeSplitRow" data-n0="1" aria-label="Hapus baris 2">×</button>
+    </div>
+    <div class="split-row" id="split-row-2">
+      <input type="text" id="split-desc-2" maxlength="80" placeholder="Keterangan 3, mis. telur" aria-label="Keterangan baris 3" data-input-act="onSplitDescInput">
+      <input type="number" data-money="int" id="split-amt-2" placeholder="Rp" inputmode="numeric" data-input-act="updateSplitRemain" aria-label="Jumlah baris 3 (Rp)">
+      <button type="button" class="split-del" id="split-del-2" data-act="removeSplitRow" data-n0="2" aria-label="Hapus baris 3">×</button>
+    </div>
+    <div class="split-row" id="split-row-3">
+      <input type="text" id="split-desc-3" maxlength="80" placeholder="Keterangan 4, mis. telur" aria-label="Keterangan baris 4" data-input-act="onSplitDescInput">
+      <input type="number" data-money="int" id="split-amt-3" placeholder="Rp" inputmode="numeric" data-input-act="updateSplitRemain" aria-label="Jumlah baris 4 (Rp)">
+      <button type="button" class="split-del" id="split-del-3" data-act="removeSplitRow" data-n0="3" aria-label="Hapus baris 4">×</button>
+    </div>
+    <div class="split-row" id="split-row-4">
+      <input type="text" id="split-desc-4" maxlength="80" placeholder="Keterangan 5, mis. telur" aria-label="Keterangan baris 5" data-input-act="onSplitDescInput">
+      <input type="number" data-money="int" id="split-amt-4" placeholder="Rp" inputmode="numeric" data-input-act="updateSplitRemain" aria-label="Jumlah baris 5 (Rp)">
+      <button type="button" class="split-del" id="split-del-4" data-act="removeSplitRow" data-n0="4" aria-label="Hapus baris 5">×</button>
+    </div>
+    <div class="acc-sub" id="split-remain" aria-live="polite"></div>
+    <button type="button" class="see-all-btn" id="split-add-btn" data-act="addSplitRow">+ Tambah baris</button>
+  </div>
   <div class="field-row has-label" id="desc-row">
     <label class="field-label" for="desc-input">Keterangan</label>
-    <input type="text" id="desc-input" placeholder="mis. Belanja telor" aria-label="Keterangan transaksi">
+    <input type="text" id="desc-input" placeholder="mis. Belanja telor" aria-label="Keterangan transaksi" data-input-act="onDescInput">
   </div>
   <div class="field-row has-label" id="tags-row">
     <label class="field-label" for="tags-input">Label (boleh kosong, pisahkan koma)</label>
     <input type="text" id="tags-input" maxlength="140" placeholder="mis. kebun, lebaran" aria-label="Label transaksi, opsional, pisahkan dengan koma" data-input-act="renderTagSuggest">
   </div>
   <div class="tag-suggest" id="tags-suggest"></div>
+  <div class="field-row has-label" id="form-photo-row" style="display:none;">
+    <label class="field-label" for="form-photo-btn">Foto struk (boleh kosong)</label>
+    <div class="form-photo-box">
+      <button type="button" class="io-btn" id="form-photo-btn" data-act="pickFormPhoto">Tambah foto</button>
+      <img id="form-photo-preview" alt="Pratinjau foto struk" style="display:none;">
+      <button type="button" class="io-btn danger" id="form-photo-remove" data-act="removeFormPhoto" style="display:none;">Hapus</button>
+    </div>
+    <input type="file" id="form-photo-file" accept="image/*" style="display:none" data-change-act="onFormPhotoPicked" data-change-with-event="1">
+  </div>
   <div class="field-row has-label" id="account-row">
     <label class="field-label" id="account-label" for="account-select">Akun</label>
     <select id="account-select" data-change-act="updateTypeAvailability"></select>
@@ -1127,10 +1182,35 @@
     </div>
     <div class="txn-detail-desc" id="txn-detail-desc"></div>
     <div class="txn-detail-rows" id="txn-detail-rows"></div>
+    <div id="txn-photo-box" class="no-print u-mt10"></div>
+    <input type="file" id="txn-photo-file" accept="image/*" style="display:none" data-change-act="onTxnPhotoPicked" data-change-with-event="1">
     <div class="acc-form-actions" style="margin-top:16px;">
       <button class="io-btn danger" data-act="deleteFromDetail">Hapus</button>
       <button class="submit-btn" data-act="editFromDetail">Edit transaksi</button>
     </div>
+    <button type="button" class="io-btn io-btn-full danger u-mt8" id="txn-detail-delall" data-act="deleteSplitFromDetail" style="display:none;"></button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="tag-manager" data-backdrop="closeTagManager">
+  <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title">Kelola label</div>
+      <button class="sheet-close" data-act="closeTagManager" aria-label="Tutup">×</button>
+    </div>
+    <div class="acc-sub u-mb8">Ubah nama label di semua transaksi. Kalau nama barunya sama dengan label lain, keduanya digabung. Hapus hanya melepas label, transaksinya tetap ada.</div>
+    <div id="tag-manager-list"></div>
+    <div class="io-msg" id="tag-manager-msg"></div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="photo-view" data-backdrop="closePhotoView">
+  <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title">Foto struk</div>
+      <button class="sheet-close" data-act="closePhotoView" aria-label="Tutup">×</button>
+    </div>
+    <img id="photo-view-img" alt="Foto struk" style="width:100%; height:auto; border-radius:10px; display:block;">
   </div>
 </div>
 
@@ -1208,6 +1288,9 @@
 <script src="02b-rute.js"></script>
 <script src="03-form-transaksi.js"></script>
 <script src="03b-label.js"></script>
+<script src="03c-pecah.js"></script>
+<script src="03d-kategori-otomatis.js"></script>
+<script src="03e-foto-struk.js"></script>
 <script src="04-akun.js"></script>
 <script src="04b-akun-detail.js"></script>
 <script src="04c-akun-aset-tagihan.js"></script>
@@ -1232,6 +1315,8 @@
 <script src="11-laporan.js"></script>
 <script src="11b-laporan-utang.js"></script>
 <script src="11c-laporan-proyeksi.js"></script>
+<script src="11d-bandingkan.js"></script>
+<script src="10l-pengingat-cadangan.js"></script>
 <script src="12-render-utama.js"></script>
 <script src="13-import-export.js"></script>
 <script src="14-sync.js"></script>

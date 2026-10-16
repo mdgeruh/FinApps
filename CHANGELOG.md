@@ -6,23 +6,140 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.152 — 14 Okt 2026
+
+**Ambang catatan perbandingan bisa diatur** (`11d-bandingkan.js`, `tests/run.js`)
+- Kartu **Perubahan per kategori** di Laporan punya bagian **Atur ambang catatan**: kenaikan/penurunan minimal (persen, 1–500) dan selisih minimal (rupiah, 0–1 miliar) agar sebuah kategori dapat catatan otomatis. Bawaan tetap 20% dan Rp50.000.
+- Disimpan di perangkat (`keuangan-ambang-bandingkan-v1`), ada tombol Simpan dan Kembalikan bawaan; nilai tak valid kembali ke bawaan (`sanitizeCmpThresholds`). `buildComparisonNotes` menerima `opts {minPct, minAmount}`.
+- Test: 316 lulus (313 + 3 baru).
+
+## v1.1.151 — 14 Okt 2026
+
+**Foto struk langsung dari form Tambah transaksi** (`03e-foto-struk.js`, `03-form-transaksi.js`, `04c-akun-aset-tagihan.js`, `03c-pecah.js`, `index.html`, `style.css`, `tests/run.js`)
+- Form **Tambah transaksi** (pemasukan/pengeluaran) punya baris **Foto struk (boleh kosong)**: tombol Tambah/Ganti foto, gambar kecil pratinjau, dan Hapus. Foto dikecilkan saat dipilih (aturan sama dengan di detail: 1280 px, JPEG, batas total 60 MB) lalu ditahan di `state.pendingPhoto` dan disimpan bersama transaksi setelah dikonfirmasi.
+- Kunci foto mengikuti jenis transaksi: id transaksi untuk transaksi biasa dan pokok cicilan PayLater, `splitId` untuk struk pecahan (satu foto untuk seluruh struk). Kegagalan menyimpan foto tidak membatalkan transaksi (muncul pemberitahuan).
+- Baris foto tersembunyi untuk Transfer dan saat Edit (di sana foto diatur lewat Detail transaksi); foto yang belum disimpan dibuang saat form dibuka/ditutup.
+- Diuji di Chromium 390 px: foto 5 MB terpilih, transaksi tersimpan dan foto terkait di detail; baris tersembunyi di Transfer.
+- 1 test baru (313 total).
+
+## v1.1.150 — 14 Okt 2026
+
+**Hapus seluruh struk pecahan** (`03c-pecah.js`, `03-form-transaksi.js`, `index.html`, `tests/run.js`)
+- Di Detail transaksi yang merupakan bagian struk pecahan, muncul tombol **Hapus seluruh struk (N baris)** di bawah Hapus/Edit. Konfirmasi menyebut jumlah baris dan total struk; setelah disetujui semua baris dengan `splitId` yang sama dihapus sekaligus (saldo, anggaran, laporan ikut), dan foto struk yang tak terpakai dibersihkan. Tombol "Hapus" biasa tetap menghapus satu baris saja.
+- Tombol tidak tampil untuk transaksi biasa. Diuji di Chromium: struk 3 baris Rp50.000 terhapus semua, transaksi lain utuh.
+- 1 test baru (312 total).
+
+## v1.1.149 — 14 Okt 2026
+
+**Ubah target tabungan** (`10k-target.js`, `index.html`, `tests/run.js`)
+- Setiap target di daftar kelola punya tombol **Ubah**. Formulir yang sama terisi data target itu (nama, nominal, tenggat, sumber dana, jumlah terkumpul) dengan judul "Ubah target" dan tombol "Simpan perubahan"; "Batal ubah" kembali ke mode tambah. Id target tetap, jadi tidak perlu hapus dan buat ulang.
+- Tenggat yang sudah lewat boleh dibiarkan saat mengubah hal lain (hanya tenggat baru yang divalidasi harus ≥ hari ini). Akun sumber dana yang sudah diarsipkan tetap bisa dipertahankan (diberi tanda "diarsipkan"). Beralih ke akun mengosongkan angka manual; beralih ke manual memakai angka "Sudah terkumpul" yang diisi.
+- Diuji di Chromium 390 px: nilai uang dan tanggal terisi benar, simpan mengubah target di tempat.
+- 1 test baru (311 total).
+
+## v1.1.148 — 14 Okt 2026
+
+**Label di transaksi berulang (langganan/gaji)** (`10c-langganan.js`, `03b-label.js`, `index.html`, `tests/run.js`)
+- Form transaksi berulang punya isian **Label** (boleh kosong, pisahkan koma, maks 5). Setiap transaksi yang dibuat otomatis tiap bulan membawa label itu, jadi ikut muncul di filter label, kartu Label, "Per label" di Laporan, dan CSV. Label tampil di daftar "kelola transaksi berulang".
+- `sanitizeSubscriptions` menjaga `tags` (dirapikan, tanpa kembar, kunci hanya ada bila berisi); ikut ekspor/impor JSON dan sinkron karena bagian dari objek langganan.
+- **Kelola label** (v1.1.147) kini mencakup label di transaksi berulang: daftar, ubah nama/gabung, dan hapus juga mengubah langganan, supaya transaksi bulan depan memakai nama baru.
+- Belum: mengedit label langganan yang sudah dibuat (form hanya untuk tambah baru; ubah lewat Kelola label atau hapus dan buat ulang). Cicilan PayLater tetap tanpa label.
+- 4 test baru (310 total).
+
+## v1.1.147 — 14 Okt 2026
+
+**Kelola label: ubah nama, gabung, hapus** (`03b-label.js`, `index.html`, `tests/run.js`)
+- Chip baru **Kelola label** di barisan filter label (tab Transaksi) membuka sheet berisi semua label dengan jumlah pemakaiannya. Tiap label: **Ubah nama** (kolom isian, Enter/Simpan/Batal) dan **Hapus** (konfirmasi; hanya melepas label, transaksinya tetap).
+- Mengganti nama menjadi nama label lain yang sudah ada = **menggabungkan**; ejaan label yang sudah ada dipakai, dan satu transaksi tidak pernah punya label kembar atau lebih dari 5. Mengganti hanya huruf besar/kecil juga bisa. Nama kosong ditolak. Filter label yang sedang aktif ikut menyesuaikan.
+- Fungsi murni baru `renameTagInTxns(txns, key, nama)` dan `deleteTagInTxns(txns, key)`; perubahan disimpan lewat `saveData` jadi ikut sinkron.
+- 5 test baru (306 total; satu menjaga agar elemen dinamis diambil dengan getElementById, bukan $() yang menyimpan hasil lama).
+
+## v1.1.146 — 14 Okt 2026
+
+**Pengingat cadangan lewat notifikasi** (`10l-pengingat-cadangan.js` baru, `sw.js`, `13-import-export.js`, `02-navigasi.js`, `15-startup.js`, `index.html`, `tests/run.js`)
+- Blok baru **Pengingat cadangan** di tab Profil: "Aktifkan notifikasi" (meminta izin), "Matikan notifikasi", dan "Tes notifikasi" (mengirim notifikasi contoh). Status ditulis jelas: tidak didukung, izin diblokir, aktif.
+- Cara kerja: app statis tanpa server push, jadi memakai **Periodic Background Sync** (Chrome/Edge, paling andal pada aplikasi yang dipasang ke layar utama). `sw.js` dibangunkan browser, membaca keadaan cadangan dari IndexedDB `keuangan-pengingat`, dan menampilkan notifikasi "Cadangkan data keuangan" bila cadangan JSON terakhir ≥ 14 hari (atau belum pernah) dan transaksi ≥ 10, tidak sedang ditunda ("Nanti" = 7 hari), paling sering sekali per ~20 jam. Ketuk notifikasi membuka/fokus ke app.
+- Aturan "kapan perlu cadangan" kini satu sumber: `backupDueState()`, dipakai kartu di Ringkasan dan salinan murni identik di `sw.js` (test membandingkan hasilnya untuk banyak masukan). `sw.js` tidak bisa membaca localStorage, jadi app menyalin keadaan (terakhir ekspor, tunda, jumlah transaksi) ke IndexedDB saat ekspor, tunda, startup, dan saat app disembunyikan.
+- Keterbatasan (tertulis di app): waktu muncul diatur browser; Safari/iOS dan Firefox tidak mendukung Periodic Sync, di sana pengingat tetap berupa kartu di Ringkasan. Tidak ada push sungguhan saat browser tertutup total.
+- 5 test baru (302 total, file JS jadi 39).
+
+## v1.1.145 — 14 Okt 2026
+
+**Sidebar desktop lebih modern; "Ciutkan" jadi tombol bulat melayang** (`index.html`, `style.css`, `tests/run.js`)
+- Tombol **Ciutkan** kini berupa tombol bulat melayang (ikon panah ganda, tanpa label) di tepi kanan sidebar dekat logo; panah berbalik saat menu diciutkan, dengan tooltip. Perilaku tetap sama (`toggleSidebar`, pintasan `[`, pilihan diingat).
+- Sidebar: merek di atas (logo dompet + "Keuangan Pribadi"), menu berbentuk pil dengan penanda aktif di tepi kiri, hover/fokus lebih halus, latar kartu dengan bayangan tipis, tombol Catat transaksi bergradasi. Setiap menu punya `title` (tooltip) untuk mode ikon. Terang dan gelap diperiksa; tampilan mobile tidak berubah (merek dan tombol hanya di ≥1024 px).
+- Tidak ada test baru; 297 test lulus.
+
+## v1.1.144 — 14 Okt 2026
+
+**Foto struk di detail transaksi** (`03e-foto-struk.js` baru, `03-form-transaksi.js`, `12-render-utama.js`, `15-startup.js`, `index.html`, `style.css`, `sw.js`, `tests/run.js`)
+- Di Detail transaksi ada tombol "Tambah foto struk" (kamera/galeri). Setelah ada: gambar kecil yang bisa diketuk untuk dilihat penuh, "Ganti foto", dan "Hapus foto". Transaksi yang punya foto diberi penanda "· Foto" di daftar.
+- Foto dikecilkan di perangkat (sisi terpanjang 1280 px, JPEG, sasaran ≤ 450 KB; kualitas diturunkan bertahap bila masih besar). File asli > 25 MB ditolak; total penyimpanan foto dibatasi 60 MB (pesan jelas bila penuh).
+- Disimpan di **IndexedDB** perangkat ini (`keuangan-foto`), bukan di data utama: **tidak ikut sinkron, backup JSON, atau CSV**, dan tidak menambah ukuran data sinkron. Tertulis juga di bawah tombol di app.
+- Transaksi hasil pecah (satu struk) berbagi satu foto lewat `splitId`. Foto yatim (transaksinya sudah dihapus) dibersihkan otomatis saat app dibuka dan setelah hapus dari detail.
+- Browser tanpa IndexedDB: kotak foto menampilkan keterangan tidak didukung, app tetap normal. Disembunyikan saat cetak.
+- 5 test baru (297 total, file JS jadi 38): ukuran skala, byte data-URL, kuota, kunci/yatim, tanpa IndexedDB, keterpasangan.
+
+## v1.1.143 — 14 Okt 2026
+
+**Perubahan per kategori di Laporan, dengan catatan otomatis** (`11d-bandingkan.js` baru, `11c-laporan-proyeksi.js`, `index.html`, `sw.js`, `tests/run.js`)
+- Kartu baru "Perubahan per kategori" di Laporan (setelah "Dibanding periode sebelumnya"): pengeluaran per kategori periode ini dibanding periode sebelumnya, plus bagian lipat untuk pemasukan. Catatan otomatis di atasnya, mis. "Makan & minum naik 32% (Rp1.000.000 → Rp1.320.000)", "Kesehatan baru muncul", "Hiburan tidak ada (sebelumnya …)". Merah = merugikan (pengeluaran naik / pemasukan turun), hijau = membaik.
+- Catatan hanya untuk perubahan ≥ 20% **dan** selisih ≥ Rp50.000; maksimal 4 catatan, diurutkan dari selisih nominal terbesar. Tabel menampilkan 8 kategori teratas, sisanya dilipat.
+- `laporanCompareRanges(period, range, today)`: Bulanan/3 Bulan/1 Tahun digeser per kalender (Maret dibanding Februari, Januari dibanding Desember); Harian/Mingguan/Custom memakai periode sebelumnya yang sama panjang; Alltime tidak dibandingkan. Periode yang belum selesai (bulan berjalan) dipotong ke jumlah hari yang sama dengan bulan lalu supaya adil.
+- Mengikuti filter akun, tapi bukan filter kategori. Bayar utang, pencairan, dan penyesuaian saldo tidak dihitung (sama dengan Laporan lain). Fungsi murni: `computeCategoryComparison`, `buildComparisonNotes`, `sumByCategory`.
+- 4 test baru (292 total, file JS jadi 37).
+
+## v1.1.142 — 14 Okt 2026
+
+**Kategori otomatis sesuai keterangan** (`03d-kategori-otomatis.js` baru, `03-form-transaksi.js`, `index.html`, `sw.js`, `tests/run.js`)
+- Saat mengetik Keterangan di form transaksi baru (pemasukan/pengeluaran), kategori terpilih otomatis dan muncul keterangan kecil "Kategori otomatis: X (dari riwayat "…")" atau "(dari kata "…")". Pilihan manual lewat kolom Kategori selalu menang dan mematikan saran untuk transaksi itu; berganti jenis (masuk/keluar) mengatur ulang.
+- `suggestCategory(desc, type, txns)` (murni): (1) **riwayat**: transaksi sejenis yang keterangannya memuat kata yang sama (koefisien tumpang tindih ≥ 0,5; kata umum seperti "bayar", "beli", satuan, dan angka diabaikan), kategori dengan skor terbesar menang; (2) **kata kunci bawaan** (±150 kata Indonesia: bensin, listrik, beras, obat, gaji, panen, dst.) bila riwayat belum ada. Kategori sistem (Lainnya, Penyesuaian saldo, Bunga & biaya bank, Cicilan/utang) tidak pernah disarankan; Transfer dan Edit tidak ikut.
+- Mode pecah per keterangan: kategori utama mengikuti baris dengan jumlah terbesar yang bisa ditebak.
+- 4 test baru (288 total, file JS jadi 36); diuji di Chromium 390 px: "Beli bensin motor" → Transportasi (riwayat), "Streaming nonton" → Hiburan, pilihan manual tidak ditimpa, "Gaji bulanan" (masuk) → Gaji, pecah dengan "Nasi goreng warung" terbesar → Makan & minum, tanpa error JS.
+
+## v1.1.141 — 14 Okt 2026
+
+**Pecah transaksi: yang dipecah keterangan, bukan kategori** (`03c-pecah.js`, `04c-akun-aset-tagihan.js`, `03-form-transaksi.js`, `index.html`, `style.css`, `06-util-ui.js`, `tests/run.js`)
+- Koreksi arah fitur v1.1.139–v1.1.140 atas permintaan pemilik: satu struk punya **satu kategori** (kolom Kategori biasa tetap tampil), dan yang dipecah adalah **keterangan/barang** (mis. Telur 1 kg, Sabun cuci, Gula) masing-masing dengan jumlahnya. Kolom Keterangan tunggal disembunyikan di mode pecah.
+- Tiap baris tersimpan sebagai transaksi biasa dengan keterangan sendiri, kategori/akun/tanggal/label yang sama, dan `splitId` bersama. Total struk tetap otomatis (terkunci, tanpa tombol kalkulator).
+- Pemilih kategori per baris (lima `<select>` `split-cat-*`) dihapus; diganti kolom teks keterangan `split-desc-*`. `validateSplitParts(parts)` kini tanpa argumen total dan tanpa penggabungan kategori: tiap baris wajib keterangan + jumlah > 0, 2–5 baris, keterangan sama boleh. `saveSplitTxn(category, tags)` menerima kategori dari form (termasuk nama kategori "Lainnya" khusus).
+- Detail transaksi: baris "Rincian struk" (daftar keterangan + jumlah) dan "Total struk". Konfirmasi menampilkan daftar keterangan.
+- Perbaikan kecil: tombol kalkulator di Total struk kini benar-benar tersembunyi saat terkunci (kelas dipasang di pembungkus yang tepat).
+- 284 test; diuji di Chromium 390 px: tiga baris (32.000 + 18.000 + 15.000) menghasilkan total 65.000 otomatis dan tiga transaksi berkategori Belanja harian, tanpa error JS.
+
+## v1.1.140 — 14 Okt 2026
+
+**Pecah transaksi: Total struk otomatis** (`03c-pecah.js`, `style.css`, `index.html`, `tests/run.js`)
+- Di mode pecah, kolom Total struk terkunci (read-only, tombol kalkulator disembunyikan) dan terisi otomatis dari jumlah semua bagian; label menjadi "Total struk (otomatis)". Tidak perlu lagi mengetik total dulu, dan jumlah bagian pasti sama dengan total.
+- Fungsi murni baru `splitTotalOf(parts)`; bagian kosong atau tidak valid dihitung 0. Teks bantu menampilkan "Total struk otomatis dari semua bagian: Rp…". Keluar dari mode pecah mengosongkan kolom jumlah dan membuka kuncinya.
+- 1 test baru (284 total); diuji di Chromium 390 px: bagian 60.000 + 30.000 mengisi total 90.000 (read-only), diubah jadi 60.000 + 40.000 menjadi 100.000, tersimpan dua transaksi, tanpa error JS.
+
+## v1.1.139 — 13 Okt 2026
+
+**Fitur: pecah transaksi ke beberapa kategori (roadmap item 6)** (`03c-pecah.js` baru, `03-form-transaksi.js`, `04c-akun-aset-tagihan.js`, `06-util-ui.js`, `12-render-utama.js`, `13-import-export.js`, `index.html`, `style.css`, `sw.js`)
+- Di form Tambah transaksi (pemasukan/pengeluaran) ada tombol "Pecah ke beberapa kategori". Isi 2 sampai 5 bagian (kategori + jumlah, kolom jumlah punya kalkulator); label di bawah menunjukkan sisa yang belum dibagi dan berubah hijau bila pas. Kolom Jumlah berganti nama jadi "Total struk".
+- **Desain:** satu struk disimpan sebagai beberapa transaksi biasa (satu per kategori) yang berbagi `splitId`, tanggal, keterangan, akun, dan label. Dengan begitu saldo, anggaran, laporan, grafik Kategori/Label, CSV, dan sinkron otomatis benar tanpa mengubah satu pun perhitungan.
+- Validasi (`validateSplitParts`, murni): tiap bagian wajib punya kategori dan jumlah > 0, kategori kembar digabung, minimal dua kategori berbeda, jumlah semua bagian harus sama persis dengan total struk (pesan "Masih kurang Rp…" atau "Kelebihan Rp…").
+- Daftar transaksi memberi penanda "Pecahan"; detail transaksi menampilkan "Struk terpecah" (semua bagian) dan "Total struk". Impor JSON membawa `splitId`.
+- Setelah tersimpan, tiap bagian berdiri sendiri: edit atau hapus satuan (menghapus satu bagian tidak menghapus yang lain). Cicilan PayLater tidak bisa dipecah (PayLater "Bayar nanti" bisa). Transfer dan Edit transaksi tidak punya mode pecah.
+- Catatan: jumlah "transaksi" di kartu akun dan daftar bertambah sesuai jumlah bagian.
+- 5 test baru (283 total, termasuk jumlah file JS jadi 35); diuji di Chromium 390 px: total Rp100.000 dibagi 60.000 + 40.000 menghasilkan dua transaksi, konfirmasi menampilkan rinciannya, tanpa error JS.
+
 ## v1.1.138 — 13 Okt 2026
 
-**Warna dan bayangan sidebar desktop** (`style.css`)
-- `.bottom-nav-wrap` (≥1024 px): latar `linear-gradient(180deg, var(--teal-soft) 0, var(--card) 190px)` (semburat teal di atas, memudar ke permukaan kartu), garis tepi kanan diganti `box-shadow: 8px 0 32px rgba(8,18,15,.08)` plus garis 1 px halus. Memakai variabel tema, jadi tema gelap otomatis mengikuti (sidebar tampil lebih terang daripada halaman).
-- Menu aktif: pil `--teal-soft` dengan bayangan tipis dan penanda garis teal 3 px di sisi kiri (`.nav-btn.active::before`); hover menu non-aktif memakai `--paper-dim`.
-- Bayangan berwarna teal untuk tombol "Catat transaksi" (`.nav-fab`) dan logo (`.sb-logo`).
-- HP dan tablet (<1024 px) tidak berubah. Diperiksa di 1440 px: terang, gelap, terbuka, dan diciutkan. 275 test lulus (test versi disesuaikan; tidak ada logika baru).
+**Halaman Akun: grafik kecil juga di kartu ringkasan** (`01-data.js`, `07-render-akun-transaksi.js`, `index.html`, `tests/run.js`)
+- Kartu Total aset (hijau), Total utang (merah), Kekayaan bersih (teal), dan Limit kartu terpakai (amber) memakai grafik 30 hari yang sama dengan kartu akun (`sparkHtml` kini menerima `opts` nama dan mode persen).
+- `computeSummarySparklines(data, today, days, points)` (murni): memakai deret saldo tiap akun (semua akun, termasuk arsip dan titipan) dan pembagian aset/utang yang sama dengan `computeAssetDebt`; pembagian itu dipindah ke `assetDebtOf` yang dipakai bersama, jadi angka kartu dan grafik tidak bisa berbeda. Titik terakhir selalu sama dengan angka di kartu.
+- Limit: persen pemakaian dari saldo utang kartu kredit dan PayLater pada tiap tanggal, diskalakan supaya titik terakhir sama dengan pemakaian sekarang. Ini perkiraan, karena pokok kredit PayLater (`paylaterCreditUsed`) bergantung pada jadwal hari ini dan tidak bisa dihitung mundur. Kartu limit tetap tersembunyi bila tidak ada kartu berlimit.
+- Tersembunyi saat saldo disembunyikan. 2 test baru (279 total); diperiksa di Chromium 390 dan 1440 px: 4 grafik muncul, 0 saat disembunyikan, tanpa error JS.
 
 ## v1.1.137 — 13 Okt 2026
 
-**Sidebar desktop lebih modern dan bersih; tombol ciut tanpa label** (`index.html`, `style.css`)
-- Tombol "Ciutkan menu" (ikon + teks di dalam sidebar) diganti **tombol ikon bulat 26 px di tepi kanan sidebar** (chevron ‹ / ›, berputar saat diciutkan; `aria-label` dan `aria-expanded` tetap diperbarui `applySidebar`; pintasan `[` dan penyimpanan `kp_sidebar` tidak berubah).
-- Kepala sidebar baru: logo huruf K (teal, 34 px) + "Keuangan / Pribadi" (`.sb-brand`) dan judul kecil "Menu" (`.sb-caption`). Saat diciutkan nama dan judul disembunyikan, logo tetap di tengah.
-- Item menu: padding 10×12, ukuran 14 px, bobot 500 (aktif 600) dengan latar pil teal lembut; tombol "Catat transaksi" di dasar tidak berubah.
-- Enam tombol menu diberi atribut `title` supaya nama muncul sebagai tooltip saat sidebar hanya berisi ikon.
-- `.sb-brand` dan `.sb-caption` disembunyikan di <1024 px (HP dan tablet tidak berubah). Diperiksa di 1440 px (terbuka, diciutkan, dibuka lagi, pintasan `[`) dan 390 px; tanpa error JS.
-- 1 test baru (275 total); test versi disesuaikan.
+**Halaman Akun: grafik kecil 30 hari di kartu akun** (`01-data.js`, `07-render-akun-transaksi.js`, `style.css`, `tests/run.js`)
+- Tiap kartu akun (kecuali titipan dan arsip) menampilkan garis kecil dengan area tipis: saldo pada 16 titik berjarak sama dalam 30 hari terakhir. Akun utang (kartu kredit, PayLater, pinjaman) digambar sebagai jumlah utang, jadi garis turun berarti membaik. Warna mengikuti warna jenis akun.
+- `computeAccountSparklines(data, today, days, points)` (murni, `01-data.js`): satu pass atas transaksi per akun; aset berpenilaian memakai `assetBalance`; titik terakhir selalu sama dengan saldo sekarang. `sparkDates` membentuk tanggalnya.
+- `sparkHtml(series, isDebt)`: garis datar (tanpa perubahan) tidak digambar; `aria-label` dan `<title>` menyebut arah dan nilai perubahan (mis. "Utang turun Rp100.000 dalam 30 hari terakhir"). Tidak digambar saat saldo disembunyikan (`state.balanceHidden`) dan disembunyikan di cetak. Tinggi 28 px (HP) dan 36 px (desktop ≥1024 px).
+- 3 test baru (277 total); diperiksa di Chromium 390 dan 1440 px dengan data contoh: 9 grafik di 12 kartu, nol grafik saat saldo disembunyikan, tanpa error JS.
 
 ## v1.1.136 — 13 Okt 2026
 
