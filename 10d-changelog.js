@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.154', d: '16 Okt 2026', items: [
+      'Saat memecah struk, kategori tiap baris kini terisi otomatis dari keterangannya (misalnya bensin jadi Transportasi, makan siang jadi Makan & minum). Kamu tetap bisa mengganti kategori baris kapan saja, dan pilihanmu tidak akan ditimpa'] },
+    { v: 'v1.1.153', d: '16 Okt 2026', items: [
+      'Saat memecah struk, tiap baris kini bisa punya kategori sendiri (misalnya pakan ternak dan sabun dalam satu struk). Biarkan "sama dengan di atas" bila semua baris satu kategori'] },
     { v: 'v1.1.152', d: '14 Okt 2026', items: [
       'Catatan otomatis di kartu Perubahan per kategori (Laporan) kini bisa diatur: buka Atur ambang catatan untuk menentukan kenaikan/penurunan minimal dalam persen dan selisih minimal dalam rupiah. Ada tombol Kembalikan bawaan'] },
     { v: 'v1.1.151', d: '14 Okt 2026', items: [

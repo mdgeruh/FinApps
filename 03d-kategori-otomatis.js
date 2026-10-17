@@ -95,10 +95,12 @@
   function onSplitDescInput() {
     const rows = splitReadParts().filter(p => p.desc && p.desc.trim());
     rows.sort((a, b) => (roundMoney(Number(b.amount)) || 0) - (roundMoney(Number(a.amount)) || 0));
+    let done = false;
     for (const r of rows) {
-      if (suggestCategory(r.desc, state.currentType, loadData().txns)) { applyAutoCategory(r.desc); return; }
+      if (suggestCategory(r.desc, state.currentType, loadData().txns)) { applyAutoCategory(r.desc); done = true; break; }
     }
-    applyAutoCategory('');
+    if (!done) applyAutoCategory('');
+    if (typeof autoSplitCats === 'function') autoSplitCats();
   }
   function resetAutoCategory() {
     state.catManual = false;
