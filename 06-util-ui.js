@@ -220,6 +220,8 @@
 
   [
     'category-select', 'account-select', 'to-account-select',
+    // Kategori per baris pecah transaksi (v1.1.153)
+    'split-cat-0', 'split-cat-1', 'split-cat-2', 'split-cat-3', 'split-cat-4',
     // Form akun (tambah/edit)
     'acc-type-input', 'acc-fee-type-input', 'acc-fee-period-input', 'acc-asset-kind-input',
     'acc-card-min-type-input', 'acc-loan-stage-input', 'acc-loan-type-input',

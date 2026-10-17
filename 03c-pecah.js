@@ -1,9 +1,9 @@
   // ============================================================
   // PECAH TRANSAKSI PER KETERANGAN (v1.1.139, diubah v1.1.141)
-  // Satu struk berisi beberapa barang/keterangan (mis. telur, sabun, gula) dicatat per keterangan: satu kategori, satu akun, satu tanggal,
+  // Satu struk berisi beberapa barang/keterangan (mis. telur, sabun, gula) dicatat per keterangan: satu akun, satu tanggal,
   // tetapi tiap baris punya keterangan dan jumlah sendiri. Tersimpan sebagai beberapa transaksi biasa yang berbagi `splitId`, jadi saldo,
   // anggaran, laporan, grafik, CSV, dan sinkron otomatis benar tanpa mengubah satu pun perhitungan.
-  // Total struk dihitung otomatis dari jumlah semua baris. Maksimal 5 baris (minimal 2). Setelah tersimpan tiap baris berdiri sendiri
+  // Tiap baris boleh punya kategori sendiri (pilihan di bawah barisnya); kosong = ikut kategori utama. Total struk dihitung otomatis dari jumlah semua baris. Maksimal 5 baris (minimal 2). Setelah tersimpan tiap baris berdiri sendiri
   // (edit/hapus satuan); detail transaksi menampilkan baris lain dari struk yang sama.
   // Fungsi hitung murni: cleanSplitId, splitTotalOf, validateSplitParts, buildSplitTxns, splitSiblings.
   // ============================================================
@@ -17,14 +17,15 @@
     return roundMoney((parts || []).reduce((s, p) => { const a = roundMoney(Number(p && p.amount)); return s + (a > 0 ? a : 0); }, 0));
   }
 
-  // parts = [{ desc, amount }] (jumlah boleh teks/angka). Hasil: { ok, error, parts, total }.
+  // parts = [{ desc, amount, category? }] (jumlah boleh teks/angka). Hasil: { ok, error, parts, total }.
   function validateSplitParts(parts) {
     const out = [];
     for (const p of (parts || [])) {
       const desc = String(p && p.desc != null ? p.desc : '').replace(/\s+/g, ' ').trim().slice(0, 80);
       const amt = roundMoney(Number(p && p.amount));
       if (!desc || !(amt > 0)) return { ok: false, error: 'Isi keterangan dan jumlah di setiap baris.', parts: [], total: 0 };
-      out.push({ desc, amount: amt });
+      const cat = String(p && p.category != null ? p.category : '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      out.push(cat ? { desc, amount: amt, category: cat } : { desc, amount: amt });
     }
     if (out.length < SPLIT_MIN_PARTS) return { ok: false, error: 'Isi minimal dua baris keterangan.', parts: out, total: splitTotalOf(out) };
     if (out.length > SPLIT_MAX_PARTS) return { ok: false, error: 'Maksimal ' + SPLIT_MAX_PARTS + ' baris.', parts: out, total: splitTotalOf(out) };
@@ -35,6 +36,7 @@
   function buildSplitTxns(base, parts, splitId, tags, makeId) {
     return parts.map(p => {
       const t = { id: makeId('txn'), ...base, desc: p.desc, amount: p.amount, splitId };
+      if (p.category) t.category = p.category;   // kategori khusus baris ini; kosong = ikut kategori utama (base)
       if (tags && tags.length) t.tags = tags.slice();
       return t;
     });
@@ -49,12 +51,40 @@
   }
 
   // ---------- Form ----------
-  state.splitMode = false; state.splitCount = SPLIT_MIN_PARTS; state.splitWasOn = false;
+  state.splitMode = false; state.splitCount = SPLIT_MIN_PARTS; state.splitWasOn = false; state.splitCatManual = [];
 
   function splitReadParts() {
     const out = [];
-    for (let i = 0; i < state.splitCount; i++) out.push({ desc: $('split-desc-' + i).value, amount: $('split-amt-' + i).value });
+    for (let i = 0; i < state.splitCount; i++) { const c = $('split-cat-' + i); out.push({ desc: $('split-desc-' + i).value, amount: $('split-amt-' + i).value, category: c ? c.value : '' }); }
     return out;
+  }
+  // Pilihan kategori per baris: "Sama dengan kategori di atas" (kosong) lalu semua kategori jenis ini. Nilai terpilih dipertahankan.
+  function populateSplitCats() {
+    const list = CATEGORIES[state.currentType] || [];
+    for (let i = 0; i < SPLIT_MAX_PARTS; i++) {
+      const s = $('split-cat-' + i); if (!s) continue;
+      const cur = s.value;
+      s.innerHTML = '<option value="">Kategori: sama dengan di atas</option>' + list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      s.value = list.indexOf(cur) >= 0 ? cur : '';
+    }
+  }
+  // Kategori otomatis per baris (v1.1.154): tiap baris yang kategorinya belum dipilih sendiri ditebak dari keterangannya
+  // (riwayat lalu kata kunci, sama seperti kategori utama). Bila tebakan sama dengan kategori utama, baris dibiarkan "sama dengan di atas".
+  function autoSplitCats() {
+    if (!state.splitMode) return;
+    const main = $('category-select').value, type = state.currentType, txns = loadData().txns;
+    for (let i = 0; i < state.splitCount; i++) {
+      const s = $('split-cat-' + i);
+      if (!s || state.splitCatManual[i]) continue;
+      const d = $('split-desc-' + i).value;
+      const sg = d && d.trim() ? suggestCategory(d, type, txns) : null;
+      const want = sg && sg.category !== main && Array.from(s.options).some(o => o.value === sg.category) ? sg.category : '';
+      if (s.value !== want) s.value = want;
+    }
+  }
+  function onSplitCatChange() {
+    const m = /split-cat-(\d)/.exec(this && this.id || '');
+    if (m) state.splitCatManual[Number(m[1])] = true;
   }
   function refreshSplitUI() {
     const on = !!state.splitMode;
@@ -66,6 +96,7 @@
     const add = $('split-add-btn'); if (add) add.style.display = state.splitCount >= SPLIT_MAX_PARTS ? 'none' : '';
     for (let i = 0; i < SPLIT_MAX_PARTS; i++) { const d = $('split-del-' + i); if (d) d.style.display = state.splitCount > SPLIT_MIN_PARTS ? '' : 'none'; }
     lockSplitTotal(on);
+    if (on) populateSplitCats();
     if (on) updateSplitRemain(); else if (state.splitWasOn) $('amount-input').value = '';
     state.splitWasOn = on;
   }
@@ -93,8 +124,8 @@
   function toggleSplitMode() {
     state.splitMode = !state.splitMode;
     if (state.splitMode) {
-      state.splitCount = SPLIT_MIN_PARTS;
-      for (let i = 0; i < SPLIT_MAX_PARTS; i++) { $('split-desc-' + i).value = ''; $('split-amt-' + i).value = ''; }
+      state.splitCount = SPLIT_MIN_PARTS; state.splitCatManual = [];
+      for (let i = 0; i < SPLIT_MAX_PARTS; i++) { $('split-desc-' + i).value = ''; $('split-amt-' + i).value = ''; $('split-cat-' + i).value = ''; }
       const d = $('desc-input').value.trim(); if (d) $('split-desc-0').value = d;
     }
     refreshSplitUI();
@@ -102,21 +133,21 @@
   }
   function addSplitRow() {
     if (state.splitCount >= SPLIT_MAX_PARTS) return;
-    const i = state.splitCount++;
-    $('split-desc-' + i).value = ''; $('split-amt-' + i).value = '';
+    const i = state.splitCount++; state.splitCatManual[i] = false;
+    $('split-desc-' + i).value = ''; $('split-amt-' + i).value = ''; $('split-cat-' + i).value = '';
     refreshSplitUI();
     $('split-desc-' + i).focus();
   }
   function removeSplitRow(i) {
     if (state.splitCount <= SPLIT_MIN_PARTS) return;
-    const rows = splitReadParts(); rows.splice(i, 1);
+    const rows = splitReadParts(); rows.splice(i, 1); state.splitCatManual.splice(i, 1);
     state.splitCount--;
-    rows.forEach((p, k) => { $('split-desc-' + k).value = p.desc; $('split-amt-' + k).value = p.amount; });
-    $('split-desc-' + state.splitCount).value = ''; $('split-amt-' + state.splitCount).value = '';
+    rows.forEach((p, k) => { $('split-desc-' + k).value = p.desc; $('split-amt-' + k).value = p.amount; $('split-cat-' + k).value = p.category || ''; });
+    $('split-desc-' + state.splitCount).value = ''; $('split-amt-' + state.splitCount).value = ''; $('split-cat-' + state.splitCount).value = '';
     refreshSplitUI();
   }
   function resetSplitUI() {
-    state.splitMode = false; state.splitCount = SPLIT_MIN_PARTS;
+    state.splitMode = false; state.splitCount = SPLIT_MIN_PARTS; state.splitCatManual = [];
     if ($('split-box')) refreshSplitUI();
   }
 
@@ -134,7 +165,7 @@
       if ($('paylater-method').value === 'cicilan') { showIoMsg('Cicilan PayLater tidak bisa dipecah. Pilih "Bayar nanti" atau catat satu per satu.', 'error'); return; }
       base.method = 'nanti';
     }
-    const lines = v.parts.map(p => '• ' + p.desc + ' ' + formatRp(p.amount)).join('\n');
+    const lines = v.parts.map(p => '• ' + p.desc + ' ' + formatRp(p.amount) + (p.category && p.category !== category ? ' [' + p.category + ']' : '')).join('\n');
     const okc = await showConfirm((type === 'masuk' ? 'Pemasukan' : 'Pengeluaran') + ' (' + category + ') — ' + (payAcc ? payAcc.name : '?') + '\n' + lines + '\nTotal ' + formatRp(v.total) + '\n\nTambahkan ' + v.parts.length + ' transaksi ini?');
     if (!okc) return;
     const splitKey = generateId('split');

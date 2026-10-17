@@ -6,6 +6,21 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.154 — 16 Okt 2026
+
+**Kategori otomatis per baris di pecah transaksi** (`03c-pecah.js`, `03d-kategori-otomatis.js`, `03-form-transaksi.js`, `index.html`, `tests/run.js`)
+- Saat mengetik keterangan tiap baris, kategorinya ditebak otomatis (riwayat transaksi lalu kata kunci, aturan sama dengan kategori utama). Bila tebakan sama dengan kategori utama, baris dibiarkan "sama dengan di atas".
+- Baris yang kategorinya sudah dipilih sendiri tidak ditimpa (`state.splitCatManual`); baris lain ikut dihitung ulang saat kategori utama berubah. Hasil tebakan tetap bisa diganti manual.
+- Test: 320 lulus (319 + 1 baru).
+
+## v1.1.153 — 16 Okt 2026
+
+**Kategori berbeda per baris di pecah transaksi** (`03c-pecah.js`, `03-form-transaksi.js`, `06-util-ui.js`, `index.html`, `style.css`, `tests/run.js`)
+- Tiap baris rincian struk punya pilihan **Kategori** sendiri (bawaan: "sama dengan di atas" = kategori utama). Contoh: satu struk toko tani berisi pakan (Usaha tani) dan sabun (Belanja harian) kini tercatat di kategori yang benar, sehingga laporan, anggaran, dan grafik per kategori akurat.
+- `validateSplitParts` menerima `category` per baris (dirapikan, kosong tidak ditulis); `buildSplitTxns` memberi kategori baris bila ada, selain itu memakai kategori utama. Tiap baris tetap transaksi biasa berbagi `splitId`, jadi tidak ada perhitungan yang berubah.
+- Dialog konfirmasi menandai kategori baris yang berbeda `[Kategori]`; detail transaksi menampilkan kategori tiap baris di "Rincian struk" bila berbeda. Pilihan ikut berpindah saat baris dihapus dan menyesuaikan jenis (pemasukan/pengeluaran).
+- Test: 319 lulus (316 + 3 baru).
+
 ## v1.1.152 — 14 Okt 2026
 
 **Ambang catatan perbandingan bisa diatur** (`11d-bandingkan.js`, `tests/run.js`)

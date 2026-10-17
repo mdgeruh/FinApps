@@ -121,7 +121,8 @@
     if (txnTags(t).length) rows.push(['Label', tagsText(txnTags(t))]);
     const sibs = splitSiblings(data.txns, t);
     if (sibs.length) {
-      rows.push(['Rincian struk', sibs.map(s => (s.desc || s.category || 'Transaksi') + ' ' + formatRp(s.amount)).join(' · ')]);
+      const mixedCat = sibs.some(s => s.category !== sibs[0].category);
+      rows.push(['Rincian struk', sibs.map(s => (s.desc || s.category || 'Transaksi') + ' ' + formatRp(s.amount) + (mixedCat && s.category ? ' [' + s.category + ']' : '')).join(' · ')]);
       rows.push(['Total struk', formatRp(sibs.reduce((s2, x) => s2 + x.amount, 0))]);
     }
     rows.push(['Tanggal', formatDayLabel(t.date)]);
@@ -196,12 +197,14 @@
     const list = CATEGORIES[state.currentType] || [];
     sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     onCategoryChange();
+    if (typeof populateSplitCats === 'function' && state.splitMode) populateSplitCats();
   }
 
   function onCategoryChange() {
     if (this && this.id === 'category-select') { state.catManual = true; const h = $('cat-auto-hint'); if (h) h.style.display = 'none'; }   // dipilih sendiri lewat select (bukan dari kode)
     const sel = $('category-select');
     $('category-custom-row').style.display = sel.value === CATEGORY_CUSTOM ? 'flex' : 'none';
+    if (typeof autoSplitCats === 'function' && state.splitMode) autoSplitCats();
   }
 
   // `data` opsional: render() sudah punya snapshot, jadi tidak perlu parse ulang localStorage (hanya dibaca, tidak diubah)
