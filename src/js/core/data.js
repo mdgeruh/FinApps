@@ -1389,7 +1389,8 @@
               // Persen + bulanan: dari sisa belum lunas (sama basisnya dengan bunga, tapi baris terpisah).
               // Persen + tahunan: dari limit kartu (lazim untuk iuran tahunan berbasis limit).
               const base = feePeriod === 'tahunan' ? (acc.limit || 0) : sisaBelumLunas;
-              feeCharged = Math.round(base * feeVal / 100);
+              // Pengaman (v1.1.170): persen di atas 100 pasti salah isi (mis. Rp12.500 diketik dengan jenis "Persen"); tidak dikenakan.
+              feeCharged = feeVal > 100 ? 0 : Math.round(base * feeVal / 100);
               feeDesc += ` (${feeVal}% dari ${feePeriod === 'tahunan' ? 'limit' : 'sisa belum lunas'})`;
             }
             if (feeCharged > 0) {

@@ -417,6 +417,7 @@
     }
     const dup = data.accounts.find(a => a.id !== editingAccountId && a.name.toLowerCase() === name.toLowerCase());
     if (dup) { accFormMsg(`Nama "${dup.name}" sudah dipakai akun lain.`); nameEl.focus(); return; }
+    if (feeTypeVal === 'percent' && feeAmountVal > 100) { feeAmountEl.focus(); accFormMsg('Biaya admin persen tidak boleh lebih dari 100%. Kalau maksudnya nominal rupiah (mis. Rp12.500), ubah jenisnya ke Nominal.'); return; }
     if (type === 'kartu_kredit' && cardStmtVal > 0 && feeDayVal <= 0) { feeDayEl.focus(); accFormMsg('Isi tanggal jatuh tempo juga kalau tanggal cetak tagihan diisi.'); return; }
     if (type === 'kartu_kredit' && cardMinValueVal > 0 && cardMinTypeVal === 'percent' && cardMinValueVal > 100) { $('acc-card-min-input').focus(); accFormMsg('Pembayaran minimum persen tidak boleh lebih dari 100%.'); return; }
     if (isDebt && !isLoan && limitVal <= 0) { limitEl.focus(); accFormMsg('Isi limit untuk kartu kredit / paylater.'); return; }

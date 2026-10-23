@@ -1831,7 +1831,7 @@ console.log('kartu terpisah Kategori + Label, Tren/Utang mengikuti periode (v1.1
     const html = rd('index.html'), r = rd('src/js/core/render-utama.js');
     ok(/<div class="acc-sub" id="month-projection-note"><\/div><\/div>\s*<\/div>\s*<div class="txn-right"><span class="txn-amount keluar" id="month-projection">/.test(html), 'catatan di dalam txn-text');
     ok(!/id="month-projection-note" style="margin:-4px/.test(html), 'tanpa margin negatif');
-    ok(/APP_VERSION = 'v1\.1\.169'/.test(r) && /APP_BUILD = '14 Okt 2026'/.test(r), 'versi dan tanggal build');
+    ok(/APP_VERSION = 'v1\.1\.172'/.test(r) && /APP_BUILD = '14 Okt 2026'/.test(r), 'versi dan tanggal build');
   });
   test('cetak laporan: blok rata dengan kepala laporan, panah dan "Tampilkan N lagi" disembunyikan', () => {
     const css = rd('src/css/app.css'), u = rd('src/js/features/laporan/laporan-utang.js');
@@ -2577,6 +2577,49 @@ console.log('pengingat tenggat target dan jarak cadangan (v1.1.161)');
     const c = fs.readFileSync(path.join(root, 'src/js/features/perencanaan/langganan.js'), 'utf8');
     ok(/function startEditSub\(id\)/.test(c) && /data-act="startEditSub"/.test(c) && /subs\[subs\.indexOf\(editing\)\] = ns/.test(c), 'startEditSub terpasang');
     eq(run(sb, 'typeof startEditSub'), 'function');
+  });
+}
+
+// ---------- v1.1.170: pengaman biaya admin persen > 100 ----------
+{
+  const { sb } = makeSandbox(NOW);
+  const mk = (feeAmount) => { run(sb, `var K2 = { accounts: [{ id: 'kas1', name: 'Kas', type: 'kas', initialBalance: 5000000 }, { id: 'p1', name: 'Pinjol', type: 'kartu_kredit', initialBalance: 0, limit: 10000000, feeAmount: ${feeAmount}, feeDay: 10, feeType: 'percent', feePeriod: 'bulanan', lastFeeAppliedMonth: '2026-07' }], txns: [{ id: 'x', date: '2026-07-05', type: 'keluar', desc: 'b', amount: 1000000, accountId: 'p1' }] };`); run(sb, 'applyRecurringFees(K2)'); return run(sb, `K2.txns.filter(t => t.id.indexOf('fee-') === 0 && /admin/.test(t.id)).map(t => t.amount)`); };
+  test('biaya admin persen > 100 tidak pernah dikenakan (salah isi Rp sebagai persen)', () => eq(mk(12500), []));
+  test('biaya admin persen wajar tetap jalan (2% dari sisa)', () => eq(mk(2).length > 0, true));
+  test('form akun menolak persen > 100 dengan pesan yang menunjuk ke jenis Nominal', () => {
+    const a = fs.readFileSync(path.join(root, 'src/js/features/akun/akun.js'), 'utf8');
+    ok(/feeTypeVal === 'percent' && feeAmountVal > 100/.test(a) && /ubah jenisnya ke Nominal/.test(a), 'validasi terpasang');
+  });
+}
+
+// ---------- v1.1.171: impor transfer berulang ----------
+{
+  const { sb } = makeSandbox('2026-10-23T05:00:00Z');
+  test('importSubscriptions: akun tujuan transfer dipetakan ke ID baru; tujuan hilang atau sama dengan asal dibuang', () => {
+    sb.__p = { subscriptions: [
+      { id: 's1', name: 'Tabung', amount: 100, accountId: 'oldA', toAccountId: 'oldB', day: 1, type: 'transfer', category: 'Pindah dana antar akun', freq: 'mingguan', weekday: 1 },
+      { id: 's2', name: 'Rusak', amount: 100, accountId: 'oldA', toAccountId: 'oldA', day: 1, type: 'transfer' },
+      { id: 's3', name: 'Hilang', amount: 100, accountId: 'oldA', toAccountId: 'tidakada', day: 1, type: 'transfer' }] };
+    sb.__m = { oldA: 'newA', oldB: 'newB' };
+    const r = JSON.parse(run(sb, "JSON.stringify(importSubscriptions([], __p, __m, ['newA', 'newB']))"));
+    eq(r.length, 1); eq(r[0].accountId, 'newA'); eq(r[0].toAccountId, 'newB'); eq(r[0].freq, 'mingguan');
+    eq(/^\d{4}-\d{2}-\d{2}$/.test(r[0].lastAppliedDate), true);
+  });
+}
+
+// ---------- v1.1.172: pesan impor tidak boleh masuk ke <details> tertutup ----------
+{
+  const { sb } = makeSandbox('2026-10-23T05:00:00Z');
+  test('ioMsgVisible: elemen dalam <details> tertutup dianggap tidak terlihat (jatuh ke toast)', () => {
+    sb.__open = { offsetParent: {}, closest: () => ({ open: true, parentElement: null }) };
+    sb.__shut = { offsetParent: {}, closest: () => ({ open: false, parentElement: null }) };
+    sb.__none = { offsetParent: null, closest: () => null };
+    eq(run(sb, 'ioMsgVisible(__open)'), true); eq(run(sb, 'ioMsgVisible(__shut)'), false); eq(run(sb, 'ioMsgVisible(__none)'), false); eq(run(sb, 'ioMsgVisible(null)'), false);
+  });
+  test('#io-msg berada di bagian Export & import (Alat), bukan di Zona berbahaya', () => {
+    const h = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const i = h.indexOf('id="io-msg"'), alat = h.indexOf('id="profil-g-alat"'), bahaya = h.indexOf('id="profil-g-bahaya"');
+    ok(i > alat && i < bahaya, 'io-msg di grup Alat');
   });
 }
 

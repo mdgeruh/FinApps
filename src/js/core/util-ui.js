@@ -42,9 +42,16 @@
 
   // Pesan hasil aksi. Tampil di elemen target (bawaan #io-msg di tab Profil) kalau elemen itu sedang terlihat;
   // kalau tidak (mis. galat dari form di sheet, sementara #io-msg ada di tab lain), jatuh ke toast supaya pesan tidak hilang.
+  // Elemen pesan benar-benar terlihat? offsetParent saja tidak cukup: isi <details> yang tertutup tetap punya offsetParent,
+  // sehingga pesan (mis. hasil Import JSON) masuk ke kotak tersembunyi dan pengguna tidak melihat apa pun (diperbaiki v1.1.172).
+  function ioMsgVisible(el) {
+    if (!el || el.offsetParent === null) return false;
+    for (let d = el.closest ? el.closest('details') : null; d; d = d.parentElement ? d.parentElement.closest('details') : null) if (!d.open) return false;
+    return true;
+  }
   function showIoMsg(text, kind, elId) {
     const el = $(elId || 'io-msg');
-    const visible = !!(el && el.offsetParent !== null);
+    const visible = ioMsgVisible(el);
     if (!text) { if (el) { el.textContent = ''; el.className = 'io-msg'; } return; }
     if (visible) {
       el.textContent = text;
