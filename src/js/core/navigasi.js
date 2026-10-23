@@ -240,6 +240,17 @@
     try { if (id === 'hutan') localStorage.removeItem(PALETTE_KEY); else localStorage.setItem(PALETTE_KEY, id); } catch (e) { /* abaikan */ }
     applyPalette(id);
   }
+  // Efek kaca (v1.1.176): sakelar terpisah dari palet, berlaku di semua palet. Atribut data-glass="on" di <html>.
+  const GLASS_KEY = 'kp_glass';
+  function currentGlass() { try { return localStorage.getItem(GLASS_KEY) === '1'; } catch (e) { return false; } }
+  function applyGlass(on) {
+    if (on) document.documentElement.setAttribute('data-glass', 'on'); else document.documentElement.removeAttribute('data-glass');
+  }
+  function toggleGlass() {
+    const on = !!(this && this.checked);
+    try { if (on) localStorage.setItem(GLASS_KEY, '1'); else localStorage.removeItem(GLASS_KEY); } catch (e) { /* abaikan */ }
+    applyGlass(on);
+  }
   function currentPalette() { try { return cleanPalette(localStorage.getItem(PALETTE_KEY)); } catch (e) { return 'hutan'; } }
   function currentAccent() { try { return cleanAccent(localStorage.getItem(ACCENT_KEY)); } catch (e) { return 'hijau'; } }
 
@@ -280,6 +291,7 @@
     const palEl = $('palette-opts'), curPal = currentPalette();
     if (palEl) palEl.innerHTML = PALETTES.map(p =>
       '<button type="button" class="palette-opt" data-act="setPalette" data-a0="' + p.id + '" aria-pressed="' + (curPal === p.id) + '" aria-label="Palet ' + p.label + '"><span class="palette-prev" style="background:' + p.prev[0] + ';"><i style="background:' + p.prev[2] + ';"></i><i style="background:' + p.prev[1] + ';"></i><i style="background:' + p.prev[2] + ';opacity:.45;"></i></span>' + p.label + '</button>').join('');
+    const glassEl = $('glass-toggle'); if (glassEl) glassEl.checked = currentGlass();
     modeEl.innerHTML = [['system', 'Sistem'], ['light', 'Terang'], ['dark', 'Gelap']].map(m =>
       '<button type="button" class="theme-opt" data-act="setThemeMode" data-a0="' + m[0] + '" aria-pressed="' + (mode === m[0]) + '">' + m[1] + '</button>').join('');
     accEl.innerHTML = ACCENTS.map(a =>
@@ -323,6 +335,11 @@
     try { acc = localStorage.getItem(ACCENT_KEY) || 'hijau'; } catch (e) {}
     let pal = 'hutan';
     try { pal = localStorage.getItem(PALETTE_KEY) || 'hutan'; } catch (e) {}
+    if (pal === 'kaca') {   // palet Kaca lama (v1.1.173-175) -> palet Senja + efek kaca
+      pal = 'senja';
+      try { localStorage.setItem(PALETTE_KEY, 'senja'); localStorage.setItem(GLASS_KEY, '1'); } catch (e) { /* abaikan */ }
+    }
+    applyGlass(currentGlass());
     applyPalette(pal);
   })();
 
