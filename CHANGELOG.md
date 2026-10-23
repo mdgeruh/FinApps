@@ -6,6 +6,116 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.169 — 23 Okt 2026
+
+### Diubah (struktur proyek, tanpa perubahan perilaku)
+- **Penataan ulang nama dan folder berkas** mengikuti praktik umum web app: JS di `src/js/` (`core/` untuk fondasi, `features/<domain>/` untuk fitur: transaksi, akun, titipan, perencanaan, laporan, beranda, profil, data), CSS di `src/css/app.css`, dokumen pendamping di `docs/`. Nama berkas kebab-case tanpa nomor urut; urutan muat tetap ditentukan daftar `<script>` di `index.html` (semua berbagi scope global), jadi perilaku app tidak berubah.
+- `index.html`, `manifest.json`, `sw.js`, dan ikon tetap di akar (syarat cakupan service worker/PWA). `sw.js` (APP_SHELL), build pratinjau/dist, dan tes disesuaikan; versi dist tetap `app.js` + `style.css`.
+- Baru: `docs/PEMETAAN-NAMA-FILE.md` (nama lama → baru) dan `tools/migrasi-struktur.sh` (`git mv` agar riwayat git terjaga). Riwayat CHANGELOG di bawah tetap memakai nama lama.
+- Tes: 358.
+
+## v1.1.168 — 23 Okt 2026
+
+### Ditambahkan
+- **Ubah transaksi berulang**: tombol "Ubah" di Kelola langganan membuka form terisi (nama, nominal, jadwal, akun, kategori, label). Simpan memperbarui di tempat: ID dan transaksi yang sudah tercatat tetap; bila jadwal berubah, kejadian yang sudah lewat tidak dikejar mundur. Sebelumnya harus hapus lalu buat ulang.
+- Tes: 358 (+1).
+
+## v1.1.167 — 23 Okt 2026
+
+### Diperbaiki / ditambahkan
+- **Pulihkan foto setelah Import JSON**: Import JSON membuat ID transaksi baru, sehingga foto transaksi tunggal tidak menemukan pasangannya. Cadangan foto kini menyimpan tanda tangan transaksi (tanggal, jenis, keterangan, jumlah, akun) dan memulihkan foto ke transaksi yang cocok tepat satu; kasus kembar/ambigu dilewati. Foto struk pecahan sudah aman karena splitId tetap.
+- Chip filter akun tidak lagi terpotong di layar sempit (turun baris).
+- Tes tambahan untuk ekspor CSV (rumus berawalan, BOM, urutan), impor transaksi, dan pemulihan foto. Tes: 357 (+4).
+
+## v1.1.166 — 23 Okt 2026
+
+### Ditambahkan
+- **Edit seluruh struk**: di detail transaksi pecahan ada tombol "Edit seluruh struk". Form terbuka dalam mode pecah, terisi dari semua baris (keterangan, jumlah, kategori per baris); bisa menambah/menghapus baris (2-5), lalu simpan mengganti seluruh struk. ID baris lama dipakai ulang, foto struk tetap menempel, dan cegah saldo minus dihitung dengan mengabaikan baris lama.
+- Tes: 353 (+2).
+
+## v1.1.165 — 23 Okt 2026
+
+### Ditambahkan
+- **Cadangan foto struk**: Profil › Alat › Foto struk punya tombol **Cadangkan foto** (berkas JSON terpisah, agar Export JSON utama tetap kecil) dan **Pulihkan foto**. Saat memulihkan, foto yang transaksinya belum ada (impor JSON transaksi dulu), bukan gambar, terlalu besar, atau melebihi batas 60 MB dilewati dan dilaporkan.
+- Tes: 351 (+3).
+
+## v1.1.164 — 23 Okt 2026
+
+### Ditambahkan
+- **Periode grafik mini**: di tab Akun ada pilihan 7 / 30 / 90 hari untuk grafik kecil di kartu akun dan kartu Total aset, Total utang, Kekayaan bersih, dan Limit. Pilihan tersimpan di perangkat ini; teks aksesibilitas ikut berubah.
+- Tes: 348 (+2).
+
+## v1.1.163 — 23 Okt 2026
+
+### Ditambahkan
+- **Kata kunci kategori otomatis buatan sendiri** (Profil › Preferensi › Kata kunci kategori otomatis): tambah kata (boleh banyak, pisah koma) yang selalu memilih kategori tertentu saat mengetik keterangan, mis. "pupuk" → Belanja harian. Diutamakan di atas riwayat dan kata bawaan; tersimpan di perangkat ini; bisa dihapus satu per satu.
+- Tes: 346 (+2).
+
+## v1.1.162 — 23 Okt 2026
+
+### Ditambahkan
+- **Transfer berulang**: jenis baru di Langganan & transaksi berulang untuk memindahkan dana antar kas/bank/e-wallet secara otomatis (mis. tabung otomatis). Akun asal dan tujuan harus berbeda; keduanya tidak bisa diarsipkan selama transfer berulang aktif.
+- **Frekuensi**: selain bulanan kini ada **mingguan** (pilih hari) dan **tahunan** (pilih bulan + tanggal). Kejadian terlewat dikejar maksimal 12 minggu / 2 tahun; tanpa dobel (ID memuat tanggal).
+- Total per bulan di kartu memakai padanan (mingguan x 52/12, tahunan / 12); transfer tidak dihitung sebagai pengeluaran/pemasukan.
+- Tes: 344 (+6).
+
+## v1.1.161 — 23 Okt 2026
+
+**Pengingat tenggat target tabungan dan jarak hari pengingat cadangan** (`10j-perhatian.js`, `10l-pengingat-cadangan.js`, `sw.js`, `13-import-export.js`, `02-navigasi.js`, `index.html`, `tests/run.js`)
+- Strip **Perlu perhatian** di Ringkasan kini memuat target tabungan yang belum tercapai: kuning bila tenggat tinggal 30 hari atau kurang, merah bila sudah lewat tenggat. Yang paling mendesak tampil, dengan penanda "(+N lainnya)". Prioritas paling bawah (setelah tagihan, anggaran, dana darurat).
+- Pengingat cadangan: jarak hari bisa dipilih **7 / 14 / 30 hari** di Profil > Keamanan & data (bawaan tetap 14). Dipakai kartu Ringkasan, kartu status Profil, dan notifikasi latar belakang (`intervalDays` disalin ke IndexedDB; `backupDueState` di `sw.js` tetap sama persis dengan di app).
+- Test: 338 lulus (334 + 4 baru).
+
+## v1.1.160 — 22 Okt 2026
+
+**Palet warna lengkap** (`style.css`, `02-navigasi.js`, `index.html`, `tests/run.js`)
+- Profil > Preferensi > Tampilan > **Palet**: enam palet siap pakai yang mengganti latar, kartu, teks, garis, dan aksen sekaligus: **Hutan** (bawaan), **Laut**, **Senja**, **Anggur**, **Kopi**, **Grafit**. Tiap palet punya versi terang dan gelap (manual dan otomatis mengikuti sistem). Kartu pilihan menampilkan contoh warna.
+- Lewat atribut `data-palette` di `<html>`. **Warna aksen** (v1.1.159) tetap bisa dipakai di atas palet mana pun; pilihan pertamanya kini "Bawaan" (aksen palet). Hijau/merah pemasukan dan pengeluaran tidak berubah di semua palet. Warna bilah browser ikut palet.
+- Cetak tetap selalu putih (variabel cetak memakai `!important`, jadi palet tidak ikut tercetak). Tersimpan di perangkat (`kp_palette`).
+- Test baru mengunci kontras: teks minimal 7:1 dan teks lembut/aksen minimal 4,5:1 di atas kertas dan kartu, pada tiap palet terang dan gelap.
+- Test: 334 lulus (331 + 3 baru).
+
+## v1.1.159 — 22 Okt 2026
+
+**Pilihan warna aksen dan mode tampilan di Profil** (`style.css`, `02-navigasi.js`, `index.html`, `tests/run.js`)
+- Profil > Preferensi > **Tampilan**: **Mode** (Sistem / Terang / Gelap, sama dengan tombol di header yang tetap ada) dan **Warna aksen** (Hijau bawaan, Biru, Ungu, Oranye, Mawar).
+- Aksen mengganti `--teal`, `--teal-soft`, dan `--teal-ink` lewat atribut `data-accent` di `<html>`, dengan nilai terpisah untuk terang, gelap manual, dan gelap otomatis (mengikuti sistem). Warna hijau/merah pemasukan dan pengeluaran tidak berubah, jadi maknanya tetap. Warna bilah browser (`theme-color`) ikut berganti.
+- Tersimpan di perangkat (`kp_accent`), diterapkan saat app dibuka. Test mengunci kontras teks tiap aksen terang minimal 4,5:1.
+- Test: 331 lulus (328 + 3 baru).
+
+## v1.1.158 — 22 Okt 2026
+
+**Cetak laporan dibuat polos** (`style.css`, `tests/run.js`)
+- Cetak/PDF Laporan kini hitam putih tanpa warna: semua teks dan angka hitam (tanpa merah/hijau), batang kategori dan grafik tren tidak dicetak, titik penanda jadi hitam, garis pemisah abu-abu tipis. Panah ▲ ▼ dan tanda minus tetap menunjukkan arah. Hemat tinta dan jelas di printer hitam putih.
+- Dicetak tetap sama: kepala laporan, ringkasan, kategori, label, perbandingan, posisi akun, utang, dan proyeksi.
+- Test: 328 lulus (327 + 1 baru).
+
+## v1.1.157 — 22 Okt 2026
+
+**Halaman Profil dirapikan (UI dan UX)** (`index.html`, `style.css`, `02-navigasi.js`, `09-grafik.js`, `10l-pengingat-cadangan.js`, `13-import-export.js`, `06b-kunci.js`, `tests/run.js`)
+- **Kartu status** di atas: cadangan terakhir (kuning bila perlu dicadangkan), sinkron cloud (email atau Mode lokal), kunci app, plus tombol **Cadangkan sekarang (JSON)**. Ikut diperbarui saat ekspor dan saat PIN diaktifkan atau dimatikan (`renderProfilStatus`).
+- **Empat grup lipat:** *Keamanan & data* (pengingat cadangan, kunci app, akun sinkron; terbuka bawaan), *Preferensi* (profil pemilik, cegah saldo minus, kartu Ringkasan), *Alat* (export/import, data contoh), *Zona berbahaya* (reset; bingkai dan judul merah). Menggantikan bagian lipat "Pengaturan data lanjutan".
+- **Saklar seragam** untuk Cegah saldo minus dan semua kartu Ringkasan (label di kiri, saklar di kanan). "Kartu di Ringkasan" kini lipatan sendiri dengan hitungan "N dari M tampil", tidak lagi blok setinggi satu layar.
+- Teks penjelas dipersingkat; baris tombol kosong pada pengingat cadangan tidak lagi memakan ruang. Di desktop: kartu status selebar penuh, grup dua kolom.
+- Semua id dan aksi lama dipertahankan. Tombol pengingat notifikasi tetap tombol (butuh alur izin), bukan saklar.
+- Test: 327 lulus (324 + 3 baru).
+
+## v1.1.156 — 22 Okt 2026
+
+**Cegah saldo minus juga untuk bayar pinjaman dan belanja titipan** (`04c-akun-aset-tagihan.js`, `05-form-titipan.js`, `tests/run.js`)
+- Form **Catat pembayaran pinjaman** (bunga + pokok) dan **Belanjakan titipan** kini memeriksa akun sumber dengan aturan v1.1.155 sebelum konfirmasi; pesan tampil di form masing-masing. Tombol Bayar tagihan/kartu/PayLater memang membuka form transfer, jadi sudah terjaga sejak v1.1.155.
+- Tetap tidak dijaga: transaksi berulang otomatis dan impor data.
+- Test: 324 lulus (323 + 1 baru).
+
+## v1.1.155 — 22 Okt 2026
+
+**Cegah saldo minus untuk kas, bank, dan e-wallet** (`01-data.js`, `04c-akun-aset-tagihan.js`, `03c-pecah.js`, `03-form-transaksi.js`, `02-navigasi.js`, `index.html`, `tests/run.js`)
+- Pengeluaran, transfer keluar, dan struk pecahan yang membuat saldo akun **kas, bank, atau e-wallet** jadi minus ditolak dengan pesan: saldo sekarang, kekurangannya, dan jalan keluarnya. Kartu kredit, PayLater, dan pinjaman tidak dibatasi (memang berutang); aset dan titipan juga tidak.
+- `overdraftCheck(data, addTxns, removeIds)` murni: menghitung saldo sebelum dan sesudah; Edit membuang transaksi lama lebih dulu; akun yang sudah minus dari data lama hanya ditolak bila transaksi memperdalam minusnya; pemasukan selalu boleh.
+- Pengaturan **Cegah saldo minus** di tab Profil (bawaan aktif, disimpan di perangkat: `keuangan-cegah-minus-v1`).
+- Belum dijaga: pembayaran tagihan/pinjaman lewat tombol khusus, transaksi berulang otomatis, dan impor data.
+- Test: 323 lulus (320 + 3 baru).
+
 ## v1.1.154 — 16 Okt 2026
 
 **Kategori otomatis per baris di pecah transaksi** (`03c-pecah.js`, `03d-kategori-otomatis.js`, `03-form-transaksi.js`, `index.html`, `tests/run.js`)

@@ -2,9 +2,9 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.154** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`00-config.js` s.d. `15-startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.169** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`src/js/core/config.js` s.d. `src/js/core/startup.js`) yang dimuat berurutan oleh `index.html`.
 
-Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md)) dan [SUMMARY.md](SUMMARY.md) (status, todolist, hasil uji).
+Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status, todolist, hasil uji).
 
 ---
 
@@ -220,7 +220,7 @@ App juga akan menampilkan pengingat kalau kamu sudah lama tidak export (backup r
 
 ## Sinkron Cloud (Supabase)
 
-Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config.js` terisi; kalau key dikosongkan, app 100% lokal tanpa login.
+Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `src/js/core/config.js` terisi; kalau key dikosongkan, app 100% lokal tanpa login.
 
 - **Cara kerja:** login email + kata sandi atau **Google** (daftar akun langsung dari layar masuk). Setelah tiap perubahan, data dikirim ke tabel `app_data` di latar belakang (jeda 1,5 detik, coba ulang tiap 30 detik kalau gagal). Status kecil di bawah footer: Tersinkron, Menyimpan, Belum terkirim, Mode lokal, atau "Ada pembaruan dari perangkat lain" (tombol Muat ulang).
 - **Bentrok:** tiap baris cloud punya nomor versi. Kalau perangkat ini dan cloud sama-sama berubah, muncul dialog untuk memilih data cloud atau data perangkat ini; data yang tidak dipilih dibackup ke file JSON dulu.
@@ -230,7 +230,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config
 - **Lupa kata sandi / ganti email & kata sandi:** tersedia di layar login dan tab Profil.
 - **Keamanan:** anon/publishable key memang publik, tapi **Row Level Security wajib aktif** (jalankan `supabase/setup.sql` di SQL Editor Supabase; berisi tabel, kebijakan, dan query verifikasi) supaya tiap akun hanya bisa membaca barisnya sendiri. Jangan pernah menaruh key `service_role` atau kata sandi database di file ini. Data tersimpan sebagai JSON biasa (tidak dienkripsi di sisi klien) di project Supabase kamu.
 - **Content-Security-Policy (v1.1.079):** `index.html` punya meta CSP: skrip hanya dari app sendiri dan `cdn.jsdelivr.net`, sambungan data hanya ke app sendiri dan `*.supabase.co`, tanpa `unsafe-eval`, `object-src none`. Karena itu **jangan menambah `<script>` inline atau atribut `onclick=`**; pakai `data-act`. Kalau menambah layanan luar, tambahkan origin-nya di CSP.
-- **Kunci versi Supabase JS:** jalankan `node tools/pin-supabase.js` (butuh internet) sekali; hasilnya versi persis + hash SRI di `14-sync.js`. Selama belum dijalankan, pustaka dimuat dari `@2` tanpa cek hash.
+- **Kunci versi Supabase JS:** jalankan `node tools/pin-supabase.js` (butuh internet) sekali; hasilnya versi persis + hash SRI di `src/js/features/data/sync.js`. Selama belum dijalankan, pustaka dimuat dari `@2` tanpa cek hash.
 - **Keluar:** menghapus sesi login, tapi salinan data tetap ada di localStorage perangkat itu. Untuk perangkat bersama, reset data lokal setelah keluar.
 
 ---
@@ -253,50 +253,63 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `00-config
 - Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
 - Akun forex USD/cent dengan kurs
 
-Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](SUMMARY.md).
+Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](docs/SUMMARY.md).
 
 ---
 
 ## Struktur Kode (untuk yang mau modifikasi)
 
+Struktur folder (sejak v1.1.169; peta nama lama → baru di [docs/PEMETAAN-NAMA-FILE.md](docs/PEMETAAN-NAMA-FILE.md)):
+
+```
+index.html, manifest.json, sw.js, icon-*.png   ← di akar (syarat cakupan service worker / PWA)
+src/css/app.css                                 ← seluruh gaya
+src/js/core/        config, data, util-ui, navigasi, rute, render-utama, startup
+src/js/features/    transaksi/ akun/ titipan/ perencanaan/ laporan/ beranda/ profil/ data/
+tests/run.js        tools/ (build-dist, build-preview, pin-supabase, migrasi-struktur.sh)
+supabase/setup.sql  docs/ (SUMMARY, CHANGELOG-ARSIP, PEMETAAN-NAMA-FILE)
+```
+
+Nama berkas memakai kebab-case tanpa nomor urut; urutan muat ditentukan oleh daftar `<script>` di `index.html`.
+
 JavaScript dipecah per modul dan dimuat berurutan di akhir `index.html` (semua berbagi scope global, jadi **urutan `<script>` penting**). File baru harus didaftarkan di `index.html`, `APP_SHELL` di `sw.js`, dan daftar file di `tests/run.js` kalau fungsinya dites.
 
 | File | Isi |
 |---|---|
-| `00-config` | Konfigurasi dan state terpusat (`SUPABASE_URL`/key di sini) |
-| `01-data` | Lapisan data: load/save, saldo, pinjaman/anuitas, jadwal, kalender tagihan, arus utang |
-| `02-navigasi` | Navigasi, header, sapaan, aksi cepat, pengingat jatuh tempo |
-| `03-form-transaksi`, `05-form-titipan` | Form transaksi dan form titipan |
-| `04-akun`, `04b-akun-detail`, `04c-akun-aset-tagihan` | Akun: form dan simpan, modal detail, nilai aset + bayar kartu/PayLater/pinjaman + `addTxn` |
-| `06-util-ui` | Util UI (modal, toast, format, custom select) dan `dispatchDelegated()` |
-| `07-render-akun-transaksi`, `08-render-titipan` | Render tab Akun/Transaksi/Tagihan dan tab Titipan |
-| `09-grafik` | Grafik SVG dan pengaturan kartu Ringkasan |
-| `10-render-beranda` | Tab Ringkasan |
-| `10b-anggaran`, `10c-langganan`, `10e-dana-darurat`, `10f-tren-utang` | Kartu Ringkasan: anggaran, langganan berulang, dana darurat, tren utang |
-| `10d-changelog` | Riwayat perubahan di tombol `?` (`CHANGELOG_ENTRIES`) |
-| `10g-denda-telat`, `10h-ics-tagihan`, `10i-rekonsiliasi` | Perkiraan denda telat, ekspor `.ics`, rekonsiliasi saldo |
-| `09-grafik` (urutan kartu) | `RINGKASAN_ORDER_UNITS`, `sanitizeRingkasanOrder`, `moveInOrder`, `applyRingkasanOrder`; pengaturan di Profil > Tampilan Ringkasan (▲ ▼, tersimpan per perangkat) |
-| `10b-anggaran` + `10-render-beranda` (proyeksi) | `computeMonthProjection` (murni) dan `renderMonthProjection`: baris "Proyeksi akhir bulan" di blok insight kartu Bulan ini |
-| `09-grafik` (aksesibilitas) | `applyChartA11y`, `chartAriaLabel`, `describeChartPoint`, `describePieChart`, `trendArrow`; grafik `role="img"` + `aria-label`, keyboard (panah, Home, End, Esc) lewat `bindChartInteraction`, pembacaan titik lewat `#chart-live` (aria-live) |
-| `09-grafik` (segmen) | Kartu "Grafik" di Ringkasan: `CHART_SEGMENTS`, `pickChartSegment`, `setChartSegment`; `computeRingkasanVisibility` menentukan kartu mana yang dirender |
-| `10j-perhatian` | Strip "Perlu perhatian" di puncak Ringkasan (`computeAttentionItems`, `renderAttentionStrip`) dan kartu ajakan rencana (`renderPlanCta`; kartu Anggaran/Langganan/Dana darurat yang belum dipakai tersembunyi otomatis, `computePlanUsage`) |
-| `11-laporan`, `11b-laporan-utang`, `11c-laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
-| `03e-foto-struk.js` | Foto struk (v1.1.144): kompres foto, simpan di IndexedDB perangkat (tidak ikut sinkron/ekspor), kotak foto di detail transaksi |
-| `10l-pengingat-cadangan.js` | Pengingat cadangan lewat notifikasi (v1.1.146): `backupDueState`, simpan keadaan ke IndexedDB untuk `sw.js` (periodicsync + notificationclick), pengaturan di Profil |
-| `11d-bandingkan.js` | Perubahan per kategori di Laporan (v1.1.143): `laporanCompareRanges`, `computeCategoryComparison`, `buildComparisonNotes`, `laporanCategoryCompareHtml` |
-| `12-render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
-| `13-import-export`, `14-sync`, `15-startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
+| `core/config` | Konfigurasi dan state terpusat (`SUPABASE_URL`/key di sini) |
+| `core/data` | Lapisan data: load/save, saldo, pinjaman/anuitas, jadwal, kalender tagihan, arus utang |
+| `core/navigasi` | Navigasi, header, sapaan, aksi cepat, pengingat jatuh tempo |
+| `features/transaksi/form-transaksi`, `features/titipan/form-titipan` | Form transaksi dan form titipan |
+| `features/akun/akun`, `features/akun/akun-detail`, `features/akun/akun-aset-tagihan` | Akun: form dan simpan, modal detail, nilai aset + bayar kartu/PayLater/pinjaman + `addTxn` |
+| `core/util-ui` | Util UI (modal, toast, format, custom select) dan `dispatchDelegated()` |
+| `features/akun/render-akun-transaksi`, `features/titipan/render-titipan` | Render tab Akun/Transaksi/Tagihan dan tab Titipan |
+| `features/laporan/grafik` | Grafik SVG dan pengaturan kartu Ringkasan |
+| `features/beranda/render-beranda` | Tab Ringkasan |
+| `features/perencanaan/anggaran`, `features/perencanaan/langganan`, `features/perencanaan/dana-darurat`, `features/akun/tren-utang` | Kartu Ringkasan: anggaran, langganan berulang, dana darurat, tren utang |
+| `features/profil/changelog` | Riwayat perubahan di tombol `?` (`CHANGELOG_ENTRIES`) |
+| `features/akun/denda-telat`, `features/akun/ics-tagihan`, `features/akun/rekonsiliasi` | Perkiraan denda telat, ekspor `.ics`, rekonsiliasi saldo |
+| `features/laporan/grafik` (urutan kartu) | `RINGKASAN_ORDER_UNITS`, `sanitizeRingkasanOrder`, `moveInOrder`, `applyRingkasanOrder`; pengaturan di Profil > Tampilan Ringkasan (▲ ▼, tersimpan per perangkat) |
+| `features/perencanaan/anggaran` + `features/beranda/render-beranda` (proyeksi) | `computeMonthProjection` (murni) dan `renderMonthProjection`: baris "Proyeksi akhir bulan" di blok insight kartu Bulan ini |
+| `features/laporan/grafik` (aksesibilitas) | `applyChartA11y`, `chartAriaLabel`, `describeChartPoint`, `describePieChart`, `trendArrow`; grafik `role="img"` + `aria-label`, keyboard (panah, Home, End, Esc) lewat `bindChartInteraction`, pembacaan titik lewat `#chart-live` (aria-live) |
+| `features/laporan/grafik` (segmen) | Kartu "Grafik" di Ringkasan: `CHART_SEGMENTS`, `pickChartSegment`, `setChartSegment`; `computeRingkasanVisibility` menentukan kartu mana yang dirender |
+| `features/beranda/perhatian` | Strip "Perlu perhatian" di puncak Ringkasan (`computeAttentionItems`, `renderAttentionStrip`) dan kartu ajakan rencana (`renderPlanCta`; kartu Anggaran/Langganan/Dana darurat yang belum dipakai tersembunyi otomatis, `computePlanUsage`) |
+| `features/laporan/laporan`, `features/laporan/laporan-utang`, `features/laporan/laporan-proyeksi` | Laporan: periode dan kategori; rincian utang dan saran; proyeksi kas, biaya utang, simulasi (`renderLaporanExtra`) |
+| `src/js/features/transaksi/foto-struk.js` | Foto struk (v1.1.144): kompres foto, simpan di IndexedDB perangkat (tidak ikut sinkron/ekspor), kotak foto di detail transaksi |
+| `src/js/features/profil/pengingat-cadangan.js` | Pengingat cadangan lewat notifikasi (v1.1.146): `backupDueState`, simpan keadaan ke IndexedDB untuk `sw.js` (periodicsync + notificationclick), pengaturan di Profil |
+| `src/js/features/laporan/bandingkan.js` | Perubahan per kategori di Laporan (v1.1.143): `laporanCompareRanges`, `computeCategoryComparison`, `buildComparisonNotes`, `laporanCategoryCompareHtml` |
+| `core/render-utama` | Entry point `render()`, `APP_VERSION`/`APP_BUILD` |
+| `features/data/import-export`, `features/data/sync`, `core/startup` | Import/export/reset, sinkron Supabase, startup (dijalankan terakhir; kode yang memanggil fungsi lintas file ditaruh di sini) |
 | `sw.js`, `manifest.json`, `supabase/setup.sql`, `tests/run.js` | Service worker, PWA, skema Supabase + RLS, 259 test unit |
-| `03d-kategori-otomatis.js` | Kategori otomatis dari keterangan (v1.1.142): `suggestCategory` menebak dari riwayat transaksi yang keterangannya mirip, lalu dari daftar kata kunci bawaan; tidak menyarankan kategori sistem; pilihan manual menang. |
-| `03c-pecah.js` | Pecah transaksi per keterangan (v1.1.139, diubah v1.1.141): satu struk dengan beberapa barang disimpan sebagai beberapa transaksi biasa (satu kategori, keterangan dan jumlah masing-masing) yang berbagi `splitId`; 2–5 baris, total struk otomatis. Fungsi murni `validateSplitParts`, `splitTotalOf`, `buildSplitTxns`, `splitSiblings`; form pecah di sheet transaksi. |
-| `03b-label.js` | Label (tag) transaksi: `txn.tags` (maks. 5 per transaksi, 24 huruf, huruf besar/kecil dianggap sama). Kolom Label + chip saran di form, `#label` di daftar dan detail, chip filter label dan pencarian di tab Transaksi, kartu "Per label" di Laporan, kolom Label di CSV, ikut ekspor/impor JSON |
-| `10k-target.js` | Target tabungan: nama, nominal, tenggat opsional, sumber dana (saldo satu akun kas/bank/e-wallet, atau setoran manual). Kartu di Ringkasan menampilkan progres, saran setoran per bulan (sisa ÷ sisa bulan kalender, dibulatkan ke atas Rp1.000), status tercapai/lewat tenggat. Ikut ekspor/impor JSON |
-| `06c-kalkulator.js` | Kalkulator kolom nominal: ketik rumus langsung (`25000+15000*2`, `150000/3`, `(1000+500)*2`, `200000+10%`) lalu Enter/pindah kolom; ikon kalkulator permanen di dalam setiap kolom nominal (dan tombol "Kalkulator" di bawah kolom yang fokus) membuka papan hitung layar (untuk HP tanpa tanda operasi) dengan "Pakai hasil". Parser sendiri tanpa eval; titik = ribuan, koma = desimal; kolom tanpa desimal membulatkan, tanpa minus menolak hasil negatif |
-| `06b-kunci.js` | Kunci app: PIN 6 angka (PBKDF2-SHA256 + salt; cadangan hash sederhana bila Web Crypto tak ada), layar kunci saat dibuka dan setelah >1 menit di latar, jeda 30 dtk dst. setelah 5x salah, Ubah/Matikan PIN di tab Profil, Lupa PIN = reset data perangkat (tanpa backup otomatis). PIN hanya di perangkat, tidak ikut ekspor/sinkron. Penghalang akses sekilas, bukan enkripsi data |
-| `02b-rute.js` | Rute web (hash): `#/akun`, `#/laporan`, `#/akun/<id>` untuk detail akun. Alamat mengikuti tab dan detail yang terbuka, tombol Kembali/Maju bekerja, tautan bisa dibookmark. Tombol Kembali juga menutup form/sheet yang terbuka. Tanpa pengaturan server |
+| `src/js/features/transaksi/kategori-otomatis.js` | Kategori otomatis dari keterangan (v1.1.142): `suggestCategory` menebak dari riwayat transaksi yang keterangannya mirip, lalu dari daftar kata kunci bawaan; tidak menyarankan kategori sistem; pilihan manual menang. |
+| `src/js/features/transaksi/pecah.js` | Pecah transaksi per keterangan (v1.1.139, diubah v1.1.141): satu struk dengan beberapa barang disimpan sebagai beberapa transaksi biasa (satu kategori, keterangan dan jumlah masing-masing) yang berbagi `splitId`; 2–5 baris, total struk otomatis. Fungsi murni `validateSplitParts`, `splitTotalOf`, `buildSplitTxns`, `splitSiblings`; form pecah di sheet transaksi. |
+| `src/js/features/transaksi/label.js` | Label (tag) transaksi: `txn.tags` (maks. 5 per transaksi, 24 huruf, huruf besar/kecil dianggap sama). Kolom Label + chip saran di form, `#label` di daftar dan detail, chip filter label dan pencarian di tab Transaksi, kartu "Per label" di Laporan, kolom Label di CSV, ikut ekspor/impor JSON |
+| `src/js/features/perencanaan/target.js` | Target tabungan: nama, nominal, tenggat opsional, sumber dana (saldo satu akun kas/bank/e-wallet, atau setoran manual). Kartu di Ringkasan menampilkan progres, saran setoran per bulan (sisa ÷ sisa bulan kalender, dibulatkan ke atas Rp1.000), status tercapai/lewat tenggat. Ikut ekspor/impor JSON |
+| `src/js/features/profil/kalkulator.js` | Kalkulator kolom nominal: ketik rumus langsung (`25000+15000*2`, `150000/3`, `(1000+500)*2`, `200000+10%`) lalu Enter/pindah kolom; ikon kalkulator permanen di dalam setiap kolom nominal (dan tombol "Kalkulator" di bawah kolom yang fokus) membuka papan hitung layar (untuk HP tanpa tanda operasi) dengan "Pakai hasil". Parser sendiri tanpa eval; titik = ribuan, koma = desimal; kolom tanpa desimal membulatkan, tanpa minus menolak hasil negatif |
+| `src/js/features/profil/kunci-aplikasi.js` | Kunci app: PIN 6 angka (PBKDF2-SHA256 + salt; cadangan hash sederhana bila Web Crypto tak ada), layar kunci saat dibuka dan setelah >1 menit di latar, jeda 30 dtk dst. setelah 5x salah, Ubah/Matikan PIN di tab Profil, Lupa PIN = reset data perangkat (tanpa backup otomatis). PIN hanya di perangkat, tidak ikut ekspor/sinkron. Penghalang akses sekilas, bukan enkripsi data |
+| `src/js/core/rute.js` | Rute web (hash): `#/akun`, `#/laporan`, `#/akun/<id>` untuk detail akun. Alamat mengikuti tab dan detail yang terbuka, tombol Kembali/Maju bekerja, tautan bisa dibookmark. Tombol Kembali juga menutup form/sheet yang terbuka. Tanpa pengaturan server |
 | `tools/build-dist.js` | `node tools/build-dist.js [folder]` membuat `dist/` untuk hosting: 30 file JS digabung jadi satu `app.js` (30 request → 1), CSS dipadatkan (±52 → ±41 KB), `index.html` dan daftar cache `sw.js` disesuaikan. JS ikut diperkecil bila `terser` terpasang (`npm i -D terser`). Sumber modular tetap dipakai untuk pengembangan dan test |
 | `tools/build-preview.js` | `node tools/build-preview.js` membuat `preview/keuangan-pribadi.html`: app lengkap dalam satu halaman (CSS + semua JS, mode lokal, data contoh + satu akun terarsip) untuk dipublikasikan sebagai artefak pratinjau. Ekspor/unduh file tidak berfungsi di artefak |
-| `tools/pin-supabase.js` | Skrip sekali jalan (butuh internet): mengunci versi `supabase-js` dan mengisi hash SRI di `14-sync.js` |
+| `tools/pin-supabase.js` | Skrip sekali jalan (butuh internet): mengunci versi `supabase-js` dan mengisi hash SRI di `src/js/features/data/sync.js` |
 
 Titik masuk yang sering dipakai saat memodifikasi:
 
@@ -304,13 +317,13 @@ Titik masuk yang sering dipakai saat memodifikasi:
 |---|---|
 | Rumus bunga/angsuran pinjaman | `computeLoanMonthlyInterest`, `computeOnlineInstallment`, `loanMonthlyFees`, `computeLoanSchedule`, `computeLoanRemaining` |
 | Form akun pinjol | `updateAccFormFields`, `updateOnlineLoanEstimate`, `saveAccount` |
-| Kartu-kartu di Laporan | `renderLaporanExtra` (`11c-laporan-proyeksi.js`), `laporanDebtDetailHtml`, `laporanAdviceHtml` (`11b-laporan-utang.js`), `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate` (`11c-laporan-proyeksi.js`) |
-| Nomor versi di footer | konstanta `APP_VERSION`, `APP_BUILD` (`12-render-utama.js`) |
-| Nama pemilik (awalan file export) & sapaan | `getOwnerName`, `setOwnerName` (`01-data.js`), `updateGreeting` (`02-navigasi.js`), `saveOwnerNameFromInput` (`02-navigasi.js`) |
-| Denda telat, `.ics`, rekonsiliasi | `computeLateFees` (`10g-`), `buildBillsIcs` (`10h-`), `computeReconcileDiff` (`01-data.js`) dan `reconcileCheck`/`reconcileApply` (`10i-`) |
-| Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush` (`14-sync.js`), konfigurasi di `00-config.js` |
-| Penanganan data rusak | `loadData`, `handleCorruptData` (`01-data.js`) |
-| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`01-data.js`), `splitLoanPayment` (`04c-akun-aset-tagihan.js`), `updateOnlineLoanEstimate` (`04-akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`11c-laporan-proyeksi.js`) |
+| Kartu-kartu di Laporan | `renderLaporanExtra` (`src/js/features/laporan/laporan-proyeksi.js`), `laporanDebtDetailHtml`, `laporanAdviceHtml` (`src/js/features/laporan/laporan-utang.js`), `laporanCashProjectionHtml`, `laporanDebtCostHtml`, `laporanSimulate` (`src/js/features/laporan/laporan-proyeksi.js`) |
+| Nomor versi di footer | konstanta `APP_VERSION`, `APP_BUILD` (`src/js/core/render-utama.js`) |
+| Nama pemilik (awalan file export) & sapaan | `getOwnerName`, `setOwnerName` (`src/js/core/data.js`), `updateGreeting` (`src/js/core/navigasi.js`), `saveOwnerNameFromInput` (`src/js/core/navigasi.js`) |
+| Denda telat, `.ics`, rekonsiliasi | `computeLateFees` (`10g-`), `buildBillsIcs` (`10h-`), `computeReconcileDiff` (`src/js/core/data.js`) dan `reconcileCheck`/`reconcileApply` (`10i-`) |
+| Sinkron cloud | `syncBoot`, `syncReconcile`, `syncPush` (`src/js/features/data/sync.js`), konfigurasi di `src/js/core/config.js` |
+| Penanganan data rusak | `loadData`, `handleCorruptData` (`src/js/core/data.js`) |
+| Logika pinjaman | `computeLoanMonthlyInterest`, `computeLoanRemaining`, `computeLoanSchedule`, `loanEffectiveMonthlyRate`, `loanAnnuityPMT` (`src/js/core/data.js`), `splitLoanPayment` (`src/js/features/akun/akun-aset-tagihan.js`), `updateOnlineLoanEstimate` (`src/js/features/akun/akun.js`), `laporanSimDebts`, `laporanDebtCostHtml` (`src/js/features/laporan/laporan-proyeksi.js`) |
 
 ---
 
@@ -320,15 +333,15 @@ Nomor versi ada di `APP_VERSION` (`v1.1.NNN`) dan tampil di kartu atas tab Profi
 
 **Checklist rilis** (semua dokumen ikut diperbarui tiap ada perubahan kode):
 
-1. Naikkan `APP_VERSION` dan `APP_BUILD` (`12-render-utama.js`) **dan** `CACHE_VERSION` (`sw.js`) ke nomor yang sama.
+1. Naikkan `APP_VERSION` dan `APP_BUILD` (`src/js/core/render-utama.js`) **dan** `CACHE_VERSION` (`sw.js`) ke nomor yang sama.
 2. File JS baru: daftarkan di `index.html`, `APP_SHELL` (`sw.js`), dan `tests/run.js` (kalau dites).
-3. Dokumen: entri di [CHANGELOG.md](CHANGELOG.md) (teknis) dan `CHANGELOG_ENTRIES` di `10d-changelog.js` (bahasa awam, hanya entri terbaru per tanggal yang tampil); tandai [SUMMARY.md](SUMMARY.md) (todolist + hasil uji); perbarui README kalau fitur, struktur file, atau batasan berubah.
+3. Dokumen: entri di [CHANGELOG.md](CHANGELOG.md) (teknis) dan `CHANGELOG_ENTRIES` di `src/js/features/profil/changelog.js` (bahasa awam, hanya entri terbaru per tanggal yang tampil); tandai [SUMMARY.md](docs/SUMMARY.md) (todolist + hasil uji); perbarui README kalau fitur, struktur file, atau batasan berubah.
 4. Jalankan `node tests/run.js` (semua harus lulus), cek sintaks tiap file (`node --check`), lalu buka semua tab di browser.
 5. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
 
 **Konvensi kode**
-- **Event delegation:** tulis `data-act="namaFungsi" data-a0="teks" data-n1="123"` (klik) atau `data-input-act` / `data-change-act` (argumen `data-input-a0`, `data-change-n0`, dst.), bukan `onclick="..."`. `data-a<i>` argumen teks, `data-n<i>` argumen angka. Atribut tambahan: `data-stop="1"` (berhenti setelah handler elemen ini) dan `data-backdrop` untuk menutup sheet. Ditangani `dispatchDelegated()` di `06-util-ui.js`.
+- **Event delegation:** tulis `data-act="namaFungsi" data-a0="teks" data-n1="123"` (klik) atau `data-input-act` / `data-change-act` (argumen `data-input-a0`, `data-change-n0`, dst.), bukan `onclick="..."`. `data-a<i>` argumen teks, `data-n<i>` argumen angka. Atribut tambahan: `data-stop="1"` (berhenti setelah handler elemen ini) dan `data-backdrop` untuk menutup sheet. Ditangani `dispatchDelegated()` di `src/js/core/util-ui.js`.
 - **Kelas utilitas:** `style.css` punya `u-*` (mis. `u-mb8`, `u-w100`) di bagian bawah untuk margin/lebar sederhana; pakai itu alih-alih inline style baru. Kelas utilitas kalah oleh aturan yang lebih spesifik (mis. `#tab-laporan .section-title`).
-- **Transaksi non-operasional:** pembayaran utang, pencairan pinjaman, dan Penyesuaian saldo dikecualikan dari pemasukan/pengeluaran lewat `isNonOperatingTxn` (`01-data.js`); pakai helper itu untuk filter baru.
+- **Transaksi non-operasional:** pembayaran utang, pencairan pinjaman, dan Penyesuaian saldo dikecualikan dari pemasukan/pengeluaran lewat `isNonOperatingTxn` (`src/js/core/data.js`); pakai helper itu untuk filter baru.
 
 **Memasang paket zip:** timpa file lama dengan isi zip. Zip parsial hanya berisi file yang berubah; paket lengkap juga berisi `sw.js`, `supabase/setup.sql`, `tests/run.js`, `manifest.json`, dan empat ikon. Salin semua file JS baru (mis. `04b-`, `04c-`, `11b-`, `11c-`, `10b-` s.d. `10j-`).
