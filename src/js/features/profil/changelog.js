@@ -7,6 +7,14 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.176', d: '23 Okt 2026', items: [
+      'Efek kaca kini sakelar di Profil, Tampilan, bisa dinyalakan di semua palet dan mode Terang atau Gelap.'] },
+    { v: 'v1.1.175', d: '23 Okt 2026', items: [
+      'Tampilan Kaca lebih rapi: tidak ada lagi kotak yang menimpa sudut kartu, angka Aset/Utang di kartu saldo terbaca di mode Terang, dan menu bawah tidak tembus teks.'] },
+    { v: 'v1.1.174', d: '23 Okt 2026', items: [
+      'Palet Kaca sekarang punya mode Terang dan Gelap.'] },
+    { v: 'v1.1.173', d: '23 Okt 2026', items: [
+      'Palet baru Kaca (glass): latar gradasi, kartu tembus pandang berblur.'] },
     { v: 'v1.1.172', d: '23 Okt 2026', items: [
       'Pesan hasil Import/Export JSON kini selalu terlihat (tidak lagi tersembunyi di grup tertutup).'] },
     { v: 'v1.1.171', d: '23 Okt 2026', items: [
