@@ -7,6 +7,12 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.172', d: '23 Okt 2026', items: [
+      'Pesan hasil Import/Export JSON kini selalu terlihat (tidak lagi tersembunyi di grup tertutup).'] },
+    { v: 'v1.1.171', d: '23 Okt 2026', items: [
+      'Impor JSON memetakan akun tujuan transfer berulang dengan benar.'] },
+    { v: 'v1.1.170', d: '23 Okt 2026', items: [
+      'Biaya admin persen di atas 100% ditolak dan tidak pernah dikenakan.'] },
     { v: 'v1.1.169', d: '23 Okt 2026', items: [
       'Struktur folder dirapikan: src/js (core + fitur per domain), src/css, docs.'] },
     { v: 'v1.1.168', d: '23 Okt 2026', items: [

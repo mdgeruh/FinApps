@@ -350,9 +350,15 @@
     incoming.forEach(s => {
       const accountId = idMap[s.accountId] !== undefined ? idMap[s.accountId] : s.accountId;
       if (accountIds.indexOf(accountId) < 0) return;
-      if (out.some(x => x.name === s.name && x.accountId === accountId && x.day === s.day && x.type === s.type && x.freq === s.freq && x.weekday === s.weekday && x.month === s.month && x.toAccountId === s.toAccountId)) return;
+      // transfer berulang: akun tujuan juga dipetakan ke ID akun hasil impor (v1.1.171); tujuan yang tak ada atau sama dengan asal dibuang
+      const toAccountId = s.type === 'transfer' ? (idMap[s.toAccountId] !== undefined ? idMap[s.toAccountId] : s.toAccountId) : undefined;
+      if (s.type === 'transfer' && (accountIds.indexOf(toAccountId) < 0 || toAccountId === accountId)) return;
+      if (out.some(x => x.name === s.name && x.accountId === accountId && x.day === s.day && x.type === s.type && x.freq === s.freq && x.weekday === s.weekday && x.month === s.month && x.toAccountId === toAccountId)) return;
       if (out.length >= SUB_MAX_ITEMS) return;
-      out.push({ ...s, id: generateId('sub'), accountId, lastAppliedMonth: s.lastAppliedMonth || subInitialLastApplied(s.day, cur) });
+      const ns = { ...s, id: generateId('sub'), accountId, ...(toAccountId ? { toAccountId } : {}) };
+      // tanpa penanda terakhir diproses: mulai dari kejadian berikutnya sesuai frekuensi
+      if (!ns.lastAppliedMonth && !ns.lastAppliedDate) Object.assign(ns, { lastAppliedMonth: '' }, subInitialState(ns, cur));
+      out.push(ns);
     });
     return out;
   }

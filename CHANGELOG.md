@@ -6,6 +6,24 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.172 — 23 Okt 2026
+
+### Diperbaiki
+- **Import JSON tampak "diam"**: pesan hasil Import/Export JSON ditulis ke kotak pesan yang ternyata berada di grup "Zona berbahaya" (tertutup bawaan), jadi tidak terlihat dan toast pengganti tidak muncul (isi `<details>` tertutup tetap punya `offsetParent`). Kini kotak pesan ada tepat di bawah tombol Export & import (grup Alat), dan pengecekan terlihat-tidaknya memperhitungkan `<details>` tertutup sehingga pesan jatuh ke toast bila tak terlihat.
+- Tes: 364 (+2).
+
+## v1.1.171 — 23 Okt 2026
+
+### Diperbaiki
+- **Impor transfer berulang**: saat Import JSON, akun tujuan transfer berulang tidak dipetakan ke ID akun hasil impor, sehingga transfer berulang hasil impor menunjuk akun yang tidak ada dan berhenti jalan. Kini tujuan ikut dipetakan; tujuan hilang atau sama dengan asal dibuang. Transaksi berulang mingguan/tahunan hasil impor tanpa penanda juga dimulai dari kejadian berikutnya sesuai frekuensinya.
+- Tes: 362 (+1).
+
+## v1.1.170 — 23 Okt 2026
+
+### Diperbaiki
+- **Biaya admin persen salah isi**: bila biaya admin diisi 12500 tetapi jenisnya "Persen", app menghitung 12.500% dari sisa belum lunas dan mencatat potongan raksasa tiap bulan. Kini form akun menolak persen di atas 100% dengan pesan yang menunjuk ke jenis Nominal, dan mesin biaya otomatis tidak pernah mengenakan persen di atas 100 (juga untuk akun yang sudah tersimpan salah). Transaksi biaya yang sudah terlanjur tercatat perlu dihapus manual.
+- Tes: 361 (+3).
+
 ## v1.1.169 — 23 Okt 2026
 
 ### Diubah (struktur proyek, tanpa perubahan perilaku)
