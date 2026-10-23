@@ -4,13 +4,13 @@
  * Hanya menangani file app sendiri + pustaka Supabase (jsdelivr) + font Google.
  * TIDAK PERNAH menyentuh API Supabase (*.supabase.co) atau permintaan non-GET.
  * Naikkan CACHE_VERSION bersamaan dengan APP_VERSION supaya cache lama dibersihkan. */
-const CACHE_VERSION = 'kp-v1.1.154';
+const CACHE_VERSION = 'kp-v1.1.169';
 const APP_SHELL = [
-  './', 'index.html', 'style.css', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png',
-  '00-config.js', '01-data.js', '02-navigasi.js', '02b-rute.js', '03-form-transaksi.js', '03b-label.js', '03c-pecah.js', '03d-kategori-otomatis.js', '03e-foto-struk.js', '04-akun.js', '04b-akun-detail.js', '04c-akun-aset-tagihan.js',
-  '05-form-titipan.js', '06-util-ui.js', '06b-kunci.js', '06c-kalkulator.js', '07-render-akun-transaksi.js', '08-render-titipan.js',
-  '09-grafik.js', '10-render-beranda.js', '10b-anggaran.js', '10c-langganan.js', '10d-changelog.js', '10e-dana-darurat.js', '10k-target.js', '10f-tren-utang.js', '10g-denda-telat.js', '10h-ics-tagihan.js', '10i-rekonsiliasi.js', '10j-perhatian.js', '11-laporan.js', '11b-laporan-utang.js', '11c-laporan-proyeksi.js', '11d-bandingkan.js', '10l-pengingat-cadangan.js', '12-render-utama.js',
-  '13-import-export.js', '14-sync.js', '15-startup.js'
+  './', 'index.html', 'src/css/app.css', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png',
+  'src/js/core/config.js', 'src/js/core/data.js', 'src/js/core/navigasi.js', 'src/js/core/rute.js', 'src/js/features/transaksi/form-transaksi.js', 'src/js/features/transaksi/label.js', 'src/js/features/transaksi/pecah.js', 'src/js/features/transaksi/kategori-otomatis.js', 'src/js/features/transaksi/foto-struk.js', 'src/js/features/akun/akun.js', 'src/js/features/akun/akun-detail.js', 'src/js/features/akun/akun-aset-tagihan.js',
+  'src/js/features/titipan/form-titipan.js', 'src/js/core/util-ui.js', 'src/js/features/profil/kunci-aplikasi.js', 'src/js/features/profil/kalkulator.js', 'src/js/features/akun/render-akun-transaksi.js', 'src/js/features/titipan/render-titipan.js',
+  'src/js/features/laporan/grafik.js', 'src/js/features/beranda/render-beranda.js', 'src/js/features/perencanaan/anggaran.js', 'src/js/features/perencanaan/langganan.js', 'src/js/features/profil/changelog.js', 'src/js/features/perencanaan/dana-darurat.js', 'src/js/features/perencanaan/target.js', 'src/js/features/akun/tren-utang.js', 'src/js/features/akun/denda-telat.js', 'src/js/features/akun/ics-tagihan.js', 'src/js/features/akun/rekonsiliasi.js', 'src/js/features/beranda/perhatian.js', 'src/js/features/laporan/laporan.js', 'src/js/features/laporan/laporan-utang.js', 'src/js/features/laporan/laporan-proyeksi.js', 'src/js/features/laporan/bandingkan.js', 'src/js/features/profil/pengingat-cadangan.js', 'src/js/core/render-utama.js',
+  'src/js/features/data/import-export.js', 'src/js/features/data/sync.js', 'src/js/core/startup.js'
 ];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -55,14 +55,14 @@ self.addEventListener('fetch', (event) => {
 
 // ---- Pengingat cadangan (v1.1.146) ----
 // Keadaan cadangan disalin aplikasi ke IndexedDB 'keuangan-pengingat' (sw.js tidak bisa membaca localStorage).
-// Fungsi murni di antara penanda ini harus sama dengan backupDueState/backupNotifBody di 10l-pengingat-cadangan.js (dijaga test).
+// Fungsi murni di antara penanda ini harus sama dengan backupDueState/backupNotifBody di src/js/features/profil/pengingat-cadangan.js (dijaga test).
 // <pengingat-murni>
-function backupDueState(info, nowMs) {
+function backupDueState(info, nowMs) {   // info.intervalDays opsional (bawaan 14)
   const last = info && info.last;
   let days = last ? Math.floor((nowMs - new Date(last).getTime()) / 86400000) : null;
   if (days !== null && isNaN(days)) days = null;
   const snooze = Number(info && info.snooze) || 0;
-  const need = ((info && info.txnCount) || 0) >= 10 && (days === null || days >= 14) && nowMs >= snooze;
+  const need = ((info && info.txnCount) || 0) >= 10 && (days === null || days >= (Number(info && info.intervalDays) > 0 ? Number(info.intervalDays) : 14)) && nowMs >= snooze;
   return { need: need, days: days };
 }
 function backupNotifBody(days) {

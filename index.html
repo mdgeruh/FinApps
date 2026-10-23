@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="src/css/app.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0E9E76">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -254,6 +254,7 @@
   <div class="tab-panel" id="tab-akun">
     <div class="accounts-section">
       <div class="section-title-row"><div class="section-title">Akun</div><button type="button" class="see-all-btn" id="acc-order-toggle" data-act="toggleAccOrderMode">Atur urutan</button></div>
+      <div class="filter-row" id="spark-period" role="group" aria-label="Periode grafik mini" style="margin:0 0 8px;"></div>
       <div style="display:flex; gap:10px; margin-bottom:14px;">
         <div class="acc-card u-flex1-min0">
           <div class="acc-type">Total aset</div>
@@ -550,13 +551,17 @@
     <div class="acc-sub">Dicatat otomatis tiap bulan pada tanggalnya: langganan/tagihan sebagai pengeluaran, atau pemasukan rutin seperti gaji.</div>
     <div id="sub-manage-list"></div>
     <div class="section-title u-mt14">Tambah transaksi berulang</div>
-    <div class="field-row has-label"><label class="field-label" for="sub-type-input">Jenis</label><select id="sub-type-input" aria-label="Jenis transaksi berulang" data-change-act="onSubTypeChange"><option value="keluar">Pengeluaran (langganan/tagihan)</option><option value="masuk">Pemasukan (gaji, dll.)</option></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-type-input">Jenis</label><select id="sub-type-input" aria-label="Jenis transaksi berulang" data-change-act="onSubTypeChange"><option value="keluar">Pengeluaran (langganan/tagihan)</option><option value="masuk">Pemasukan (gaji, dll.)</option><option value="transfer">Transfer antar akun (mis. tabung otomatis)</option></select></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-freq-input">Frekuensi</label><select id="sub-freq-input" aria-label="Frekuensi" data-change-act="onSubFreqChange"><option value="bulanan">Tiap bulan</option><option value="mingguan">Tiap minggu</option><option value="tahunan">Tiap tahun</option></select></div>
+    <div class="field-row has-label" id="sub-weekday-row" hidden><label class="field-label" for="sub-weekday-input">Hari</label><select id="sub-weekday-input" aria-label="Hari"><option value="1">Senin</option><option value="2">Selasa</option><option value="3">Rabu</option><option value="4">Kamis</option><option value="5">Jumat</option><option value="6">Sabtu</option><option value="0">Minggu</option></select></div>
+    <div class="field-row has-label" id="sub-month-row" hidden><label class="field-label" for="sub-month-input">Bulan</label><select id="sub-month-input" aria-label="Bulan"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select></div>
     <div class="field-row has-label"><label class="field-label" for="sub-name-input" id="sub-name-label">Nama langganan</label><input type="text" id="sub-name-input" maxlength="60" placeholder="mis. Netflix" aria-label="Nama langganan"></div>
-    <div class="field-row has-label"><label class="field-label" for="sub-amount-input">Nominal per bulan</label><input type="number" data-money="int" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
-    <div class="field-row has-label"><label class="field-label" for="sub-day-input" id="sub-day-label">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
+    <div class="field-row has-label"><label class="field-label" for="sub-amount-input" id="sub-amount-label">Nominal per bulan</label><input type="number" data-money="int" id="sub-amount-input" inputmode="numeric" min="0" step="1" placeholder="Rp" aria-label="Nominal per bulan"></div>
+    <div class="field-row has-label" id="sub-day-row"><label class="field-label" for="sub-day-input" id="sub-day-label">Tanggal tagih (1–31)</label><input type="number" id="sub-day-input" inputmode="numeric" min="1" max="31" step="1" placeholder="mis. 12" aria-label="Tanggal tagih"></div>
     <div class="field-row has-label"><label class="field-label" for="sub-category-input">Kategori</label><select id="sub-category-input" aria-label="Kategori transaksi berulang"></select></div>
     <div class="field-row has-label"><label class="field-label" for="sub-tags-input">Label (boleh kosong, pisahkan koma)</label><input type="text" id="sub-tags-input" maxlength="140" placeholder="mis. rumah, bulanan" aria-label="Label transaksi berulang, opsional, pisahkan dengan koma" enterkeyhint="done"></div>
     <div class="field-row has-label"><label class="field-label" for="sub-account-input" id="sub-account-label">Dibayar dari akun</label><select id="sub-account-input" aria-label="Akun pembayaran"></select></div>
+    <div class="field-row has-label" id="sub-to-row" hidden><label class="field-label" for="sub-to-account-input">Ke akun</label><select id="sub-to-account-input" aria-label="Akun tujuan transfer"></select></div>
     <div class="acc-sub u-red" id="sub-form-msg"></div>
     <button type="button" class="submit-btn" id="sub-submit-btn" data-act="saveSubForm">Tambah langganan</button>
     </div>
@@ -919,40 +924,40 @@
   </div>
 
   <div class="tab-panel" id="tab-profil">
-    <div class="set-block profil-about">
-      <div><div class="section-title u-m0">Keuangan Pribadi</div><div class="acc-sub" id="profil-version"></div></div>
-      <button type="button" class="help-btn" data-act="openChangelog" aria-label="Lihat riwayat perubahan" title="Riwayat perubahan">?</button>
+    <div class="set-block profil-status" id="profil-status">
+      <div class="profil-about">
+        <div><div class="section-title u-m0">Keuangan Pribadi</div><div class="acc-sub" id="profil-version"></div></div>
+        <button type="button" class="help-btn" data-act="openChangelog" aria-label="Lihat riwayat perubahan" title="Riwayat perubahan">?</button>
+      </div>
+      <div class="status-list" id="profil-status-list" aria-live="polite"></div>
+      <button type="button" class="io-btn io-btn-full" id="profil-backup-now" data-act="exportJson">Cadangkan sekarang (JSON)</button>
     </div>
-    <div class="set-block">
-    <div class="section-title">Profil pemilik</div>
-    <div class="acc-sub u-mb6" id="profil-name-hint">Dipakai sebagai awalan nama file export/backup kalau belum masuk akun sinkron. Tersimpan di browser ini saja (tidak ikut ekspor JSON).</div>
-    <div class="io-row">
-      <input class="u-flex1-min0" type="text" id="profil-name-input" placeholder="Nama kamu" aria-label="Nama pemilik" maxlength="40" enterkeyhint="done" data-keydown-act="saveOwnerNameFromInput" data-keydown-keys="Enter">
-      <button type="button" class="io-btn" data-act="saveOwnerNameFromInput">Simpan</button>
-    </div>
-    <div id="profil-msg" class="io-msg"></div>
-    </div>
-    <div class="set-block" id="backup-notif-block">
-    <div class="section-title">Pengingat cadangan</div>
-    <div class="acc-sub u-mb6" id="backup-notif-status"></div>
-    <div class="io-row">
-      <button type="button" class="io-btn u-flex1" id="backup-notif-toggle" data-act="toggleBackupNotif">Aktifkan notifikasi</button>
-      <button type="button" class="io-btn u-flex1" id="backup-notif-test" data-act="testBackupNotif" style="display:none;">Tes notifikasi</button>
-    </div>
-    <div id="backup-notif-msg" class="io-msg"></div>
-    </div>
-    <div class="set-block">
-    <div class="section-title">Kunci app</div>
-    <div class="acc-sub u-mb6" id="lock-status">Kunci app belum aktif.</div>
-    <div class="acc-sub u-mb10">PIN 6 angka disimpan di perangkat ini saja dan tidak ikut backup atau sinkron. Ini penghalang akses sekilas, bukan enkripsi data. Lupa PIN berarti data di perangkat ini harus direset.</div>
-    <button type="button" class="io-btn io-btn-full" id="lock-btn-enable" data-act="lockSetupStart">Aktifkan PIN</button>
-    <div class="io-row">
-      <button type="button" class="io-btn u-flex1" id="lock-btn-change" data-act="lockChangeStart" style="display:none;">Ubah PIN</button>
-      <button type="button" class="io-btn u-flex1" id="lock-btn-disable" data-act="lockDisableStart" style="display:none;">Matikan PIN</button>
-    </div>
-    <button type="button" class="io-btn io-btn-full u-mt8" id="lock-btn-now" data-act="lockNow" style="display:none;">Kunci sekarang</button>
-    </div>
-    <div class="set-block">
+
+    <details class="adv-item profil-group" id="profil-g-aman" open>
+      <summary><span class="profil-group-title">Keamanan &amp; data<small>Cadangan, PIN, akun sinkron</small></span><span class="adv-chev" aria-hidden="true">▾</span></summary>
+      <div class="profil-sec" id="backup-notif-block">
+        <div class="section-title">Pengingat cadangan</div>
+        <div class="acc-sub u-mb6" id="backup-notif-status"></div>
+        <div class="acc-sub">Ingatkan bila cadangan sudah lewat</div>
+        <div class="theme-opts" id="backup-interval-opts" role="group" aria-label="Jarak hari pengingat cadangan"></div>
+        <div class="io-row">
+          <button type="button" class="io-btn u-flex1" id="backup-notif-toggle" data-act="toggleBackupNotif">Aktifkan notifikasi</button>
+          <button type="button" class="io-btn u-flex1" id="backup-notif-test" data-act="testBackupNotif" style="display:none;">Tes notifikasi</button>
+        </div>
+        <div id="backup-notif-msg" class="io-msg"></div>
+      </div>
+      <div class="profil-sec">
+        <div class="section-title">Kunci app</div>
+        <div class="acc-sub u-mb6" id="lock-status">Kunci app belum aktif.</div>
+        <div class="acc-sub u-mb10">PIN 6 angka hanya di perangkat ini (tidak ikut backup atau sinkron). Ini penghalang akses sekilas, bukan enkripsi. Lupa PIN berarti data di perangkat ini harus direset.</div>
+        <button type="button" class="io-btn io-btn-full" id="lock-btn-enable" data-act="lockSetupStart">Aktifkan PIN</button>
+        <div class="io-row">
+          <button type="button" class="io-btn u-flex1" id="lock-btn-change" data-act="lockChangeStart" style="display:none;">Ubah PIN</button>
+          <button type="button" class="io-btn u-flex1" id="lock-btn-disable" data-act="lockDisableStart" style="display:none;">Matikan PIN</button>
+        </div>
+        <button type="button" class="io-btn io-btn-full u-mt8" id="lock-btn-now" data-act="lockNow" style="display:none;">Kunci sekarang</button>
+      </div>
+      <div class="profil-sec">
     <div class="section-title">Akun sinkron (login cloud)</div>
     <div id="profil-sync-none" class="acc-sub">Belum masuk ke akun sinkron cloud.</div>
     <button type="button" id="sync-menu-login-btn" class="io-btn io-btn-full" data-act="syncLoginFromMenu" style="display:none;">Masuk untuk sinkron</button>
@@ -975,45 +980,99 @@
     <div id="profil-sync-msg" class="io-msg"></div>
     <button type="button" id="sync-logout-btn" class="io-btn" data-act="syncLogout" style="display:none;"></button>
     </div>
+    </details>
 
-    <details class="adv-item profil-adv">
-      <summary class="section-title adv-summary">Pengaturan data lanjutan <span class="adv-chev" style="color:var(--ink-soft); font-size:11px;">▾</span></summary>
+    <details class="adv-item profil-group" id="profil-g-pref">
+      <summary><span class="profil-group-title">Preferensi<small>Tampilan, nama, saldo minus, kartu Ringkasan</small></span><span class="adv-chev" aria-hidden="true">▾</span></summary>
+      <div class="profil-sec" id="theme-block">
+        <div class="section-title">Tampilan</div>
+        <div class="acc-sub">Palet</div>
+        <div class="palette-opts" id="palette-opts" role="group" aria-label="Palet warna"></div>
+        <div class="acc-sub">Mode</div>
+        <div class="theme-opts" id="theme-mode-opts" role="group" aria-label="Mode tampilan"></div>
+        <div class="acc-sub">Warna aksen</div>
+        <div class="accent-opts" id="accent-opts" role="group" aria-label="Warna aksen"></div>
+      </div>
+      <div class="profil-sec">
+        <div class="section-title">Profil pemilik</div>
+        <div class="acc-sub u-mb6" id="profil-name-hint">Awalan nama file export/backup bila belum masuk akun sinkron. Tersimpan di browser ini saja.</div>
+        <div class="io-row">
+          <input class="u-flex1-min0" type="text" id="profil-name-input" placeholder="Nama kamu" aria-label="Nama pemilik" maxlength="40" enterkeyhint="done" data-keydown-act="saveOwnerNameFromInput" data-keydown-keys="Enter">
+          <button type="button" class="io-btn" data-act="saveOwnerNameFromInput">Simpan</button>
+        </div>
+        <div id="profil-msg" class="io-msg"></div>
+      </div>
+      <div class="profil-sec" id="overdraft-block">
+        <label class="switch-row" for="overdraft-toggle">
+          <span class="switch-text"><b>Cegah saldo minus</b><small>Tolak pengeluaran atau transfer yang membuat saldo kas, bank, atau e-wallet minus. Kartu kredit, PayLater, dan pinjaman tidak dibatasi.</small></span>
+          <input type="checkbox" class="switch" id="overdraft-toggle" checked data-change-act="toggleOverdraftGuard">
+        </label>
+        <div id="overdraft-msg" class="io-msg"></div>
+      </div>
+      <div class="profil-sec">
+        <details class="profil-sub" id="profil-kata-sub">
+          <summary><span>Kata kunci kategori otomatis</span><span class="profil-sub-count" id="ck-count"></span></summary>
+          <div class="acc-sub u-mb6">Tambahkan kata yang selalu memilih kategori tertentu saat Anda mengetik keterangan (mis. "pupuk" → Belanja harian). Kata Anda diutamakan di atas riwayat dan kata bawaan. Pisahkan dengan koma untuk banyak kata. Tersimpan di perangkat ini.</div>
+          <div class="field-row has-label"><label class="field-label" for="ck-type">Jenis</label><select id="ck-type" aria-label="Jenis transaksi" data-change-act="renderCustomKeywords"><option value="keluar">Pengeluaran</option><option value="masuk">Pemasukan</option></select></div>
+          <div class="field-row has-label"><label class="field-label" for="ck-cat">Kategori</label><select id="ck-cat" aria-label="Kategori"></select></div>
+          <div class="field-row has-label"><label class="field-label" for="ck-word">Kata</label><input type="text" id="ck-word" maxlength="60" placeholder="mis. pupuk, benih" aria-label="Kata kunci" data-keydown-act="addCustomKeyword" data-keydown-keys="Enter"></div>
+          <div class="acc-sub u-red" id="ck-msg"></div>
+          <div class="io-row"><button type="button" class="io-btn" data-act="addCustomKeyword">Tambah kata</button></div>
+          <div id="ck-list" class="u-mt8"></div>
+        </details>
+      </div>
+      <div class="profil-sec">
+        <details class="profil-sub" id="profil-ringkasan-sub">
+          <summary><span>Kartu di Ringkasan</span><span class="profil-sub-count" id="ringkasan-cards-count"></span></summary>
+          <div class="acc-sub u-mb6">Pilih kartu yang tampil dan atur urutannya dengan ▲ ▼. Tersimpan di browser ini saja. Kartu tanpa data otomatis disembunyikan.</div>
+          <div id="ringkasan-cards-config"></div>
+          <div class="io-row u-mt8"><button class="io-btn" data-act="resetRingkasanCards">Tampilkan semua &amp; urutan awal</button></div>
+        </details>
+      </div>
+    </details>
 
-      <div class="set-block">
-      <div class="section-title">Export &amp; import</div>
-      <div class="io-row">
-        <button class="io-btn" data-act="exportJson">Export JSON</button>
-        <button class="io-btn" data-act="exportCsv">Export CSV transaksi</button>
-        <button class="io-btn" data-act="exportAccountsCsv">Export CSV akun</button>
-        <button class="io-btn" data-act="clickById" data-a0="import-file">Import JSON</button>
-        <input type="file" id="import-file" accept="application/json" style="display:none" data-change-act="importJson" data-change-with-event="1">
+    <details class="adv-item profil-group" id="profil-g-alat">
+      <summary><span class="profil-group-title">Alat<small>Export, import, data contoh</small></span><span class="adv-chev" aria-hidden="true">▾</span></summary>
+      <div class="profil-sec">
+        <div class="section-title">Export &amp; import</div>
+        <div class="io-row io-wrap">
+          <button class="io-btn" data-act="exportJson">Export JSON</button>
+          <button class="io-btn" data-act="exportCsv">Export CSV transaksi</button>
+          <button class="io-btn" data-act="exportAccountsCsv">Export CSV akun</button>
+          <button class="io-btn" data-act="clickById" data-a0="import-file">Import JSON</button>
+          <input type="file" id="import-file" accept="application/json" style="display:none" data-change-act="importJson" data-change-with-event="1">
+        </div>
       </div>
+      <div class="profil-sec">
+        <div class="section-title">Foto struk</div>
+        <div class="acc-sub u-mb6">Foto hanya tersimpan di perangkat ini dan tidak ikut Export JSON. Cadangkan ke berkas terpisah, lalu pulihkan setelah Import JSON transaksi.</div>
+        <div class="io-row io-wrap">
+          <button class="io-btn" data-act="exportPhotos">Cadangkan foto</button>
+          <button class="io-btn" data-act="clickById" data-a0="import-foto-file">Pulihkan foto</button>
+          <input type="file" id="import-foto-file" accept="application/json" style="display:none" data-change-act="importPhotos" data-change-with-event="1">
+        </div>
+        <div id="foto-io-msg" class="io-msg"></div>
       </div>
+      <div class="profil-sec">
+        <div class="section-title">Data contoh</div>
+        <div class="io-row">
+          <button class="io-btn" data-act="loadDummyData">Muat data contoh (dummy)</button>
+        </div>
+        <div class="acc-sub u-mt8">Mengisi akun &amp; transaksi contoh 3 bulan terakhir untuk coba-coba fitur. Data lama dibackup otomatis dulu sebelum diganti.</div>
+      </div>
+    </details>
 
-      <div class="set-block">
-      <div class="section-title">Tampilan Ringkasan</div>
-      <div class="acc-sub u-mb6">Pilih kartu yang tampil di tab Ringkasan dan atur urutannya dengan tombol ▲ ▼. Pengaturan ini tersimpan di browser ini saja dan tidak ikut ekspor JSON. Kartu tanpa data otomatis disembunyikan.</div>
-      <div id="ringkasan-cards-config"></div>
-      <div class="io-row u-mt8"><button class="io-btn" data-act="resetRingkasanCards">Tampilkan semua &amp; urutan awal</button></div>
-      </div>
-
-      <div class="set-block">
-      <div class="section-title">Data contoh</div>
-      <div class="io-row">
-        <button class="io-btn" data-act="loadDummyData">Muat data contoh (dummy)</button>
-      </div>
-      <div class="acc-sub u-mt8">Mengisi akun &amp; transaksi contoh 3 bulan terakhir untuk coba-coba fitur (kategori, pie chart, bunga kartu). Data lama akan dibackup otomatis dulu sebelum diganti.</div>
-      </div>
-
-      <div class="set-block">
-      <div class="section-title title-danger">Reset &amp; ganti data</div>
-      <div class="io-row">
-        <button class="io-btn danger" data-act="resetAllData">Reset semua data</button>
-        <button class="io-btn" data-act="clickById" data-a0="reset-import-file">Reset lalu isi dari file</button>
-        <input type="file" id="reset-import-file" accept="application/json" style="display:none" data-change-act="resetAndImport" data-change-with-event="1">
-      </div>
-      <div class="acc-sub u-mt8">"Reset semua data" mengosongkan semua akun &amp; transaksi. Data lama akan dibackup otomatis dulu sebelum dihapus.</div>
-      <div id="io-msg" class="io-msg"></div>
+    <details class="adv-item profil-group profil-danger" id="profil-g-bahaya">
+      <summary><span class="profil-group-title">Zona berbahaya<small>Reset dan ganti seluruh data</small></span><span class="adv-chev" aria-hidden="true">▾</span></summary>
+      <div class="profil-sec">
+        <div class="section-title title-danger">Reset &amp; ganti data</div>
+        <div class="io-row io-wrap">
+          <button class="io-btn danger" data-act="resetAllData">Reset semua data</button>
+          <button class="io-btn" data-act="clickById" data-a0="reset-import-file">Reset lalu isi dari file</button>
+          <input type="file" id="reset-import-file" accept="application/json" style="display:none" data-change-act="resetAndImport" data-change-with-event="1">
+        </div>
+        <div class="acc-sub u-mt8">"Reset semua data" mengosongkan semua akun &amp; transaksi. Data lama dibackup otomatis dulu sebelum dihapus.</div>
+        <div id="io-msg" class="io-msg"></div>
       </div>
     </details>
   <div class="app-footer no-print" id="app-footer" aria-hidden="true"></div>
@@ -1193,6 +1252,7 @@
       <button class="io-btn danger" data-act="deleteFromDetail">Hapus</button>
       <button class="submit-btn" data-act="editFromDetail">Edit transaksi</button>
     </div>
+    <button type="button" class="io-btn io-btn-full u-mt8" id="txn-detail-editall" data-act="startEditSplit" style="display:none;">Edit seluruh struk</button>
     <button type="button" class="io-btn io-btn-full danger u-mt8" id="txn-detail-delall" data-act="deleteSplitFromDetail" style="display:none;"></button>
   </div>
 </div>
@@ -1287,44 +1347,44 @@
     <button type="button" class="lock-link" id="lock-cancel" data-act="lockCancel" style="display:none;">Batal</button>
   </div>
 </div>
-<script src="00-config.js"></script>
-<script src="01-data.js"></script>
-<script src="02-navigasi.js"></script>
-<script src="02b-rute.js"></script>
-<script src="03-form-transaksi.js"></script>
-<script src="03b-label.js"></script>
-<script src="03c-pecah.js"></script>
-<script src="03d-kategori-otomatis.js"></script>
-<script src="03e-foto-struk.js"></script>
-<script src="04-akun.js"></script>
-<script src="04b-akun-detail.js"></script>
-<script src="04c-akun-aset-tagihan.js"></script>
-<script src="05-form-titipan.js"></script>
-<script src="06-util-ui.js"></script>
-<script src="06b-kunci.js"></script>
-<script src="06c-kalkulator.js"></script>
-<script src="07-render-akun-transaksi.js"></script>
-<script src="08-render-titipan.js"></script>
-<script src="09-grafik.js"></script>
-<script src="10-render-beranda.js"></script>
-<script src="10b-anggaran.js"></script>
-<script src="10c-langganan.js"></script>
-<script src="10d-changelog.js"></script>
-<script src="10e-dana-darurat.js"></script>
-<script src="10k-target.js"></script>
-<script src="10f-tren-utang.js"></script>
-<script src="10g-denda-telat.js"></script>
-<script src="10h-ics-tagihan.js"></script>
-<script src="10i-rekonsiliasi.js"></script>
-<script src="10j-perhatian.js"></script>
-<script src="11-laporan.js"></script>
-<script src="11b-laporan-utang.js"></script>
-<script src="11c-laporan-proyeksi.js"></script>
-<script src="11d-bandingkan.js"></script>
-<script src="10l-pengingat-cadangan.js"></script>
-<script src="12-render-utama.js"></script>
-<script src="13-import-export.js"></script>
-<script src="14-sync.js"></script>
-<script src="15-startup.js"></script>
+<script src="src/js/core/config.js"></script>
+<script src="src/js/core/data.js"></script>
+<script src="src/js/core/navigasi.js"></script>
+<script src="src/js/core/rute.js"></script>
+<script src="src/js/features/transaksi/form-transaksi.js"></script>
+<script src="src/js/features/transaksi/label.js"></script>
+<script src="src/js/features/transaksi/pecah.js"></script>
+<script src="src/js/features/transaksi/kategori-otomatis.js"></script>
+<script src="src/js/features/transaksi/foto-struk.js"></script>
+<script src="src/js/features/akun/akun.js"></script>
+<script src="src/js/features/akun/akun-detail.js"></script>
+<script src="src/js/features/akun/akun-aset-tagihan.js"></script>
+<script src="src/js/features/titipan/form-titipan.js"></script>
+<script src="src/js/core/util-ui.js"></script>
+<script src="src/js/features/profil/kunci-aplikasi.js"></script>
+<script src="src/js/features/profil/kalkulator.js"></script>
+<script src="src/js/features/akun/render-akun-transaksi.js"></script>
+<script src="src/js/features/titipan/render-titipan.js"></script>
+<script src="src/js/features/laporan/grafik.js"></script>
+<script src="src/js/features/beranda/render-beranda.js"></script>
+<script src="src/js/features/perencanaan/anggaran.js"></script>
+<script src="src/js/features/perencanaan/langganan.js"></script>
+<script src="src/js/features/profil/changelog.js"></script>
+<script src="src/js/features/perencanaan/dana-darurat.js"></script>
+<script src="src/js/features/perencanaan/target.js"></script>
+<script src="src/js/features/akun/tren-utang.js"></script>
+<script src="src/js/features/akun/denda-telat.js"></script>
+<script src="src/js/features/akun/ics-tagihan.js"></script>
+<script src="src/js/features/akun/rekonsiliasi.js"></script>
+<script src="src/js/features/beranda/perhatian.js"></script>
+<script src="src/js/features/laporan/laporan.js"></script>
+<script src="src/js/features/laporan/laporan-utang.js"></script>
+<script src="src/js/features/laporan/laporan-proyeksi.js"></script>
+<script src="src/js/features/laporan/bandingkan.js"></script>
+<script src="src/js/features/profil/pengingat-cadangan.js"></script>
+<script src="src/js/core/render-utama.js"></script>
+<script src="src/js/features/data/import-export.js"></script>
+<script src="src/js/features/data/sync.js"></script>
+<script src="src/js/core/startup.js"></script>
 </body>
 </html>
