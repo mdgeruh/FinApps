@@ -6,6 +6,31 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.176 — 23 Okt 2026
+
+### Diubah
+- **Kaca kini sakelar, bukan palet.** Di Profil › Preferensi › Tampilan ada sakelar **Efek kaca** yang bisa dinyalakan di semua palet (Hutan, Laut, Senja, Anggur, Kopi, Grafit) dan di mode Terang maupun Gelap. Latar gradasi, warna kartu translusen, dan warna kartu saldo diambil dari palet yang sedang dipakai.
+- Palet "Kaca" lama dihapus dari daftar palet. Pengguna yang memakainya otomatis dipindah ke palet Senja dengan efek kaca menyala (tampilannya paling mirip).
+- Efek hanya aktif bila browser mendukung `backdrop-filter` dan `color-mix`; kalau tidak, tampilan tetap biasa. Cetak tetap polos putih.
+
+## v1.1.175 — 23 Okt 2026
+
+### Diperbaiki
+- **Palet Kaca: elemen yang saling menimpa.** Kotak persegi di dalam kartu kaca (area Grafik, label warna aksen, kartu status Profil, header HP) menimpa sudut bulat kartu luarnya karena blur bersarang. Sekarang blur hanya di wadah terluar; chip dan tombol kecil hanya translusen; grup grafik Ringkasan jadi satu kartu kaca; kartu status Profil polos; header HP transparan (di desktop tetap translusen karena menempel).
+- Mode Terang: angka Aset dan Utang di kartu saldo kini gelap sehingga terbaca di atas oranye; bilah menu bawah lebih pekat supaya teks di belakangnya tidak tembus.
+
+## v1.1.174 — 23 Okt 2026
+
+### Diubah
+- **Palet Kaca kini punya mode Terang dan Gelap**: sebelumnya selalu gelap. Terang = latar gradasi peach/lavender, kartu putih tembus pandang berblur, teks cokelat tua, aksen oranye tua, tombol utama gelap; Gelap = tampilan sebelumnya. Mengikuti pilihan Mode (Sistem/Terang/Gelap) di Profil. Warna kaca kini dikendalikan variabel `--k-*` (latar, sorot tepi, bayangan, panel, navigasi, tombol, kartu saldo), kontras terang dan gelap dicek di tes.
+- Tes: 366.
+
+## v1.1.173 — 23 Okt 2026
+
+### Ditambahkan
+- **Palet "Kaca" (glassmorphism)** di Profil › Preferensi › Tampilan › Palet: latar gradasi hangat gelap (oranye, mauve), kartu tembus pandang dengan blur, tepi tipis bercahaya, teks terang, aksen hijau muda, tombol utama putih, panel/formulir berkaca. Selalu gelap (mengabaikan mode Terang/Gelap); warna aksen pilihan tetap bisa menimpa. Browser tanpa dukungan `backdrop-filter` otomatis memakai kartu semi-solid; cetak Laporan tetap polos putih.
+- Tes: 366 (+2).
+
 ## v1.1.172 — 23 Okt 2026
 
 ### Diperbaiki
