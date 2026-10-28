@@ -192,12 +192,12 @@
     const th = sanitizeCmpThresholds({ minPct: pv, minAmount: av });
     if (!(pv >= CMP_PCT_RANGE[0] && pv <= CMP_PCT_RANGE[1])) { showToast('Persen harus ' + CMP_PCT_RANGE[0] + '–' + CMP_PCT_RANGE[1], 'error'); return; }
     if (av > CMP_AMOUNT_RANGE[1]) { showToast('Selisih maksimal ' + formatRp(CMP_AMOUNT_RANGE[1]), 'error'); return; }
-    try { localStorage.setItem(CMP_THRESH_KEY, JSON.stringify(th)); } catch (e) { /* abaikan */ }
+    try { settingSet(CMP_THRESH_KEY, JSON.stringify(th)); } catch (e) { /* abaikan */ }
     state.cmpAmbangOpen = true;
     renderLaporan();
   }
   function resetCmpThresholds() {
-    try { localStorage.removeItem(CMP_THRESH_KEY); } catch (e) { /* abaikan */ }
+    try { settingRemove(CMP_THRESH_KEY); } catch (e) { /* abaikan */ }
     state.cmpAmbangOpen = true;
     renderLaporan();
   }
