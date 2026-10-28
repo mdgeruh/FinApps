@@ -24,8 +24,8 @@
   function subYmd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   // Kategori yang tak ada di daftar (mis. "Penyesuaian saldo", yang khusus sistem) jatuh ke bawaan.
   function subCategoryOf(type, category) {
-    const list = (CATEGORIES[type] || []).filter(c => c !== 'Penyesuaian saldo');
-    return list.indexOf(category) >= 0 ? category : SUB_DEFAULT_CATEGORY[type];
+    const list = categoryAll(type).filter(c => c !== 'Penyesuaian saldo');
+    return list.indexOf(category) >= 0 ? category : (list.indexOf(SUB_DEFAULT_CATEGORY[type]) >= 0 ? SUB_DEFAULT_CATEGORY[type] : list[0]);
   }
 
   function subMonthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
@@ -201,9 +201,9 @@
     const data = loadData();
     const tv = $('sub-type-input').value;
     const type = tv === 'masuk' ? 'masuk' : (tv === 'transfer' ? 'transfer' : 'keluar');
-    const cats = CATEGORIES[type].filter(c => c !== 'Penyesuaian saldo');
+    const cats = categoryList(type).filter(c => c !== 'Penyesuaian saldo');
     $('sub-category-input').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-    $('sub-category-input').value = SUB_DEFAULT_CATEGORY[type];
+    $('sub-category-input').value = cats.indexOf(SUB_DEFAULT_CATEGORY[type]) >= 0 ? SUB_DEFAULT_CATEGORY[type] : cats[0];
     const opts = type === 'transfer' ? accountOptionsHtml(data.accounts.filter(a => !a.archived && SUB_TRANSFER_ACCOUNT_TYPES.indexOf(a.type) >= 0)) : subAccountOptions(data, type);
     $('sub-account-input').innerHTML = opts;
     $('sub-to-account-input').innerHTML = opts;
@@ -256,6 +256,7 @@
     if (!Array.from(accSel.options).some(o => o.value === s.accountId)) { const a = data.accounts.find(x => x.id === s.accountId); if (a) { const o = document.createElement('option'); o.value = a.id; o.textContent = a.name; accSel.appendChild(o); } }
     set('sub-account-input', s.accountId);
     if (s.type === 'transfer') set('sub-to-account-input', s.toAccountId);
+    if (typeof ensureCategoryOption === 'function') ensureCategoryOption($('sub-category-input'), s.type || 'keluar', s.category);
     if (Array.from($('sub-category-input').options).some(o => o.value === s.category)) set('sub-category-input', s.category);
     $('sub-submit-btn').textContent = 'Simpan perubahan';
     $('sub-form-msg').textContent = '';
