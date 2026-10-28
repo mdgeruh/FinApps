@@ -41,7 +41,7 @@
     ['keluar', 'masuk'].forEach(type => {
       const src = raw[type];
       if (!src || typeof src !== 'object') return;
-      const valid = (typeof CATEGORIES !== 'undefined' ? CATEGORIES[type] : []) || [];
+      const valid = (typeof categoryAll === 'function' ? categoryAll(type) : (typeof CATEGORIES !== 'undefined' ? CATEGORIES[type] : [])) || [];
       Object.keys(src).forEach(cat => {
         if (valid.indexOf(cat) < 0 || AUTO_CAT_EXCLUDE.indexOf(cat) >= 0 || !Array.isArray(src[cat])) return;
         const words = [];
@@ -79,7 +79,7 @@
     if (type !== 'keluar' && type !== 'masuk') return null;
     const toks = normalizeDescTokens(desc);
     if (!toks.length) return null;
-    const allowed = (categories || (typeof CATEGORIES !== 'undefined' ? CATEGORIES[type] : []) || []).filter(c => AUTO_CAT_EXCLUDE.indexOf(c) < 0);
+    const allowed = (categories || (typeof categoryList === 'function' ? categoryList(type) : (typeof CATEGORIES !== 'undefined' ? CATEGORIES[type] : [])) || []).filter(c => AUTO_CAT_EXCLUDE.indexOf(c) < 0);
     if (!allowed.length) return null;
     const tokSet = new Set(toks);
     // 0. kata kunci buatan sendiri
@@ -111,10 +111,11 @@
     const lower = ' ' + String(desc).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ') + ' ';
     const kw = AUTO_CAT_KEYWORDS[type] || {};
     let best = null, bestN = 0, bestWord = '';
-    Object.keys(kw).forEach(cat => {
+    Object.keys(kw).forEach(builtin => {
+      const cat = typeof categoryAliasOf === 'function' ? categoryAliasOf(type, builtin) : builtin;   // kategori bawaan yang diganti nama tetap memakai kata kunci aslinya
       if (allowed.indexOf(cat) < 0) return;
       let n = 0, w0 = '';
-      kw[cat].forEach(k => { if (lower.indexOf(' ' + k + ' ') >= 0 || (k.length >= 4 && lower.indexOf(' ' + k) >= 0)) { n++; if (!w0) w0 = k; } });
+      kw[builtin].forEach(k => { if (lower.indexOf(' ' + k + ' ') >= 0 || (k.length >= 4 && lower.indexOf(' ' + k) >= 0)) { n++; if (!w0) w0 = k; } });
       if (n > bestN) { best = cat; bestN = n; bestWord = w0; }
     });
     return best ? { category: best, source: 'kata kunci', match: bestWord } : null;
@@ -156,7 +157,7 @@
   function renderCustomKeywords() {
     const typeEl = $('ck-type'); if (!typeEl) return;
     const type = typeEl.value === 'masuk' ? 'masuk' : 'keluar';
-    const cats = CATEGORIES[type].filter(c => AUTO_CAT_EXCLUDE.indexOf(c) < 0);
+    const cats = categoryList(type).filter(c => AUTO_CAT_EXCLUDE.indexOf(c) < 0);
     const prev = $('ck-cat').value;
     $('ck-cat').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     if (cats.indexOf(prev) >= 0) $('ck-cat').value = prev;
@@ -165,7 +166,7 @@
     $('ck-list').innerHTML = list.length ? list.map((e, i) => `<div class="budget-top sub-row"><span class="budget-name">${escapeHtml(e.word)}<span class="acc-sub"> → ${escapeHtml(e.cat)} (${e.type === 'masuk' ? 'masuk' : 'keluar'})</span></span><span class="sub-actions"><button type="button" class="see-all-btn" data-act="removeCustomKeyword" data-n0="${i}">Hapus</button></span></div>`).join('') : '<div class="acc-sub">Belum ada. Contoh: kata "pupuk" → kategori yang Anda pilih.</div>';
   }
   function saveCustomKeywords(kw) {
-    try { localStorage.setItem(CUSTOM_KW_KEY, JSON.stringify(kw)); } catch (e) { showToast('Gagal menyimpan di perangkat ini.', 'error'); }
+    try { settingSet(CUSTOM_KW_KEY, JSON.stringify(kw)); } catch (e) { showToast('Gagal menyimpan di perangkat ini.', 'error'); }
   }
   function addCustomKeyword() {
     const type = $('ck-type').value === 'masuk' ? 'masuk' : 'keluar';

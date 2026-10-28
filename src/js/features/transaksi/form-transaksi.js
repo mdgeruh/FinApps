@@ -47,6 +47,7 @@
 
     const catSel = $('category-select');
     const catCustomEl = $('category-custom-input');
+    ensureCategoryOption(catSel, t.type, t.category);   // kategori yang sedang disembunyikan tetap terpilih saat mengubah transaksi lamanya
     const hasPreset = Array.from(catSel.options).some(o => o.value === t.category);
     if (t.category && hasPreset) {
       catSel.value = t.category;
@@ -195,16 +196,23 @@
 
   function toggleOverdraftGuard() {
     const on = !!(this && this.checked);
-    try { localStorage.setItem(OVERDRAFT_GUARD_KEY, on ? '1' : '0'); } catch (e) { /* abaikan */ }
+    try { settingSet(OVERDRAFT_GUARD_KEY, on ? '1' : '0'); } catch (e) { /* abaikan */ }
     showIoMsg(on ? 'Saldo kas, bank, dan e-wallet tidak bisa jadi minus lagi.' : 'Pencegah saldo minus dimatikan.', 'ok', 'overdraft-msg');
   }
 
   function populateCategorySelect() {
     const sel = $('category-select');
-    const list = CATEGORIES[state.currentType] || [];
+    const list = categoryList(state.currentType) || [];
     sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     onCategoryChange();
     if (typeof populateSplitCats === 'function' && state.splitMode) populateSplitCats();
+  }
+
+  // Tambahkan satu pilihan sementara bila `cat` terdaftar tetapi sedang disembunyikan dari pilihan (hanya untuk transaksi lama yang diubah).
+  function ensureCategoryOption(sel, type, cat) {
+    if (!sel || !cat || Array.from(sel.options).some(o => o.value === cat)) return;
+    if (categoryAll(type).indexOf(cat) < 0) return;
+    const o = document.createElement('option'); o.value = cat; o.textContent = cat + ' (disembunyikan)'; sel.appendChild(o);
   }
 
   function onCategoryChange() {
