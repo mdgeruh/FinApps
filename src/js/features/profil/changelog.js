@@ -7,6 +7,14 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.180', d: '29 Okt 2026', items: [
+      'Pengaturan (tema, palet, nama, kata kunci, kartu Ringkasan, dll.) kini ikut tersinkron ke Supabase.'] },
+    { v: 'v1.1.179', d: '29 Okt 2026', items: [
+      'Preferensi dan Alat kini halaman sendiri di Profil, alurnya seperti Kelola kategori & label.'] },
+    { v: 'v1.1.178', d: '29 Okt 2026', items: [
+      'Halaman baru Kelola kategori & label: tambah, ubah nama, gabung, sembunyikan, hapus, dengan Urungkan.'] },
+    { v: 'v1.1.177', d: '29 Okt 2026', items: [
+      'Detail akun kini halaman penuh di tab Akun: dua kolom di layar lebar, dan Kembali mengembalikan posisi daftar.'] },
     { v: 'v1.1.176', d: '23 Okt 2026', items: [
       'Efek kaca kini sakelar di Profil, Tampilan, bisa dinyalakan di semua palet dan mode Terang atau Gelap.'] },
     { v: 'v1.1.175', d: '23 Okt 2026', items: [

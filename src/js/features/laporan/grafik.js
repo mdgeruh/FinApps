@@ -522,7 +522,7 @@
     } catch (e) { return []; }
   }
   function saveHiddenCards(list) {
-    try { localStorage.setItem(RINGKASAN_HIDDEN_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
+    try { settingSet(RINGKASAN_HIDDEN_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
   }
   // Fungsi murni: fitur perencanaan mana yang sudah dipakai (v1.1.071, R7).
   function computePlanUsage(data) {
@@ -624,7 +624,7 @@
   function setChartSegment(id) {
     if (!CHART_SEGMENTS.some(s => s.id === id)) return;
     chartSegment = id;
-    try { localStorage.setItem(CHART_SEGMENT_KEY, id); } catch (e) { /* preferensi tampilan, tidak kritis */ }
+    try { settingSet(CHART_SEGMENT_KEY, id); } catch (e) { /* preferensi tampilan, tidak kritis */ }
     const data = loadData();
     const vis = computeRingkasanVisibility(data);
     const cur = applyChartSegments(data, vis);
@@ -672,7 +672,7 @@
     try { return sanitizeRingkasanOrder(JSON.parse(localStorage.getItem(RINGKASAN_ORDER_KEY) || '[]')); } catch (e) { return sanitizeRingkasanOrder([]); }
   }
   function saveRingkasanOrder(list) {
-    try { localStorage.setItem(RINGKASAN_ORDER_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
+    try { settingSet(RINGKASAN_ORDER_KEY, JSON.stringify(list)); } catch (e) { /* preferensi tampilan, tidak kritis */ }
   }
   // Hanya memindahkan elemen DOM yang sudah ada (isi kartu tidak diubah), tepat setelah kartu backup.
   function applyRingkasanOrder() {

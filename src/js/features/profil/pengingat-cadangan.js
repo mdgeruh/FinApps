@@ -23,7 +23,7 @@
   function setReminderInterval(d) {
     d = Number(d);
     if (REMINDER_INTERVALS.indexOf(d) < 0) d = REMINDER_DAYS;
-    try { if (d === REMINDER_DAYS) localStorage.removeItem(REMINDER_INTERVAL_KEY); else localStorage.setItem(REMINDER_INTERVAL_KEY, String(d)); } catch (e) { /* abaikan */ }
+    try { if (d === REMINDER_DAYS) settingRemove(REMINDER_INTERVAL_KEY); else settingSet(REMINDER_INTERVAL_KEY, String(d)); } catch (e) { /* abaikan */ }
     reminderSyncState();
     renderBackupNotifSettings();
     if (typeof renderBackupReminder === 'function') renderBackupReminder(loadData());

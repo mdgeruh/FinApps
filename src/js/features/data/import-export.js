@@ -52,7 +52,7 @@
 
   async function exportJson() {
     const data = loadData();
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals), categories: serializeCategoryConfig(categoryConfigOf(data)) || undefined, settings: settingsSnapshot() };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-' + exportUserPrefix() + '-' + todayStr() + '-' + nowTimeStr() + '.json';
 
@@ -261,6 +261,7 @@
           // Cuma akun baru, tanpa transaksi (mis. import saldo pinjaman online yang sudah berjalan).
           const ok = await showConfirm(`File ini berisi ${newAccountsCount} akun baru, tanpa transaksi.\n\nTambahkan akun-akun itu?`);
           if (!ok) { event.target.value = ''; return; }
+          categoryMergeImported(data, parsed && !Array.isArray(parsed) ? parsed.categories : null);
           mergeImportedBudgets(data, parsed);
           mergeImportedSubscriptions(data, parsed, idMap);
           mergeImportedEmergency(data, parsed);
@@ -306,6 +307,7 @@
         if (!ok) { event.target.value = ''; return; }
 
         data.txns = data.txns.concat(deduped);
+        categoryMergeImported(data, parsed && !Array.isArray(parsed) ? parsed.categories : null);
         mergeImportedBudgets(data, parsed);
         mergeImportedSubscriptions(data, parsed, idMap);
         mergeImportedEmergency(data, parsed);
@@ -507,7 +509,7 @@
   }
 
   async function autoBackupBeforeReset(data) {
-    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals) };
+    const payload = { exported_at: new Date().toISOString(), accounts: data.accounts, transaksi: data.txns, budgets: sanitizeBudgets(data.budgets), subscriptions: sanitizeSubscriptions(data.subscriptions), emergencyMonths: sanitizeEmergencyMonths(data.emergencyMonths), goals: sanitizeGoals(data.goals), categories: serializeCategoryConfig(categoryConfigOf(data)) || undefined, settings: settingsSnapshot() };
     const json = JSON.stringify(payload, null, 2);
     const filename = 'keuangan-backup-sebelum-reset-' + exportUserPrefix() + '-' + todayStr() + '-' + Date.now() + '.json';
     if (downloadsCap) {
@@ -561,7 +563,9 @@
         const backupOk = await autoBackupBeforeReset(loadData());
 
         const goalsHolder = { accounts: cleanAccounts, goals: [] }; mergeImportedGoals(goalsHolder, parsed, idMap);
-        saveData({ accounts: cleanAccounts, txns: cleanTxns, goals: goalsHolder.goals, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)), emergencyMonths: sanitizeEmergencyMonths(parsed && !Array.isArray(parsed) ? parsed.emergencyMonths : 0) });
+        const impCfg = sanitizeCategoryConfig(parsed && !Array.isArray(parsed) ? parsed.categories : null);   // anggaran kategori buatan sendiri harus lolos terhadap daftar dari file
+        saveData({ accounts: cleanAccounts, txns: cleanTxns, goals: goalsHolder.goals, budgets: sanitizeBudgets(parsed && !Array.isArray(parsed) ? parsed.budgets : null, impCfg), subscriptions: importSubscriptions([], parsed, idMap, cleanAccounts.map(a => a.id)), emergencyMonths: sanitizeEmergencyMonths(parsed && !Array.isArray(parsed) ? parsed.emergencyMonths : 0), categories: serializeCategoryConfig(impCfg) || undefined, settings: sanitizeSettings(parsed && !Array.isArray(parsed) ? parsed.settings : null) || undefined });
+        if (parsed && !Array.isArray(parsed) && parsed.settings) settingsApply(parsed.settings);
         state.activeFilter = 'all';
         state.activeTypeFilter = 'all';
         state.sortMode = 'date-desc';

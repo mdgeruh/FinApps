@@ -83,20 +83,20 @@
       background-attachment: fixed;
     }
     /* Wadah besar: kaca blur. Chip/tombol kecil: hanya translusen (tanpa blur) supaya tidak menimpa sudut bulat wadahnya */
-    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, #chart-group, .month-nav, .calc-card, .cat-list, .split-box, .cdate-panel, .desk-search, #list-section, .budget-card, .insight-card, .sheet-panel, .modal, .bottom-nav-wrap, .txn-thead) {
+    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, .profil-link, #chart-group, .acc-page-body, .month-nav, .calc-card, .cat-list, .split-box, .cdate-panel, .desk-search, #list-section, .budget-card, .insight-card, .sheet-panel, .modal, .bottom-nav-wrap, .txn-thead) {
       background: var(--g-card);
       -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
       border-color: var(--line);
       box-shadow: inset 0 1px 0 var(--g-hi), var(--g-shadow);
     }
-    :root[data-glass] :is(.lock-key, .help-btn, .palette-opt, .theme-opt, .io-btn, .da-row) {
+    :root[data-glass] :is(.lock-key, .help-btn, .palette-opt, .theme-opt, .io-btn, .da-row, .acc-back) {
       background: var(--g-card); border-color: var(--line); box-shadow: inset 0 1px 0 var(--g-hi);
     }
     /* Bersarang: wadah kaca di dalam wadah kaca tidak blur/bayangan lagi dan tidak punya latar persegi sendiri */
-    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, #list-section, #chart-group, .budget-card, .insight-card, .cat-list, .split-box, .calc-card, header, .sheet-panel, .modal) :is(.desk-search, .acc-card, .chart-card, .set-block, .profil-group, .budget-card, .insight-card, .cat-list, .split-box, .calc-card, .txn-thead) {
+    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, .profil-link, #list-section, #chart-group, .acc-page-body, .budget-card, .insight-card, .cat-list, .split-box, .calc-card, header, .sheet-panel, .modal) :is(.desk-search, .acc-card, .chart-card, .set-block, .profil-group, .budget-card, .insight-card, .cat-list, .split-box, .calc-card, .txn-thead) {
       -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; background: transparent;
     }
-    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, #list-section, #chart-group) { border-radius: 22px; }
+    :root[data-glass] :is(.acc-card, .chart-card, .set-block, .profil-group, #list-section, #chart-group, .acc-page-body) { border-radius: 22px; }
     /* Kartu status Profil memang tanpa bingkai (polos); jangan diberi kaca persegi */
     :root[data-glass] #profil-status.profil-status { -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; background: transparent; border: 0; }
     :root[data-glass] .balance-block {
@@ -817,6 +817,69 @@
   /* Export PDF laporan (window.print) */
   @page { size: A4; margin: 12mm 12mm 14mm; @bottom-center { content: counter(page) " / " counter(pages); font-size: 9px; color: #666; } }
   .print-only { display: none; }
+  /* ===== Halaman detail akun (v1.1.177): menggantikan lembar. Di HP/tablet kecil menggantikan daftar akun; di layar lebar (>= 1180px) jadi dua kolom (daftar kiri, detail kanan). ===== */
+  .acc-page { display: none; }
+  #tab-akun.detail-open .acc-page { display: block; }
+  .acc-page-head { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+  .acc-back { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  .acc-back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .acc-back:active { background: var(--paper-dim); }
+  .acc-back:focus-visible, .acc-page-title:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .acc-page-title { flex: 1; min-width: 0; margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink); overflow-wrap: anywhere; }
+  .acc-page-body { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 18px; }
+  .acc-tile.is-current { box-shadow: 0 0 0 2px var(--teal); }
+  @media (max-width: 1179px) {
+    #tab-akun.detail-open .accounts-section > :not(.sheet-overlay) { display: none !important; }
+  }
+  @media (min-width: 1180px) {
+    #tab-akun.active.detail-open { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 24px; align-items: start; }
+    #tab-akun.detail-open .accounts-section { position: sticky; top: calc(var(--desk-top, 84px) + 12px); max-height: calc(100vh - var(--desk-top, 84px) - 28px); overflow-y: auto; padding-right: 4px; }
+    #tab-akun.detail-open .acc-stats, #tab-akun.detail-open #spark-period { display: none !important; }
+    #tab-akun.detail-open #accounts-scroll { column-count: 1; }
+    .acc-page-title { font-size: 26px; }
+    .acc-page-body { padding: 20px 22px 22px; }
+  }
+
+  /* ===== Kelola kategori & label (v1.1.178): halaman di dalam tab Profil ===== */
+  .profil-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 14px 16px; min-height: 52px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); cursor: pointer; text-align: left; font-family: inherit; break-inside: avoid; }
+  .profil-link:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+  .profil-link .profil-group-title small { font-size: 12px; font-weight: 400; color: var(--ink-soft); margin-top: 2px; }
+  .profil-subpage { display: none; }
+  #tab-profil.sub-open > :not(.profil-subpage), #tab-profil.sub-open > .profil-subpage:not(.open) { display: none !important; }
+  #tab-profil.sub-open > .profil-subpage.open { display: block; }
+  #tab-profil.active.sub-open { column-count: 1; }
+  .profil-page-body > .profil-sec + .profil-sec { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+  .kelola-add { display: flex; gap: 8px; }
+  .kelola-add input { flex: 1; min-width: 0; }
+  .kelola-add .submit-btn { flex: none; width: auto; padding: 0 18px; margin: 0; }
+  .kelola-group { margin: 16px 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-soft); }
+  .kelola-row { border-bottom: 1px solid var(--line); }
+  .kelola-row:last-child { border-bottom: 0; }
+  .kelola-head { display: grid; grid-template-columns: 1fr; gap: 3px; width: 100%; padding: 12px 2px; min-height: 48px; background: none; border: 0; color: var(--ink); text-align: left; cursor: pointer; font-family: inherit; }
+  .kelola-head:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; border-radius: 8px; }
+  .kelola-name { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+  .kelola-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .kelola-badges:empty { display: none; }
+  .kelola-meta { font-size: 12.5px; color: var(--ink-soft); }
+  .kelola-tag { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .kelola-tag.lock { color: var(--amber-ink); border-color: var(--amber); }
+  .kelola-tag.warn { color: var(--rust-ink); border-color: var(--rust-ink); }
+  .kelola-tag.dim { background: var(--paper-dim); }
+  .kelola-actions { padding: 2px 2px 14px; }
+  .kelola-actions input[type=text], .kelola-actions select { width: 100%; }
+  .kelola-undo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--teal-soft); color: var(--teal-ink); font-size: 13px; }
+  .kelola-undo .io-btn { flex: none; }
+  @media (min-width: 1180px) {
+    #kelola-list { column-count: 2; column-gap: 28px; }
+    .kelola-row { break-inside: avoid; }
+  }
+
+  @media (min-width: 1180px) {
+    .profil-page-body { column-count: 2; column-gap: 40px; }
+    .profil-page-body > .profil-sec { break-inside: avoid; }
+    .profil-page-body > .profil-sec + .profil-sec { border-top: 0; margin-top: 0; padding-top: 0; margin-bottom: 20px; }
+  }
+
   @media print {
     /* selalu terang di kertas, walau app sedang mode gelap */
     :root, :root:not([data-theme="light"]), :root[data-theme="dark"], :root[data-palette], :root[data-accent] {

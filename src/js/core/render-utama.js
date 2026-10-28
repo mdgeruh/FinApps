@@ -3,7 +3,7 @@
   // ============================================================
   // Versi app: samakan dengan nomor di nama file (keuangan_pribadi-v1_1_NNN.html) tiap ada revisi.
   const APP_NAME = 'Keuangan Pribadi';
-  const APP_VERSION = 'v1.1.176';
+  const APP_VERSION = 'v1.1.180';
   const APP_BUILD = '14 Okt 2026';
   // Versi tampil di kartu paling atas tab Profil (renderProfilTab). #app-footer sengaja kosong: hanya jangkar untuk status sinkron.
 
@@ -24,6 +24,7 @@
     // transaksi dari riwayat akun langsung terlihat tanpa harus tutup-buka lagi.
     const accDetailEl = $('acc-detail');
     if (detailAccountId && accDetailEl && accDetailEl.classList.contains('open')) openAccountDetail(detailAccountId);
+    if (typeof kelola !== 'undefined' && kelola.open) renderKelolaPage();
 
     // Sama untuk detail titipan (saldo, status, riwayat, tombol Lunasi) — dulu tidak ikut
     // disegarkan sehingga hapus/edit transaksi dari riwayat titipan terlihat stale.

@@ -4,11 +4,35 @@
   // ============================================================
 
   let detailAccountId = null;
+  let accListScrollY = 0;   // posisi gulir daftar akun sebelum detail dibuka; dikembalikan saat Kembali
+
+  // Detail akun adalah halaman di dalam tab Akun (v1.1.177), bukan lembar. Tiap kartu akun yang sedang dibuka diberi penanda.
+  function markCurrentAccountTile(id) {
+    document.querySelectorAll('#accounts-scroll [data-act="openAccountDetail"]').forEach(el => {
+      const on = id !== null && id !== undefined && el.getAttribute('data-a0') === id;
+      el.classList.toggle('is-current', on);
+      if (on) el.setAttribute('aria-current', 'true'); else el.removeAttribute('aria-current');
+    });
+  }
+
+  // Sembunyikan halaman tanpa menyentuh alamat/riwayat. Dipakai closeAccountDetail dan setTab (pindah ke tab lain).
+  function hideAccountPage() {
+    const page = $('acc-detail'), tab = $('tab-akun');
+    if (page) page.classList.remove('open');
+    if (tab) tab.classList.remove('detail-open');
+    detailAccountId = null;
+    markCurrentAccountTile(null);
+  }
 
   function openAccountDetail(id) {
     const data = loadData();
     const acc = data.accounts.find(a => a.id === id);
     if (!acc) return;
+    const wasOpen = detailAccountId !== null;
+    const switching = wasOpen && detailAccountId !== id;
+    let tabChanged = false;
+    if (currentTabName() !== 'akun') { setTab('akun', true); tabChanged = true; }   // true: alamat ditulis sekali di bawah (#/akun/<id>), tanpa entri #/akun perantara
+    if (!wasOpen) accListScrollY = tabChanged ? 0 : (window.scrollY || 0);
     detailAccountId = id;
 
     const bal = accountBalance(data, id);
@@ -267,12 +291,22 @@
     }
 
     $('acc-detail').classList.add('open');
-    routeOnDetailOpen(id);   // src/js/core/rute.js
+    $('tab-akun').classList.add('detail-open');
+    markCurrentAccountTile(id);
+    if (!wasOpen || switching) {   // buka baru atau ganti akun: mulai dari atas; segarkan data (wasOpen && sama) tidak menggulir
+      try { window.scrollTo(0, 0); const h = $('acc-detail-name'); if (h) h.focus({ preventScroll: true }); } catch (e) { /* abaikan */ }
+    }
+    routeOnDetailOpen(id, wasOpen);   // src/js/core/rute.js: ganti akun di halaman yang sama = ganti entri riwayat, bukan menumpuk
   }
 
   function closeAccountDetail() {
     const wasOpen = detailAccountId !== null;
-    $('acc-detail').classList.remove('open');
-    detailAccountId = null;
-    if (wasOpen) routeOnDetailClose();   // src/js/core/rute.js
+    hideAccountPage();
+    if (wasOpen) {
+      const y = accListScrollY;
+      // Dua kali: sekali segera, sekali setelah pemulihan gulir bawaan browser (popstate) lewat, supaya posisi daftar akurat.
+      const restore = () => { if (detailAccountId === null && currentTabName() === 'akun') window.scrollTo(0, y); };
+      try { requestAnimationFrame(restore); setTimeout(restore, 90); } catch (e) { /* abaikan */ }
+      routeOnDetailClose();   // src/js/core/rute.js
+    }
   }

@@ -185,7 +185,10 @@
     showIoMsg('Nama tersimpan.', 'ok', 'profil-msg');
   }
 
-  function setTab(name) {
+  function setTab(name, silentRoute) {
+    // Detail akun adalah halaman di dalam tab Akun: pindah tab menutupnya (tanpa menyentuh alamat; alamat ditulis di bawah).
+    try { if (name !== 'akun' && detailAccountId !== null) hideAccountPage(); } catch (e) { /* belum dimuat */ }
+    try { if (name !== 'profil' && currentProfilSub()) hideProfilSub(); } catch (e) { /* belum dimuat */ }
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     const balanceBlock = $('balance-block');
@@ -197,7 +200,7 @@
     // Tab ini belum digambar ulang sejak data terakhir berubah -> gambar sekarang,
     // pas dibuka (bukan tiap kali render() dipanggil dari tab lain).
     if (dirtyTabs.has(name)) renderTabContent(name);
-    routeOnTabChange(name);   // src/js/core/rute.js: alamat mengikuti tab
+    if (!silentRoute) routeOnTabChange(name);   // src/js/core/rute.js: alamat mengikuti tab (silentRoute: pemanggil menulis alamatnya sendiri)
   }
 
   const THEME_KEY = 'kp_theme';
@@ -237,7 +240,7 @@
   }
   function setPalette(id) {
     id = cleanPalette(id);
-    try { if (id === 'hutan') localStorage.removeItem(PALETTE_KEY); else localStorage.setItem(PALETTE_KEY, id); } catch (e) { /* abaikan */ }
+    try { if (id === 'hutan') settingRemove(PALETTE_KEY); else settingSet(PALETTE_KEY, id); } catch (e) { /* abaikan */ }
     applyPalette(id);
   }
   // Efek kaca (v1.1.176): sakelar terpisah dari palet, berlaku di semua palet. Atribut data-glass="on" di <html>.
@@ -248,7 +251,7 @@
   }
   function toggleGlass() {
     const on = !!(this && this.checked);
-    try { if (on) localStorage.setItem(GLASS_KEY, '1'); else localStorage.removeItem(GLASS_KEY); } catch (e) { /* abaikan */ }
+    try { if (on) settingSet(GLASS_KEY, '1'); else settingRemove(GLASS_KEY); } catch (e) { /* abaikan */ }
     applyGlass(on);
   }
   function currentPalette() { try { return cleanPalette(localStorage.getItem(PALETTE_KEY)); } catch (e) { return 'hutan'; } }
@@ -274,12 +277,12 @@
   }
   function setAccent(id) {
     id = cleanAccent(id);
-    try { if (id === 'hijau') localStorage.removeItem(ACCENT_KEY); else localStorage.setItem(ACCENT_KEY, id); } catch (e) { /* abaikan */ }
+    try { if (id === 'hijau') settingRemove(ACCENT_KEY); else settingSet(ACCENT_KEY, id); } catch (e) { /* abaikan */ }
     applyAccent(id);
   }
   function setThemeMode(mode) {
     mode = THEME_LABELS[mode] ? mode : 'system';
-    try { localStorage.setItem(THEME_KEY, mode); } catch (e) { /* abaikan */ }
+    try { settingSet(THEME_KEY, mode); } catch (e) { /* abaikan */ }
     applyTheme(mode);
   }
   // Tombol pilihan mode dan warna di tab Profil (Preferensi > Tampilan).
@@ -303,7 +306,7 @@
     let current = 'system';
     try { current = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
     const next = order[(order.indexOf(current) + 1) % order.length];
-    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+    try { settingSet(THEME_KEY, next); } catch (e) {}
     applyTheme(next);
     renderThemeSettings();
   }
@@ -337,7 +340,7 @@
     try { pal = localStorage.getItem(PALETTE_KEY) || 'hutan'; } catch (e) {}
     if (pal === 'kaca') {   // palet Kaca lama (v1.1.173-175) -> palet Senja + efek kaca
       pal = 'senja';
-      try { localStorage.setItem(PALETTE_KEY, 'senja'); localStorage.setItem(GLASS_KEY, '1'); } catch (e) { /* abaikan */ }
+      try { localStorage.setItem(PALETTE_KEY, 'senja'); localStorage.setItem(GLASS_KEY, '1');  /* langsung: pengaturan-sync.js belum dimuat */ } catch (e) { /* abaikan */ }
     }
     applyGlass(currentGlass());
     applyPalette(pal);

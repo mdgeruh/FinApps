@@ -7,13 +7,18 @@
   const BUDGET_WARN_PCT = 80;
   const BUDGET_EXCLUDED = ['Cicilan/utang', 'Penyesuaian saldo']; // sudah tercatat sebagai arus utang, bukan pengeluaran
 
-  function budgetCategories() { return CATEGORIES.keluar.filter(c => BUDGET_EXCLUDED.indexOf(c) < 0); }
+  function budgetCategories(cfg) { return categoryAll('keluar', cfg).filter(c => BUDGET_EXCLUDED.indexOf(c) < 0); }   // semua, termasuk yang disembunyikan (validasi)
+  // Untuk formulir: kategori yang tampil, ditambah yang disembunyikan tetapi masih punya anggaran (supaya tidak hilang saat disimpan).
+  function budgetFormCategories(budgets) {
+    const vis = categoryList('keluar');
+    return budgetCategories().filter(c => vis.indexOf(c) >= 0 || (budgets && budgets[c] !== undefined));
+  }
 
   // Rapikan isi budgets dari sumber apa pun (import/sync): hanya kategori keluar yang dikenal, nominal > 0, 2 desimal.
-  function sanitizeBudgets(raw) {
+  function sanitizeBudgets(raw, cfg) {
     const out = {};
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
-    budgetCategories().forEach(c => {
+    budgetCategories(cfg).forEach(c => {
       const v = raw[c];
       if (typeof v === 'number' && isFinite(v) && v > 0 && v < 1e13) out[c] = roundMoney(v);
     });
@@ -83,7 +88,7 @@
 
   function openBudgetForm() {
     const budgets = sanitizeBudgets(loadData().budgets);
-    $('budget-form-list').innerHTML = budgetCategories().map((c, i) =>
+    $('budget-form-list').innerHTML = budgetFormCategories(budgets).map((c, i) =>
       `<label class="budget-field"><span class="field-label">${escapeHtml(c)}</span>
         <input type="number" data-money="int" inputmode="numeric" min="0" step="1" placeholder="Tanpa batas" data-budget-cat="${escapeHtml(c)}" value="${budgets[c] !== undefined ? budgets[c] : ''}" aria-label="Anggaran ${escapeHtml(c)}"></label>`).join('');
     $('budget-form').classList.add('open');

@@ -136,7 +136,7 @@
     try { raw = JSON.parse(localStorage.getItem(ACC_LAYOUT_KEY) || 'null'); } catch (e) { raw = null; }
     return cleanAccountLayout(raw, data || loadData());
   }
-  function saveAccLayout(layout) { try { localStorage.setItem(ACC_LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* preferensi tampilan, tidak kritis */ } }
+  function saveAccLayout(layout) { try { settingSet(ACC_LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* preferensi tampilan, tidak kritis */ } }
   function toggleAccOrderMode() {
     state.accOrderMode = !state.accOrderMode;
     if (state.accOrderMode) resetAccFilters(); else refreshAccounts();   // saat mengatur urutan, filter dimatikan supaya semua akun tampil
@@ -160,7 +160,7 @@
   function toggleAccGroup(type) {
     if (type === '_arsip') accCollapsed[type] = (accCollapsed[type] === false);   // bagian arsip terlipat bawaan: false = dibuka
     else accCollapsed[type] = !accCollapsed[type];
-    try { localStorage.setItem(ACC_GROUP_KEY, JSON.stringify(accCollapsed)); } catch (e) {}
+    try { settingSet(ACC_GROUP_KEY, JSON.stringify(accCollapsed)); } catch (e) {}
     const g = document.querySelector('.acc-group[data-type="' + type + '"]');
     if (g) {
       const isCol = type === '_arsip' ? accCollapsed[type] !== false : !!accCollapsed[type];
@@ -181,7 +181,7 @@
   function sparkPoints(days) { return Math.min(16, days + 1); }
   function setSparkPeriod(d) {
     if (SPARK_PERIODS.indexOf(d) < 0) return;
-    try { localStorage.setItem(SPARK_PERIOD_KEY, String(d)); } catch (e) { /* abaikan */ }
+    try { settingSet(SPARK_PERIOD_KEY, String(d)); } catch (e) { /* abaikan */ }
     render();
   }
   function sparkPeriodChipsHtml() {
@@ -316,6 +316,7 @@
         </div>`;
     }
     container.innerHTML = html + archHtml;
+    try { markCurrentAccountTile(detailAccountId); } catch (e) { /* detail akun belum dimuat */ }
   }
 
   // A7: baris pencarian + chip filter di atas daftar akun. Tampil bila akun >= 5 atau sedang memfilter.

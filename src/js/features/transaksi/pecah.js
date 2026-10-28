@@ -79,7 +79,7 @@
   }
   // Pilihan kategori per baris: "Sama dengan kategori di atas" (kosong) lalu semua kategori jenis ini. Nilai terpilih dipertahankan.
   function populateSplitCats() {
-    const list = CATEGORIES[state.currentType] || [];
+    const list = categoryList(state.currentType) || [];
     for (let i = 0; i < SPLIT_MAX_PARTS; i++) {
       const s = $('split-cat-' + i); if (!s) continue;
       const cur = s.value;
@@ -239,6 +239,7 @@
     setType(f.type);
     updateTypeAvailability();
     const catSel = $('category-select'), catCustomEl = $('category-custom-input');
+    if (typeof ensureCategoryOption === 'function') ensureCategoryOption(catSel, state.currentType, f.category);
     if (f.category && Array.from(catSel.options).some(o => o.value === f.category)) { catSel.value = f.category; catCustomEl.value = ''; }
     else if (f.category) { catSel.value = CATEGORY_CUSTOM; catCustomEl.value = f.category; }
     onCategoryChange();
