@@ -6,6 +6,42 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.180 — 29 Okt 2026
+
+### Ditambah
+- **Pengaturan ikut sinkron ke Supabase.** Tampilan (mode, palet, warna aksen, efek kaca), nama profil, cegah saldo minus, kata kunci kategori otomatis, kartu Ringkasan (tampil dan urutan), ambang perbandingan, jarak pengingat cadangan, periode grafik mini, serta tata letak dan lipatan daftar akun kini tersimpan di dalam data (`settings`) dan ikut terkirim ke cloud. Masuk dari perangkat lain, pengaturan yang sama langsung dipakai. Tidak ada perubahan tabel Supabase.
+- Kategori buatan sendiri, nama yang diubah, dan kategori yang disembunyikan sudah ikut sinkron sejak v1.1.178 (ada di dalam data).
+- Ikut di cadangan JSON: ekspor menyertakan pengaturan, dan "ganti semua dengan isi file" memulihkannya.
+- Sengaja tidak disinkronkan (khusus perangkat atau sensitif): menu samping, PIN dan kunci app, izin notifikasi, jadwal tunda cadangan, info sinkron.
+- Tanpa akun sinkron tidak ada yang berubah: pengaturan tetap tersimpan di perangkat. Pengaturan yang diubah sebelum masuk akun disalin ke cloud saat masuk.
+
+## v1.1.179 — 29 Okt 2026
+
+### Diubah
+- **Preferensi dan Alat kini halaman sendiri** di tab Profil, dengan alur yang sama seperti Kelola kategori & label: ketuk barisnya untuk membuka halaman, tombol Kembali (‹), Esc, atau tombol Kembali perangkat untuk menutup, dan posisi gulir Profil kembali seperti semula. Alamat `#/profil/pref` dan `#/profil/alat` bisa dibagikan atau di-bookmark.
+- Isinya tidak berubah (tampilan dan efek kaca, nama profil, cegah saldo minus, kata kunci, kartu Ringkasan; export/import, data contoh). Di layar lebar (mulai 1180px) isi halaman tersusun dua kolom.
+- Keamanan & data dan Zona berbahaya tetap berupa grup lipat di Profil.
+
+## v1.1.178 — 29 Okt 2026
+
+### Ditambah
+- **Halaman Kelola kategori & label** (Profil, Kelola kategori & label; alamat `#/profil/kelola`). Dua tab:
+  - **Kategori** per jenis (Pengeluaran, Pemasukan, Transfer): tambah kategori sendiri, ubah nama, gabung ke kategori lain, sembunyikan dari pilihan (riwayat tetap utuh), hapus kategori buatan sendiri. Tiap baris menampilkan jumlah dan total transaksi, serta label Bawaan, Dikunci, Disembunyikan.
+  - **Label:** ubah nama (nama yang sama menggabungkan), hapus. Menggantikan lembar Kelola label lama; chip "Kelola label" di Transaksi membuka tab ini.
+- Ubah nama dan gabung ikut memperbarui transaksi, transaksi berulang, anggaran (anggaran yang bertabrakan dijumlahkan) dan kata kunci kategori otomatis. Ada ringkasan sebelum menggabung/menghapus dan tombol **Urungkan** untuk perubahan terakhir.
+- Kategori yang dipakai perhitungan (Lainnya, Penyesuaian saldo, Cicilan/utang, bunga, admin pinjaman, dan sejenisnya) dikunci agar tidak merusak laporan.
+- Nama kategori yang diketik bebas lewat "Lainnya" muncul sebagai **Belum terdaftar** dan bisa dimasukkan ke daftar.
+- Pengaturan kategori tersimpan di dalam data (ikut cadangan JSON, ekspor/impor dan sinkron), bukan di perangkat saja.
+
+## v1.1.177 — 29 Okt 2026
+
+### Diubah
+- **Detail akun kini halaman, bukan lembar.** Ketuk akun membuka halaman di dalam tab Akun dengan tombol Kembali (‹) dan judul akun. Isinya sama: saldo, jadwal angsuran, tagihan kartu, nilai aset, cocokkan saldo, bayar, riwayat.
+- **HP dan layar sempit:** halaman menggantikan daftar akun; Kembali (tombol, Esc, atau tombol Kembali perangkat) mengembalikan daftar di posisi gulir semula.
+- **Layar lebar (mulai 1180px):** dua kolom. Daftar akun tetap di kiri (ringkas, satu kolom, akun yang dibuka diberi bingkai), detail di kanan. Mengetuk akun lain mengganti detail tanpa menumpuk riwayat Kembali.
+- Membuka akun dari Ringkasan (mis. Perlu perhatian) pindah ke tab Akun; Kembali langsung ke Ringkasan. Pindah tab saat detail terbuka menutup halamannya.
+- Edit akun tidak lagi menutup halaman detail; halaman ikut disegarkan setelah disimpan. Alamat `#/akun/<id>` tetap sama sehingga tautan lama berfungsi.
+
 ## v1.1.176 — 23 Okt 2026
 
 ### Diubah
