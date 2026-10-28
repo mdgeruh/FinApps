@@ -392,6 +392,7 @@
   function syncApplyCloud(row) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(row.data));
     syncWriteMeta({ uid: sync.uid, version: row.version, dirty: false });
+    if (row.data && row.data.settings) settingsApply(row.data.settings);   // pengaturan dari cloud (tema, kata kunci, dll.)
   }
 
   // Mengembalikan true kalau data lokal diganti dengan data cloud (pemanggil perlu render ulang).
@@ -674,6 +675,7 @@
     let replaced = false;
     try {
       replaced = await syncReconcile();
+      if (!replaced) { try { settingsMirror(); } catch (e) { /* tidak kritis */ } }   // salin pengaturan perangkat ke data (terkirim bersama)
       const m = syncReadMeta();
       if (m && m.dirty) syncSchedulePush(); else syncSetStatus('ok');
     } catch (e) {
