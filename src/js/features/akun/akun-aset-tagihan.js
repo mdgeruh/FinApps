@@ -493,8 +493,7 @@
   function editAccountFromDetail() {
     const id = detailAccountId;
     if (!id) return;
-    closeAccountDetail();
-    startEditAccount(id);
+    startEditAccount(id);   // halaman detail tetap terbuka di belakang form, dan ikut disegarkan setelah disimpan
   }
 
   async function toggleArchiveFromDetail() {
