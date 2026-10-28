@@ -5,6 +5,7 @@
   // menutup detail akun lalu pindah tab sebelumnya, tautan bisa dibagikan/di-bookmark.
   // ============================================================
   const ROUTE_BASE_TITLE = 'Keuangan Pribadi';
+  const PROFIL_SUB_TITLES = { kelola: 'Kelola kategori & label', pref: 'Preferensi', alat: 'Alat' };   // halaman di dalam tab Profil: #/profil/<nama>
   let routeApplying = false;        // true saat alamat diterapkan ke layar: jangan tulis balik ke alamat
 
   // '#/akun/abc' -> { tab:'akun', accId:'abc' }; tidak dikenal -> null
@@ -12,34 +13,50 @@
     const m = /^#\/([a-z]+)(?:\/([^/?#]+))?\/?$/.exec(String(hash || ''));
     if (!m || TAB_NAMES.indexOf(m[1]) < 0) return null;
     let id = null;
+    if (m[2] && m[1] === 'profil') return Object.prototype.hasOwnProperty.call(PROFIL_SUB_TITLES, m[2]) ? { tab: 'profil', accId: null, sub: m[2] } : null;
     if (m[2]) { if (m[1] !== 'akun') return null; try { id = decodeURIComponent(m[2]); } catch (e) { return null; } }
     return { tab: m[1], accId: id };
   }
 
-  function buildRoute(tab, accId) {
+  function buildRoute(tab, accId, sub) {
+    if (tab === 'profil' && sub && Object.prototype.hasOwnProperty.call(PROFIL_SUB_TITLES, sub)) return '#/profil/' + sub;
     return '#/' + tab + (tab === 'akun' && accId ? '/' + encodeURIComponent(accId) : '');
   }
 
-  function routeTitle(tab, accId) {
+  function routeTitle(tab, accId, sub) {
     let name = TAB_TITLES[tab] || '';
+    if (sub && PROFIL_SUB_TITLES[sub]) name = PROFIL_SUB_TITLES[sub];
     if (accId) { try { const a = loadData().accounts.find(x => x.id === accId); if (a) name = a.name; } catch (e) { /* abaikan */ } }
     return (name && tab !== 'ringkasan' ? name + ' · ' : '') + ROUTE_BASE_TITLE;
   }
 
   // Tulis alamat saat ini. push=true menambah riwayat (pindah tab/buka detail), false mengganti (mis. tutup detail dari tombol).
-  function writeRoute(tab, accId, push) {
+  function writeRoute(tab, accId, push, sub) {
     if (routeApplying) return;
-    const hash = buildRoute(tab, accId);
+    const hash = buildRoute(tab, accId, sub);
     try {
-      document.title = routeTitle(tab, accId);
+      document.title = routeTitle(tab, accId, sub);
       if (location.hash === hash) return;
-      const st = { kp: 1, detail: !!accId };
+      const st = { kp: 1, detail: !!accId, kelola: !!sub };   // 'kelola' = halaman bagian Profil mana pun
       if (push) history.pushState(st, '', hash); else history.replaceState(st, '', hash);
     } catch (e) { /* file:// atau iframe tertentu menolak history API: app tetap jalan tanpa rute */ }
   }
 
   function routeOnTabChange(name) { writeRoute(name, null, true); }
-  function routeOnDetailOpen(id) { writeRoute('akun', id, true); }
+  function routeOnDetailOpen(id, replace) { writeRoute('akun', id, !replace); }
+  function routeOnSubOpen(sub, replace) { writeRoute('profil', null, !replace, sub); }
+  function routeOnKelolaOpen(replace) { routeOnSubOpen('kelola', replace); }
+  function routeOnKelolaClose() { routeOnSubClose(); }
+  function routeOnSubClose() {
+    if (routeApplying) return;
+    setTimeout(() => {
+      try {
+        if (currentProfilSub() || sheetStack.length) return;
+        if (history.state && history.state.kp && history.state.kelola) { history.back(); return; }
+      } catch (e) { /* abaikan */ }
+      writeRoute('profil', null, false);
+    }, 0);
+  }
   // Tutup detail lewat tombol/backdrop: bila entri riwayat itu kita yang buat, mundur satu langkah (tidak menumpuk riwayat).
   function routeOnDetailClose() {
     if (routeApplying) return;
@@ -63,6 +80,7 @@
         if (location.hash) { try { history.replaceState({ kp: 1 }, '', buildRoute('ringkasan')); } catch (e) { /* abaikan */ } }
         if (currentTabName() !== 'ringkasan') setTab('ringkasan');
         if (detailAccountId) closeAccountDetail();
+        if (currentProfilSub()) closeProfilSub();
         document.title = routeTitle('ringkasan');
         return;
       }
@@ -75,9 +93,20 @@
       } else if (detailAccountId) {
         closeAccountDetail();
       }
-      document.title = routeTitle(r.tab, detailAccountId);
+      if (r.sub) { if (currentProfilSub() !== r.sub) openProfilSub(r.sub); }
+      else if (currentProfilSub()) closeProfilSub();
+      document.title = routeTitle(r.tab, detailAccountId, r.sub);
     } finally { routeApplying = false; }
   }
+
+  // Esc menutup halaman detail akun bila tidak ada lembar/form terbuka dan fokus bukan di kolom isian.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || (detailAccountId === null && !currentProfilSub())) return;
+    if (document.querySelector('.sheet-overlay.open')) return;
+    const t = e.target, tag = t && t.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (detailAccountId !== null) closeAccountDetail(); else closeProfilSub();
+  });
 
   window.addEventListener('hashchange', applyRoute);   // hash diubah manual di bilah alamat
 
@@ -96,7 +125,7 @@
   function onSheetOpened(id) {
     if (sheetStack.indexOf(id) >= 0) return;
     sheetStack.push(id);
-    try { history.pushState({ kp: 1, sheet: id, detail: !!(history.state && history.state.detail) }, '', location.href); } catch (e) { /* abaikan */ }
+    try { history.pushState({ kp: 1, sheet: id, detail: !!(history.state && history.state.detail), kelola: !!(history.state && history.state.kelola) }, '', location.href); } catch (e) { /* abaikan */ }
   }
 
   // Jumlah history.back() yang dipicu app sendiri (menutup sheet) dan popstate-nya belum tiba. Popstate semacam itu tidak boleh
@@ -121,7 +150,7 @@
     const el = document.getElementById(top);
     if (el && el.classList.contains('open')) {  // penutupan ditolak/ditunda (mis. konfirmasi buang perubahan): kembalikan entri riwayat
       sheetStack.push(top);
-      try { history.pushState({ kp: 1, sheet: top, detail: !!(history.state && history.state.detail) }, '', location.href); } catch (e) { /* abaikan */ }
+      try { history.pushState({ kp: 1, sheet: top, detail: !!(history.state && history.state.detail), kelola: !!(history.state && history.state.kelola) }, '', location.href); } catch (e) { /* abaikan */ }
     }
     return true;
   }

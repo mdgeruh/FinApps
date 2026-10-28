@@ -132,7 +132,7 @@
   }
   function setOwnerName(name) {
     const v = (name || '').trim() || OWNER_NAME_DEFAULT;
-    try { localStorage.setItem(OWNER_NAME_KEY, v); } catch (e) { /* tidak kritis */ }
+    try { settingSet(OWNER_NAME_KEY, v); } catch (e) { /* tidak kritis */ }
     return v;
   }
 
