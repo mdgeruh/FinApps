@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.184', d: '25 Nov 2026', items: [
+      'Header di layar lebar tidak lagi berupa kotak: kini bar penuh selebar layar, rapi juga di efek kaca. Di lebar 1024 sampai 1279 px kartu saldo hijau tidak lagi masuk ke header; diganti tiga kartu angka.'] },
+    { v: 'v1.1.183', d: '25 Nov 2026', items: [
+      'Ikon aplikasi baru (dompet hijau) untuk pintasan saat dipasang dari browser, termasuk ikon layar utama Android dan iPhone.'] },
     { v: 'v1.1.182', d: '25 Nov 2026', items: [
       'Penataan berkas: tampilan app tidak berubah.'] },
     { v: 'v1.1.181', d: '25 Nov 2026', items: [
