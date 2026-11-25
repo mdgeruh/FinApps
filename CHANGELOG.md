@@ -6,6 +6,19 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.191 — 25 Nov 2026
+
+### Ditambah
+- **Kategori naik/turun di kartu "Kategori bulan ini" (roadmap S4).** Tiap baris legenda yang bergerak berarti dibanding bulan lalu mendapat lencana kecil: `▲ 32%`, `▼ 25%`, atau `baru` (kategori yang bulan lalu tidak ada). Pembandingnya bulan lalu **sampai tanggal yang sama** (aturan `laporanCompareRanges('bulanan', …)`, sama dengan Laporan dan kartu Bulan ini), tanpa bayar utang dan penyesuaian saldo.
+  - Ambang memakai pengaturan Laporan (`cmpThresholds()`: bawaan ≥20% dan ≥Rp50.000), jadi kategori kecil atau berubah sedikit tidak diberi tanda.
+  - Warna mengikuti jenis: pengeluaran naik = merah, turun = hijau; pemasukan sebaliknya. Tidak hanya warna: ada ▲ ▼ dan teks, serta dibacakan di `aria-label` baris legenda. Tab **Transfer** tidak diberi penanda.
+  - Catatan satu baris di bawah legenda (`#category-mover-note`) menjelaskan pembandingnya; hilang bila tak ada penanda. Kategori yang hanya ada bulan lalu (hilang bulan ini) tidak tampil karena tidak ada di legenda; tetap terlihat di Laporan.
+- Fungsi murni baru `categoryMoverMarks(txns, type, today, th)` di `js/bandingkan.js`; `drawPieChart` menerima `item.badge`. Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.191. `docs/SUMMARY.md`: S4 ditandai selesai; `README.md` diperbarui.
+
+### Tes
+- Tes baru `Kategori naik/turun (S4)`: penanda naik/turun/baru, ambang, pemotongan sampai tanggal sama, nada merah/hijau per jenis, Transfer kosong, serta pemasangan di render dan markup.
+
 ## v1.1.190 — 25 Nov 2026
 
 ### Ditambah

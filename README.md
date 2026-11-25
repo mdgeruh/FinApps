@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.190** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.191** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status, todolist, hasil uji).
 
@@ -253,7 +253,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config
 
 - Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
 - Akun forex USD/cent dengan kurs
-- Lanjutan tab Ringkasan (S4–S6; S1 selesai v1.1.188, S3 v1.1.189, S2 v1.1.190): kategori naik/turun, estimasi bulan lunas utang, label bulan opsional
+- Lanjutan tab Ringkasan (S5–S6; S1 selesai v1.1.188, S3 v1.1.189, S2 v1.1.190, S4 v1.1.191 lencana ▲/▼/baru di kartu Kategori): estimasi bulan lunas utang, label bulan opsional
 
 Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](docs/SUMMARY.md).
 
