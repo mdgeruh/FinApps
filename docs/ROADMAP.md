@@ -1,6 +1,6 @@
 # Roadmap: Keuangan Pribadi
 
-Rencana pekerjaan yang **belum selesai**, per **v1.1.191** (25 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
+Rencana pekerjaan yang **belum selesai**, per **v1.1.192** (25 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
 
 Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kategori: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
@@ -9,14 +9,13 @@ Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kate
 - Tiap batch naik satu versi dan memperbarui `APP_VERSION`, `CACHE_VERSION` di `sw.js`, CHANGELOG, riwayat `?` (`js/changelog.js`), README, SUMMARY/ROADMAP, serta menambah tes.
 - Tiap rilis dikirim sebagai dua zip: **full** (seluruh proyek) dan **update** (hanya berkas yang berubah).
 
-## 1. Berikutnya: lanjutan tab Ringkasan (S5–S6)
-S1–S4 sudah selesai (lihat arsip). Urutan yang disarankan: S5 → S6.
+## 1. Berikutnya: lanjutan tab Ringkasan (S6)
+S1–S5 sudah selesai (lihat arsip). Tinggal S6.
 
-- [ ] **S5 [F] Estimasi bulan lunas di kartu Tren total utang:** perkiraan bulan lunas bila cicilan berjalan seperti sekarang.
 - [ ] **S6 [F] Label bulan opsional di kurva Tren dan Utang:** dihapus di v1.1.187 supaya segaya Kekayaan/Cashflow; sediakan sebagai pilihan bila terasa terlalu polos.
 
 ## 2. Kualitas: perapian tes
-- [ ] [Q] **Perbaiki muatan berkas di `tests/run.js`.** Hasil `node tests/run.js` per 25 Nov 2026: 323 lulus, **47 gagal**, jumlah gagal sama persis di v1.1.190 dan v1.1.191 (bukan akibat rilis terakhir). 41 di antaranya galat `categoryAll is not defined`: daftar berkas yang dimuat tes belum menyertakan `js/kategori-data.js` (hasil penataan ulang berkas, v1.1.169 dan v1.1.182). Enam sisanya perlu ditelaah satu per satu: pemeriksaan versi dan tanggal build, kelompok lipat Profil (`profil-g-*`), jumlah berkas JS (43 ≠ 39), kelola label memuat langganan, pemeriksaan `html`, dan detail akun. Belum diketahui mana yang salah tes dan mana yang salah kode.
+- [ ] [Q] **Perbaiki muatan berkas di `tests/run.js`.** Hasil `node tests/run.js` per 25 Nov 2026: 327 lulus, **47 gagal**, jumlah gagal sama persis di v1.1.190 sampai v1.1.192 (bukan akibat rilis terakhir). 41 di antaranya galat `categoryAll is not defined`: daftar berkas yang dimuat tes belum menyertakan `js/kategori-data.js` (hasil penataan ulang berkas, v1.1.169 dan v1.1.182). Enam sisanya perlu ditelaah satu per satu: pemeriksaan versi dan tanggal build, kelompok lipat Profil (`profil-g-*`), jumlah berkas JS (43 ≠ 39), kelola label memuat langganan, pemeriksaan `html`, dan detail akun. Belum diketahui mana yang salah tes dan mana yang salah kode.
 
 ## 3. Perlu kamu jalankan (tidak bisa saya lakukan)
 - [-] [K] Kunci versi `supabase-js` + SRI (`node tools/pin-supabase.js`): sengaja dilewati dulu atas permintaanmu (2 Okt 2026); Supabase tetap `@2`. Begitu juga RLS/uji sinkron: fokus ke pengembangan fitur

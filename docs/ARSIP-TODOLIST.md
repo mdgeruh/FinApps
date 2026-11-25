@@ -8,7 +8,7 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 1. Perbaikan tab Akun (A1–A9)
 2. Tampilan desktop (D1–D12)
 3. Perbaikan tab Ringkasan (R1–R9)
-4. Lanjutan tab Ringkasan (S1–S4 yang selesai)
+4. Lanjutan tab Ringkasan (S1–S5 yang selesai)
 5. Selesai lainnya
 
 ## 1. Perbaikan tab Akun (A1–A9 selesai, v1.1.075–086)
@@ -95,7 +95,7 @@ Urut dari dampak terbesar ke terkecil:
 Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas): R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9 (urutan R1–R9 sudah dijalankan). Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
 
 
-## 4. Lanjutan tab Ringkasan (S1–S4 selesai)
+## 4. Lanjutan tab Ringkasan (S1–S5 selesai)
 
 Proyeksi akhir bulan sudah ada (R8, v1.1.073), jadi tidak diulang.
 
@@ -103,6 +103,7 @@ Proyeksi akhir bulan sudah ada (R8, v1.1.073), jadi tidak diulang.
 - [x] **S2 [F] (selesai v1.1.190; Cashflow hanya mode Total) Bandingkan dengan periode sebelumnya:** garis putus-putus tipis periode lalu di Cashflow dan Tren, plus selisihnya di kalimat ringkasan.
 - [x] **S3 [F] (selesai v1.1.189) Rasio tabungan di kartu "Bulan ini":** (pemasukan − pengeluaran) ÷ pemasukan, dengan panah naik/turun dibanding bulan lalu.
 - [x] **S4 [F] (selesai v1.1.191; Transfer tanpa penanda) Kategori naik/turun di kartu Kategori:** lencana ▲/▼/baru di legenda untuk kategori yang bergerak dibanding bulan lalu sampai tanggal yang sama, ambang sama dengan Laporan.
+- [x] **S5 [F] (selesai v1.1.192; kartu kredit dan akun tanpa jadwal disebut terpisah) Estimasi bulan lunas di kartu Tren total utang:** bulan jatuh tempo terakhir terjauh dari jadwal pinjaman (`computeLoanSchedule`) dan cicilan PayLater, bila angsuran dibayar sesuai jadwal.
 
 ## 5. Selesai lainnya
 - [x] [K] Sapaan/nama pemilik disamakan dengan CHANGELOG v1.1.041; `supabase/setup.sql` (tabel + RLS + 4 kebijakan + query verifikasi)
