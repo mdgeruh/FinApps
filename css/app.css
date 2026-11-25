@@ -511,7 +511,10 @@
   .pie-legend { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; }
   .pie-legend-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
   .pie-legend-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .pie-legend-left span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pie-legend-left .pie-legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pie-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; line-height: 1; padding: 3px 6px; border-radius: 999px; white-space: nowrap; }
+  .pie-badge.bad { color: var(--red-ink); background: color-mix(in srgb, var(--red-ink) 12%, transparent); }
+  .pie-badge.good { color: var(--green-ink); background: color-mix(in srgb, var(--green-ink) 12%, transparent); }
   .pie-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
   .pie-legend-amount { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
   .pie-legend-row.clickable { cursor: pointer; }
