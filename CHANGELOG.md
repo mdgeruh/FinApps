@@ -6,6 +6,20 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.192 — 25 Nov 2026
+
+### Ditambah
+- **Perkiraan bulan lunas di kartu Tren total utang (roadmap S5).** Kalimat baru di bawah kurva (`#debt-trend-eta`): `Perkiraan lunas: Juni 2027 (9 bulan lagi), bila angsuran dibayar sesuai jadwal.` Bulan lunas = jatuh tempo terakhir **terjauh** di antara akun utang yang punya jadwal.
+  - **Pinjaman bank/online:** baris terakhir `computeLoanSchedule` (sudah memuat pergeseran akibat bulan "bayar bunga saja"). Syarat jadwal: tenor + tanggal pencairan (+ suku bunga untuk bunga menurun).
+  - **PayLater:** jatuh tempo terakhir dari cicilan (`plans`) yang belum lunas.
+  - **Kartu kredit** dan akun tanpa jadwal tidak bisa diperkirakan: disebut di kalimat (`Belum termasuk Kartu BCA (tanpa jadwal cicilan)`, maksimal 3 nama lalu "dan N lainnya"). Bila semua akun berutang tanpa jadwal: `Belum bisa memperkirakan bulan lunas: …`.
+  - Jadwal yang sudah lewat tapi belum lunas dihitung **bulan ini**. Akun diarsipkan atau tanpa utang dilewati. Kalimat tersembunyi bila tidak ada utang. Tanpa nominal, jadi tidak terpengaruh mode sembunyikan saldo.
+- Fungsi murni baru `estimateDebtFree(data, today)` dan `describeDebtFree(est)` di `js/tren-utang.js`. Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.192. `docs/ROADMAP.md`, `docs/ARSIP-TODOLIST.md`, `docs/SUMMARY.md`, dan `README.md` diperbarui (S5 selesai).
+
+### Tes
+- Tes baru `estimateDebtFree (S5)`: jadwal terjauh dan akun tanpa jadwal, PayLater saja, tanpa utang, hanya kartu, jadwal lewat (bulan ini), akun arsip/lunas dilewati, serta pemasangan di render dan markup.
+
 ## v1.1.191 — 25 Nov 2026
 
 ### Ditambah
