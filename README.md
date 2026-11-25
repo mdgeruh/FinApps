@@ -4,7 +4,7 @@ Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScrip
 
 Versi app: **v1.1.191** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
-Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status, todolist, hasil uji).
+Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status dan hasil uji), [ROADMAP.md](docs/ROADMAP.md) (rencana yang belum selesai), dan [ARSIP-TODOLIST.md](docs/ARSIP-TODOLIST.md) (pekerjaan yang sudah selesai).
 
 ---
 
@@ -255,7 +255,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config
 - Akun forex USD/cent dengan kurs
 - Lanjutan tab Ringkasan (S5–S6; S1 selesai v1.1.188, S3 v1.1.189, S2 v1.1.190, S4 v1.1.191 lencana ▲/▼/baru di kartu Kategori): estimasi bulan lunas utang, label bulan opsional
 
-Todolist lengkap (termasuk yang menunggu keputusan) ada di [SUMMARY.md](docs/SUMMARY.md).
+Rencana lengkap (termasuk yang menunggu keputusan) ada di [ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
@@ -269,7 +269,7 @@ icons/              ← ikon PWA/pintasan: icon-192, icon-512, icon-maskable-192
 css/app.css         ← seluruh gaya
 js/                 ← semua berkas JavaScript, satu folder datar (config, data, navigasi, akun, laporan, sync, dst.)
 tests/run.js        tools/ (build-dist, build-preview, pin-supabase)
-supabase/setup.sql  docs/ (SUMMARY, CHANGELOG-ARSIP, PEMETAAN-NAMA-FILE)
+supabase/setup.sql  docs/ (SUMMARY, ROADMAP, ARSIP-TODOLIST, CHANGELOG-ARSIP, PEMETAAN-NAMA-FILE)
 ```
 
 Nama berkas memakai kebab-case tanpa nomor urut; urutan muat ditentukan oleh daftar `<script>` di `index.html`.
@@ -337,7 +337,7 @@ Nomor versi ada di `APP_VERSION` (`v1.1.NNN`) dan tampil di kartu atas tab Profi
 
 1. Naikkan `APP_VERSION` dan `APP_BUILD` (`js/render-utama.js`) **dan** `CACHE_VERSION` (`sw.js`) ke nomor yang sama.
 2. File JS baru: daftarkan di `index.html`, `APP_SHELL` (`sw.js`), dan `tests/run.js` (kalau dites).
-3. Dokumen: entri di [CHANGELOG.md](CHANGELOG.md) (teknis) dan `CHANGELOG_ENTRIES` di `js/changelog.js` (bahasa awam, hanya entri terbaru per tanggal yang tampil); tandai [SUMMARY.md](docs/SUMMARY.md) (todolist + hasil uji); perbarui README kalau fitur, struktur file, atau batasan berubah.
+3. Dokumen: entri di [CHANGELOG.md](CHANGELOG.md) (teknis) dan `CHANGELOG_ENTRIES` di `js/changelog.js` (bahasa awam, hanya entri terbaru per tanggal yang tampil); tandai item di [ROADMAP.md](docs/ROADMAP.md) (selesai: pindahkan ke [ARSIP-TODOLIST.md](docs/ARSIP-TODOLIST.md)) dan perbarui [SUMMARY.md](docs/SUMMARY.md) (status + hasil uji); perbarui README kalau fitur, struktur file, atau batasan berubah.
 4. Jalankan `node tests/run.js` (semua harus lulus), cek sintaks tiap file (`node --check`), lalu buka semua tab di browser.
 5. **Export JSON** dulu sebagai cadangan sebelum memasang versi baru.
 

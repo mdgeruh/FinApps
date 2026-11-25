@@ -14,7 +14,8 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
   - Warna mengikuti jenis: pengeluaran naik = merah, turun = hijau; pemasukan sebaliknya. Tidak hanya warna: ada ▲ ▼ dan teks, serta dibacakan di `aria-label` baris legenda. Tab **Transfer** tidak diberi penanda.
   - Catatan satu baris di bawah legenda (`#category-mover-note`) menjelaskan pembandingnya; hilang bila tak ada penanda. Kategori yang hanya ada bulan lalu (hilang bulan ini) tidak tampil karena tidak ada di legenda; tetap terlihat di Laporan.
 - Fungsi murni baru `categoryMoverMarks(txns, type, today, th)` di `js/bandingkan.js`; `drawPieChart` menerima `item.badge`. Tidak ada perubahan data/penyimpanan.
-- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.191. `docs/SUMMARY.md`: S4 ditandai selesai; `README.md` diperbarui.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.191. `README.md` diperbarui.
+- **Dokumen ditata ulang (tanpa perubahan app).** `docs/ROADMAP.md` baru berisi hanya rencana yang belum selesai (S5–S6, perapian tes, keputusan, ditunda). Rincian pekerjaan selesai (A, D, R, S1–S4, dan lainnya) dipindah apa adanya ke `docs/ARSIP-TODOLIST.md`. `docs/SUMMARY.md` dipadatkan jadi gambaran, status per area, hasil pengujian, dan langkah setelah memasang (221 → ±110 baris). S4 ditandai selesai.
 
 ### Tes
 - Tes baru `Kategori naik/turun (S4)`: penanda naik/turun/baru, ambang, pemotongan sampai tanggal sama, nada merah/hijau per jenis, Transfer kosong, serta pemasangan di render dan markup.
