@@ -6,6 +6,59 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.190 — 25 Nov 2026
+
+### Ditambah
+- **Bandingkan dengan periode sebelumnya di kurva Cashflow dan Tren (roadmap S2).** Periode sebelumnya = jumlah hari yang sama tepat sebelum periode yang dipilih (pemilih 7H/30H/…/360H), digambar sebagai garis putus-putus tipis di belakang garis utama.
+  - **Cashflow (mode Total):** arus kas kumulatif periode lalu, sejajar per hari ke-n, garis abu-abu `--ink-soft`; skala sumbu ikut memuat nilainya. Ringkasan: `Arus kas bersih: ▲ +Rp3.000.000 · periode lalu +Rp2.000.000`. Tooltip menambah baris "Periode lalu". Legenda: "Garis putus-putus: N hari sebelumnya". Mode **Per akun** tidak berubah (sudah ramai).
+  - **Tren:** dua garis putus-putus (pemasukan hijau, pengeluaran merah, opasitas 50%) dari bucket periode sebelumnya yang sama jumlah dan jenisnya (harian, tiap 5 hari, atau bulanan); skala memuat nilainya. Ringkasan: `Selisih 30 hari terakhir: ▲ +Rp3.000.000 · periode sebelumnya +Rp2.000.000`. Tooltip menambah "Pemasukan lalu" dan "Pengeluaran lalu". Legenda `┅ Periode sebelumnya` (`#trend-prev-legend`) hanya tampil bila garisnya ada.
+  - Garis, ringkasan, dan legenda **tidak tampil bila periode sebelumnya tanpa transaksi**, supaya tidak ada garis datar yang menyesatkan. Pada Tren, mode sembunyikan saldo (S1) tetap menyamarkan ringkasan sepenuhnya, termasuk angka periode lalu.
+- Fungsi murni baru di `js/grafik.js`: `prevChartBuckets(buckets, days)` (bucket periode sebelumnya, berakhir sehari sebelum bucket pertama) dan `tallyTrendBuckets(data, buckets)` (total pemasukan/pengeluaran sungguhan per bucket; logika yang dulu ada di dalam `renderTrendChart`, hasil sama).
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.190. `docs/SUMMARY.md`: S2 ditandai selesai (Utang tidak termasuk, sesuai rencana); `README.md` diperbarui.
+
+### Tes
+- Tes baru `Periode sebelumnya (S2)`: `prevChartBuckets` untuk 7H, 30H, dan bulanan (jumlah sama, berakhir sehari sebelum periode ini), `tallyTrendBuckets` mengabaikan pembayaran utang, serta pemasangan di render dan markup legenda.
+
+## v1.1.189 — 25 Nov 2026
+
+### Ditambah
+- **Rasio tabungan di kartu "Bulan ini" (roadmap S3).** Baris baru di bawah "Selisih bulan ini": `Rasio tabungan: 32% ▲ 5 poin vs bulan lalu`. Rumus (pemasukan − pengeluaran) ÷ pemasukan × 100, memakai angka sungguhan yang sama dengan kartu (tanpa bayar utang/cicilan dan pencairan pinjaman, lihat `isNonOperatingTxn`). Bisa negatif (merah) bila pengeluaran melebihi pemasukan. Baris disembunyikan bila belum ada pemasukan bulan ini.
+- Perbandingan dengan bulan lalu dihitung sampai tanggal yang sama (aturan yang sama dengan perbandingan Pemasukan/Pengeluaran), dalam **poin persentase**: ▲ hijau naik, ▼ merah turun, `▬ sama dengan bulan lalu` bila selisih kurang dari 0,5 poin. Tidak tampil bila bulan lalu tanpa pemasukan.
+- Fungsi murni baru `computeSavingsRate(income, expense)` dan `describeSavingsCompare(cur, prev)` di `js/anggaran.js`; markup `#month-savings-row` di `index.html`; render di `renderMonthInsights` (`js/render-beranda.js`). Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.189. `docs/SUMMARY.md`: S3 ditandai selesai; `README.md` diperbarui.
+
+### Tes
+- Tes baru `Rasio tabungan`: tanpa pemasukan = null, rasio positif/nol/negatif dan pembulatan, perbandingan naik/turun/sama/tanpa pembanding, serta markup dan pemasangan di render.
+
+## v1.1.188 — 25 Nov 2026
+
+### Ditambah
+- **Mode sembunyikan saldo berlaku juga di kurva Tren dan Utang (roadmap S1).** Sebelumnya hanya kurva Kekayaan bersih yang menyamarkan angka. Kini bila `state.balanceHidden` aktif: label nilai akhir (Tren, dua garis) dan nilai awal/akhir (Utang) tampil `•••••••`; `formatValue` tooltip dan teks pembaca layar (`describeChartPoint`/`chartAriaLabel` memakai `formatValue`) juga tersamar; ringkasan di atas kurva menjadi `Selisih …: •••••••` (Tren) dan `Sekarang •••••••` (Utang), berwarna netral. Bentuk kurva tetap tampil, seperti Kekayaan. Pesan "Tidak ada utang tercatat" tidak disamarkan.
+- `toggleBalanceVisibility` (`js/navigasi.js`) kini menggambar ulang kurva aktif bila segmennya Kekayaan, Tren, atau Utang (sebelumnya hanya Kekayaan), jadi kurva langsung berubah saat tombol mata ditekan tanpa pindah segmen. Pindah segmen sudah memakai status terbaru.
+- Belum disamarkan (di luar cakupan S1): kurva **Cashflow** (label, tooltip, ringkasan). Dicatat untuk keputusan berikutnya.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.188. `docs/SUMMARY.md`: S1 ditandai selesai.
+
+### Tes
+- Tes baru `Tren dan Utang menyamarkan angka saat saldo disembunyikan`: label, tooltip, ringkasan, dan render ulang saat tombol mata.
+
+## v1.1.187 — 25 Nov 2026
+
+### Diubah
+- **Kurva Tren (Pemasukan vs pengeluaran) dan Tren total utang disamakan gayanya dengan kurva Kekayaan bersih dan Cashflow** (`renderTrendChart` di `js/grafik.js`, `renderDebtTrendChart` di `js/tren-utang.js`). Data, periode (pemilih 7H/30H/…/360H), tooltip, aksesibilitas, dan ringkasan di atas grafik tidak berubah.
+  - **Garis penuh selebar kartu:** `padSide` 18 → 4 (sama seperti kekayaan/cashflow); `padBottom` 20; `padTop` 26 (tren, seperti cashflow) dan 28 (utang, seperti kekayaan).
+  - **Penanda:** titik per bucket dihapus; hanya titik terakhir (r 3,5) per garis. Tebal garis 2,2 (sama dengan kekayaan).
+  - **Utang:** area bawah garis kini gradasi `--rust` (0,28 → 0) seperti kekayaan (sebelumnya area datar 12%); garis putus-putus dasar dihapus (kekayaan tidak memakainya). Nilai akhir di kanan atas dan nilai awal di kiri bawah (aturan posisi yang sama dengan kekayaan); sebelumnya hanya nilai akhir di dekat titik.
+  - **Tren:** garis putus-putus nol tetap (seperti cashflow), dua garis tanpa area (seperti mode Per akun di cashflow). Nilai akhir tiap garis tertulis di ujung kanan, berwarna hijau/merah; garis yang lebih tinggi labelnya di atas titik, yang lebih rendah di bawah titik. Id grup label `trend-chart-perm-labels` (ikut sembunyi saat tooltip tampil, seperti kurva lain).
+  - **Label sumbu bawah (nama bulan/tanggal) dihapus** supaya sama dengan kekayaan/cashflow yang juga tanpa label sumbu; periode tiap titik tetap terbaca lewat tooltip (sentuh/arahkan) dan keyboard.
+  - Kurva tetap memakai `monotonePathD` (bukan `smoothPathD`): data bucket hanya 6–12 titik, dan monotone mencegah garis menembus dasar saat nilai turun tajam (lihat v1.1.124). Perbedaannya pada mata hampir tak terlihat.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.187.
+
+### Dokumentasi
+- `docs/SUMMARY.md`: bagian baru **Roadmap lanjutan tab Ringkasan (S1–S6)**; `README.md` (Ide yang Belum Dibuat) menunjuk ke sana. Tidak ada perubahan kode.
+
+### Tes
+- Tes baru `Tren dan Utang segaya Kekayaan/Cashflow`: titik hanya di titik terakhir, tanpa label sumbu, `padSide` 4, gradasi pada utang, grup label permanen pada keduanya. Tes `grafik Tren dan Utang digambar sebagai garis` tetap lulus.
+
 ## v1.1.186 — 25 Nov 2026
 
 ### Ditambah
