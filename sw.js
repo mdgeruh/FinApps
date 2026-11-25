@@ -4,13 +4,13 @@
  * Hanya menangani file app sendiri + pustaka Supabase (jsdelivr) + font Google.
  * TIDAK PERNAH menyentuh API Supabase (*.supabase.co) atau permintaan non-GET.
  * Naikkan CACHE_VERSION bersamaan dengan APP_VERSION supaya cache lama dibersihkan. */
-const CACHE_VERSION = 'kp-v1.1.180';
+const CACHE_VERSION = 'kp-v1.1.182';
 const APP_SHELL = [
-  './', 'index.html', 'src/css/app.css', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png',
-  'src/js/core/config.js', 'src/js/core/data.js', 'src/js/features/kategori/kategori-data.js', 'src/js/features/kategori/kelola-kategori.js', 'src/js/features/profil/halaman-profil.js', 'src/js/features/data/pengaturan-sync.js', 'src/js/core/navigasi.js', 'src/js/core/rute.js', 'src/js/features/transaksi/form-transaksi.js', 'src/js/features/transaksi/label.js', 'src/js/features/transaksi/pecah.js', 'src/js/features/transaksi/kategori-otomatis.js', 'src/js/features/transaksi/foto-struk.js', 'src/js/features/akun/akun.js', 'src/js/features/akun/akun-detail.js', 'src/js/features/akun/akun-aset-tagihan.js',
-  'src/js/features/titipan/form-titipan.js', 'src/js/core/util-ui.js', 'src/js/features/profil/kunci-aplikasi.js', 'src/js/features/profil/kalkulator.js', 'src/js/features/akun/render-akun-transaksi.js', 'src/js/features/titipan/render-titipan.js',
-  'src/js/features/laporan/grafik.js', 'src/js/features/beranda/render-beranda.js', 'src/js/features/perencanaan/anggaran.js', 'src/js/features/perencanaan/langganan.js', 'src/js/features/profil/changelog.js', 'src/js/features/perencanaan/dana-darurat.js', 'src/js/features/perencanaan/target.js', 'src/js/features/akun/tren-utang.js', 'src/js/features/akun/denda-telat.js', 'src/js/features/akun/ics-tagihan.js', 'src/js/features/akun/rekonsiliasi.js', 'src/js/features/beranda/perhatian.js', 'src/js/features/laporan/laporan.js', 'src/js/features/laporan/laporan-utang.js', 'src/js/features/laporan/laporan-proyeksi.js', 'src/js/features/laporan/bandingkan.js', 'src/js/features/profil/pengingat-cadangan.js', 'src/js/core/render-utama.js',
-  'src/js/features/data/import-export.js', 'src/js/features/data/sync.js', 'src/js/core/startup.js'
+  './', 'index.html', 'css/app.css', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png',
+  'js/config.js', 'js/data.js', 'js/kategori-data.js', 'js/kelola-kategori.js', 'js/halaman-profil.js', 'js/pengaturan-sync.js', 'js/navigasi.js', 'js/rute.js', 'js/form-transaksi.js', 'js/label.js', 'js/pecah.js', 'js/kategori-otomatis.js', 'js/foto-struk.js', 'js/akun.js', 'js/akun-detail.js', 'js/akun-aset-tagihan.js',
+  'js/form-titipan.js', 'js/util-ui.js', 'js/kunci-aplikasi.js', 'js/kalkulator.js', 'js/render-akun-transaksi.js', 'js/render-titipan.js',
+  'js/grafik.js', 'js/render-beranda.js', 'js/anggaran.js', 'js/langganan.js', 'js/changelog.js', 'js/dana-darurat.js', 'js/target.js', 'js/tren-utang.js', 'js/denda-telat.js', 'js/ics-tagihan.js', 'js/rekonsiliasi.js', 'js/perhatian.js', 'js/laporan.js', 'js/laporan-utang.js', 'js/laporan-proyeksi.js', 'js/bandingkan.js', 'js/pengingat-cadangan.js', 'js/render-utama.js',
+  'js/import-export.js', 'js/sync.js', 'js/startup.js'
 ];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
 
 // ---- Pengingat cadangan (v1.1.146) ----
 // Keadaan cadangan disalin aplikasi ke IndexedDB 'keuangan-pengingat' (sw.js tidak bisa membaca localStorage).
-// Fungsi murni di antara penanda ini harus sama dengan backupDueState/backupNotifBody di src/js/features/profil/pengingat-cadangan.js (dijaga test).
+// Fungsi murni di antara penanda ini harus sama dengan backupDueState/backupNotifBody di js/pengingat-cadangan.js (dijaga test).
 // <pengingat-murni>
 function backupDueState(info, nowMs) {   // info.intervalDays opsional (bawaan 14)
   const last = info && info.last;
@@ -86,7 +86,7 @@ async function remCheck() {
     const d = backupDueState(st, now);
     if (!d.need) return;
     if (st.notifiedAt && now - st.notifiedAt < 20 * 3600 * 1000) return;   // paling sering sekali per ~20 jam
-    await self.registration.showNotification('Cadangkan data keuangan', { body: backupNotifBody(d.days), tag: 'backup-reminder', icon: 'icon-192.png', data: { url: './' } });
+    await self.registration.showNotification('Cadangkan data keuangan', { body: backupNotifBody(d.days), tag: 'backup-reminder', icon: 'icons/icon-192.png', data: { url: './' } });
     st.notifiedAt = now;
     await new Promise((res) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(st); tx.oncomplete = () => res(); tx.onerror = () => res(); });
   } catch (e) { /* abaikan */ }

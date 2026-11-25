@@ -6,6 +6,19 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.182 — 25 Nov 2026
+
+### Diubah
+- **Struktur folder disederhanakan** (tampilan dan perilaku app tidak berubah). Semua JavaScript (43 berkas) kini di satu folder `js/` tanpa subfolder `core/` dan `features/<domain>/`; nama berkas tetap, tidak ada yang bentrok. CSS pindah ke `css/app.css`. Ikon PWA pindah ke folder `icons/` (`icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-192.png`, `icons/icon-maskable-512.png`).
+- Rujukan path diperbarui di `index.html`, `manifest.json`, `sw.js` (`APP_SHELL` dan ikon notifikasi), `tests/run.js`, `tools/build-dist.js` (hasil dist juga memakai folder `icons/`), `tools/build-preview.js`, `tools/pin-supabase.js`, README, SUMMARY, dan `docs/PEMETAAN-NAMA-FILE.md`. Entri changelog lama tidak diubah, jadi path di entri lama masih memakai struktur lama.
+- `tools/migrasi-struktur.sh` dihapus (skrip sekali jalan untuk struktur v1.1.169, sudah tidak berlaku).
+- Hasil `node tests/run.js` sama dengan sebelum penataan (317 lulus, 47 gagal; kegagalan sudah ada sebelum perubahan ini).
+
+## v1.1.181 — 25 Nov 2026
+
+### Diperbaiki
+- **Header di layar lebar.** Di lebar 1024–1279px header masih memakai tata letak HP (sapaan di atas, judul di bawah, tidak menempel) padahal sidebar desktop sudah tampil, sehingga tampak berbeda dari lebar ≥1280px. Aturan bar atas desktop (satu baris: judul tab, kotak cari, tanggal, tema, profil; menempel saat gulir; `--desk-top` 84px) kini berlaku mulai 1024px, sama seperti sidebar. Perubahan hanya di `src/css/app.css`; di ≥1280px tampilan tidak berubah.
+
 ## v1.1.180 — 29 Okt 2026
 
 ### Ditambah
