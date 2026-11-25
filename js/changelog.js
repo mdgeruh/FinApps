@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.192', d: '25 Nov 2026', items: [
+      'Kartu Tren total utang kini menuliskan perkiraan bulan lunas, misalnya "Perkiraan lunas: Juni 2027 (9 bulan lagi)", dihitung dari jadwal pinjaman dan cicilan PayLater bila angsuran dibayar sesuai jadwal. Akun tanpa jadwal, seperti kartu kredit, disebut terpisah karena belum bisa diperkirakan.'] },
     { v: 'v1.1.191', d: '25 Nov 2026', items: [
       'Kartu Kategori bulan ini kini menandai kategori yang bergerak dibanding bulan lalu (sampai tanggal yang sama): ▲ naik, ▼ turun, atau baru. Untuk pengeluaran, naik berwarna merah dan turun hijau; untuk pemasukan sebaliknya. Ambangnya sama dengan catatan di Laporan dan bisa diatur di sana.'] },
     { v: 'v1.1.190', d: '25 Nov 2026', items: [

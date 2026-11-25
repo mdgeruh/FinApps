@@ -50,6 +50,55 @@
     return totals.map(roundMoney);
   }
 
+  // Perkiraan bulan lunas (v1.1.192, S5). Fungsi murni. Per akun utang yang masih bersaldo negatif, bulan lunas =
+  // bulan jatuh tempo terakhir di jadwalnya, dengan asumsi angsuran dibayar sesuai jadwal:
+  //  - pinjaman bank/online: baris terakhir computeLoanSchedule (sudah memuat bulan "bunga saja" yang menggeser jadwal)
+  //  - PayLater: jatuh tempo terakhir dari cicilan (plans) yang belum lunas
+  //  - kartu kredit, dan akun tanpa jadwal (pinjaman tanpa tenor/tanggal cair): tidak bisa diperkirakan -> `unknown`
+  // Jadwal yang sudah lewat tapi belum lunas dihitung bulan ini. Akun diarsipkan atau tanpa utang dilewati.
+  // Hasil: null (tidak ada utang) atau { ym: 'YYYY-MM' | null, months, accounts: [{ name, ym }], unknown: [nama] }.
+  function estimateDebtFree(data, today) {
+    today = today || todayStr();
+    const nowYm = today.slice(0, 7);
+    const accounts = [], unknown = [];
+    let maxYm = '';
+    data.accounts.forEach(a => {
+      if (!TYPE_DEBT[a.type] || a.archived) return;
+      const bal = accountBalance(data, a.id);
+      if (!(bal < 0)) return;
+      let end = '';
+      if (TYPE_LOAN[a.type]) {
+        const sch = computeLoanSchedule(data, a, bal);
+        if (sch && sch.rows.length) end = sch.rows[sch.rows.length - 1].due;
+      } else if (a.type === 'paylater') {
+        (Array.isArray(a.plans) ? a.plans : []).forEach(pl => {
+          const sc = paylaterPlanSchedule(data, a, pl);
+          if (sc && sc.k < sc.tenor && sc.last > end) end = sc.last;
+        });
+      }
+      if (!end) { unknown.push(a.name); return; }
+      const ym = end.slice(0, 7) < nowYm ? nowYm : end.slice(0, 7);
+      accounts.push({ name: a.name, ym });
+      if (ym > maxYm) maxYm = ym;
+    });
+    if (!accounts.length && !unknown.length) return null;
+    const months = maxYm ? (Number(maxYm.slice(0, 4)) - Number(nowYm.slice(0, 4))) * 12 + Number(maxYm.slice(5, 7)) - Number(nowYm.slice(5, 7)) : 0;
+    return { ym: maxYm || null, months, accounts, unknown };
+  }
+
+  // Kalimat untuk kartu Tren total utang; '' = sembunyikan.
+  function describeDebtFree(est) {
+    if (!est) return '';
+    let unk = '';
+    if (est.unknown.length) {
+      const shown = est.unknown.slice(0, 3).join(', ') + (est.unknown.length > 3 ? ' dan ' + (est.unknown.length - 3) + ' lainnya' : '');
+      unk = shown;
+    }
+    if (!est.ym) return 'Belum bisa memperkirakan bulan lunas: ' + unk + ' tidak punya jadwal cicilan.';
+    const when = est.months <= 0 ? 'bulan ini' : fmtBulanTahun(est.ym + '-01') + ' (' + est.months + ' bulan lagi)';
+    return 'Perkiraan lunas: ' + when + ', bila angsuran dibayar sesuai jadwal.' + (unk ? ' Belum termasuk ' + unk + ' (tanpa jadwal cicilan).' : '');
+  }
+
   function renderDebtTrendChart(data) {
     const svg = $('debt-trend-chart');
     if (!svg) return;
@@ -107,4 +156,6 @@
       formatDate: k => tipByKey[k] || k
     };
     bindChartInteraction('debt-trend-chart');
+    const etaEl = $('debt-trend-eta');
+    if (etaEl) { const txt = describeDebtFree(estimateDebtFree(data, todayStr())); etaEl.textContent = txt; etaEl.style.display = txt ? '' : 'none'; }
   }
