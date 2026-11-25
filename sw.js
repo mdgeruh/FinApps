@@ -4,9 +4,9 @@
  * Hanya menangani file app sendiri + pustaka Supabase (jsdelivr) + font Google.
  * TIDAK PERNAH menyentuh API Supabase (*.supabase.co) atau permintaan non-GET.
  * Naikkan CACHE_VERSION bersamaan dengan APP_VERSION supaya cache lama dibersihkan. */
-const CACHE_VERSION = 'kp-v1.1.182';
+const CACHE_VERSION = 'kp-v1.1.184';
 const APP_SHELL = [
-  './', 'index.html', 'css/app.css', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png',
+  './', 'index.html', 'css/app.css', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png', 'icons/icon.svg',
   'js/config.js', 'js/data.js', 'js/kategori-data.js', 'js/kelola-kategori.js', 'js/halaman-profil.js', 'js/pengaturan-sync.js', 'js/navigasi.js', 'js/rute.js', 'js/form-transaksi.js', 'js/label.js', 'js/pecah.js', 'js/kategori-otomatis.js', 'js/foto-struk.js', 'js/akun.js', 'js/akun-detail.js', 'js/akun-aset-tagihan.js',
   'js/form-titipan.js', 'js/util-ui.js', 'js/kunci-aplikasi.js', 'js/kalkulator.js', 'js/render-akun-transaksi.js', 'js/render-titipan.js',
   'js/grafik.js', 'js/render-beranda.js', 'js/anggaran.js', 'js/langganan.js', 'js/changelog.js', 'js/dana-darurat.js', 'js/target.js', 'js/tren-utang.js', 'js/denda-telat.js', 'js/ics-tagihan.js', 'js/rekonsiliasi.js', 'js/perhatian.js', 'js/laporan.js', 'js/laporan-utang.js', 'js/laporan-proyeksi.js', 'js/bandingkan.js', 'js/pengingat-cadangan.js', 'js/render-utama.js',

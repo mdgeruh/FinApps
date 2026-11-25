@@ -6,6 +6,18 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.184 — 25 Nov 2026
+
+### Diperbaiki
+- **Header layar lebar tampil sebagai kotak.** Latar bar atas hanya selebar kolom isi, jadi di efek kaca terlihat seperti kotak putih (hampir tidak tembus) yang berbeda dari latar gradasi. Latar dan garis bawah kini dibuat lewat `header::before` yang dibentangkan sampai tepi layar (bar penuh); di efek kaca latarnya translusen (55% warna kartu) dengan blur. Ditambah `overflow-x: clip` pada `html, body` (≥1024px) agar bentangan itu tidak memunculkan gulir mendatar; `position: sticky` tetap bekerja.
+- **Lebar 1024–1279 px, tab Ringkasan:** sejak v1.1.181 kartu saldo hijau (`.balance-block`) ikut terjepit di dalam header satu baris. Kini disembunyikan di rentang itu dan diganti tiga kartu angka (Kekayaan bersih, Total aset, Total utang) seperti di ≥1280px, dengan angka sedikit lebih kecil.
+
+## v1.1.183 — 25 Nov 2026
+
+### Ditambah
+- **Ikon pintasan untuk pemasangan dari browser (PWA).** Folder `icons/` kini berisi ikon dompet hijau (gradasi sama dengan logo sidebar): `icon-192.png` dan `icon-512.png` (jenis `any`, sudut membulat), `icon-maskable-192.png` dan `icon-maskable-512.png` (penuh satu bidang, glif di zona aman 80% agar tidak terpotong bentuk ikon Android), `apple-touch-icon.png` (180 px, untuk Tambahkan ke Layar Utama di iPhone), `favicon-32.png` dan `icon.svg` (tab browser). Sumber vektor: `icons/icon.svg`.
+- `index.html` memakai `icon.svg` + `favicon-32.png` sebagai favicon dan `apple-touch-icon.png` untuk iOS (sebelumnya menunjuk `icon-192.png`). `manifest.json` tidak berubah (sudah menunjuk empat ikon di `icons/`). `sw.js` (`APP_SHELL`) dan `tools/build-dist.js` ikut memuat berkas ikon baru.
+
 ## v1.1.182 — 25 Nov 2026
 
 ### Diubah
