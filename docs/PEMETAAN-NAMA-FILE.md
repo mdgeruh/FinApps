@@ -1,48 +1,52 @@
-# Pemetaan nama berkas (v1.1.169)
+# Pemetaan nama berkas
 
-Struktur lama bernomor (`00-…`, `10l-…`) diganti struktur per domain. Urutan muat `<script>` di `index.html` TIDAK berubah (semua berbagi scope global), hanya nama dan lokasinya.
+**v1.1.182:** struktur disederhanakan. Semua JS di satu folder `js/`, CSS di `css/app.css`, ikon di `icons/`. Nama berkas tidak berubah dari v1.1.169, hanya subfolder `core/` dan `features/<domain>/` dihapus. Urutan muat `<script>` di `index.html` tidak berubah (semua berbagi scope global).
 
-| Nama lama | Lokasi baru |
+Ikon (`icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`) dipindah dari akar ke `icons/`.
+
+**v1.1.169:** struktur lama bernomor (`00-…`, `10l-…`) diganti nama per domain.
+
+| Nama lama (sebelum v1.1.169) | Lokasi sekarang (v1.1.182) |
 |---|---|
-| `00-config.js` | `src/js/core/config.js` |
-| `01-data.js` | `src/js/core/data.js` |
-| `02-navigasi.js` | `src/js/core/navigasi.js` |
-| `12-render-utama.js` | `src/js/core/render-utama.js` |
-| `02b-rute.js` | `src/js/core/rute.js` |
-| `15-startup.js` | `src/js/core/startup.js` |
-| `06-util-ui.js` | `src/js/core/util-ui.js` |
-| `04c-akun-aset-tagihan.js` | `src/js/features/akun/akun-aset-tagihan.js` |
-| `04b-akun-detail.js` | `src/js/features/akun/akun-detail.js` |
-| `04-akun.js` | `src/js/features/akun/akun.js` |
-| `10g-denda-telat.js` | `src/js/features/akun/denda-telat.js` |
-| `10h-ics-tagihan.js` | `src/js/features/akun/ics-tagihan.js` |
-| `10i-rekonsiliasi.js` | `src/js/features/akun/rekonsiliasi.js` |
-| `07-render-akun-transaksi.js` | `src/js/features/akun/render-akun-transaksi.js` |
-| `10f-tren-utang.js` | `src/js/features/akun/tren-utang.js` |
-| `10j-perhatian.js` | `src/js/features/beranda/perhatian.js` |
-| `10-render-beranda.js` | `src/js/features/beranda/render-beranda.js` |
-| `13-import-export.js` | `src/js/features/data/import-export.js` |
-| `14-sync.js` | `src/js/features/data/sync.js` |
-| `11d-bandingkan.js` | `src/js/features/laporan/bandingkan.js` |
-| `09-grafik.js` | `src/js/features/laporan/grafik.js` |
-| `11c-laporan-proyeksi.js` | `src/js/features/laporan/laporan-proyeksi.js` |
-| `11b-laporan-utang.js` | `src/js/features/laporan/laporan-utang.js` |
-| `11-laporan.js` | `src/js/features/laporan/laporan.js` |
-| `10b-anggaran.js` | `src/js/features/perencanaan/anggaran.js` |
-| `10e-dana-darurat.js` | `src/js/features/perencanaan/dana-darurat.js` |
-| `10c-langganan.js` | `src/js/features/perencanaan/langganan.js` |
-| `10k-target.js` | `src/js/features/perencanaan/target.js` |
-| `10d-changelog.js` | `src/js/features/profil/changelog.js` |
-| `06c-kalkulator.js` | `src/js/features/profil/kalkulator.js` |
-| `06b-kunci.js` | `src/js/features/profil/kunci-aplikasi.js` |
-| `10l-pengingat-cadangan.js` | `src/js/features/profil/pengingat-cadangan.js` |
-| `05-form-titipan.js` | `src/js/features/titipan/form-titipan.js` |
-| `08-render-titipan.js` | `src/js/features/titipan/render-titipan.js` |
-| `03-form-transaksi.js` | `src/js/features/transaksi/form-transaksi.js` |
-| `03e-foto-struk.js` | `src/js/features/transaksi/foto-struk.js` |
-| `03d-kategori-otomatis.js` | `src/js/features/transaksi/kategori-otomatis.js` |
-| `03b-label.js` | `src/js/features/transaksi/label.js` |
-| `03c-pecah.js` | `src/js/features/transaksi/pecah.js` |
-| `style.css` | `src/css/app.css` |
+| `00-config.js` | `js/config.js` |
+| `01-data.js` | `js/data.js` |
+| `02-navigasi.js` | `js/navigasi.js` |
+| `12-render-utama.js` | `js/render-utama.js` |
+| `02b-rute.js` | `js/rute.js` |
+| `15-startup.js` | `js/startup.js` |
+| `06-util-ui.js` | `js/util-ui.js` |
+| `04c-akun-aset-tagihan.js` | `js/akun-aset-tagihan.js` |
+| `04b-akun-detail.js` | `js/akun-detail.js` |
+| `04-akun.js` | `js/akun.js` |
+| `10g-denda-telat.js` | `js/denda-telat.js` |
+| `10h-ics-tagihan.js` | `js/ics-tagihan.js` |
+| `10i-rekonsiliasi.js` | `js/rekonsiliasi.js` |
+| `07-render-akun-transaksi.js` | `js/render-akun-transaksi.js` |
+| `10f-tren-utang.js` | `js/tren-utang.js` |
+| `10j-perhatian.js` | `js/perhatian.js` |
+| `10-render-beranda.js` | `js/render-beranda.js` |
+| `13-import-export.js` | `js/import-export.js` |
+| `14-sync.js` | `js/sync.js` |
+| `11d-bandingkan.js` | `js/bandingkan.js` |
+| `09-grafik.js` | `js/grafik.js` |
+| `11c-laporan-proyeksi.js` | `js/laporan-proyeksi.js` |
+| `11b-laporan-utang.js` | `js/laporan-utang.js` |
+| `11-laporan.js` | `js/laporan.js` |
+| `10b-anggaran.js` | `js/anggaran.js` |
+| `10e-dana-darurat.js` | `js/dana-darurat.js` |
+| `10c-langganan.js` | `js/langganan.js` |
+| `10k-target.js` | `js/target.js` |
+| `10d-changelog.js` | `js/changelog.js` |
+| `06c-kalkulator.js` | `js/kalkulator.js` |
+| `06b-kunci.js` | `js/kunci-aplikasi.js` |
+| `10l-pengingat-cadangan.js` | `js/pengingat-cadangan.js` |
+| `05-form-titipan.js` | `js/form-titipan.js` |
+| `08-render-titipan.js` | `js/render-titipan.js` |
+| `03-form-transaksi.js` | `js/form-transaksi.js` |
+| `03e-foto-struk.js` | `js/foto-struk.js` |
+| `03d-kategori-otomatis.js` | `js/kategori-otomatis.js` |
+| `03b-label.js` | `js/label.js` |
+| `03c-pecah.js` | `js/pecah.js` |
+| `style.css` | `css/app.css` |
 | `SUMMARY.md` | `docs/SUMMARY.md` |
 | `CHANGELOG-ARSIP.md` | `docs/CHANGELOG-ARSIP.md` |
