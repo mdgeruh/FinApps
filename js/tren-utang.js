@@ -66,12 +66,16 @@
       if (trend.every(t => t.total === 0)) { sumEl.textContent = 'Tidak ada utang tercatat dalam ' + periodText + '.'; sumEl.style.color = ''; }
       else {
         const delta = roundMoney(last.total - first.total);
-        sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti awal periode' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dalam ' + periodText);
-        sumEl.style.color = delta > 0 ? 'var(--red-ink)' : (delta < 0 ? 'var(--green-ink)' : '');
+        if (state.balanceHidden) { sumEl.textContent = 'Sekarang ' + HIDDEN_RP; sumEl.style.color = 'var(--ink)'; }
+        else {
+          sumEl.textContent = 'Sekarang ' + formatRp(last.total) + (delta === 0 ? ', sama seperti awal periode' : (delta > 0 ? ', ▲ naik ' : ', ▼ turun ') + formatRp(Math.abs(delta)) + ' dalam ' + periodText);
+          sumEl.style.color = delta > 0 ? 'var(--red-ink)' : (delta < 0 ? 'var(--green-ink)' : '');
+        }
       }
     }
-    // Garis seperti kurva cashflow (v1.1.124): garis mulus + area tipis, titik per bucket, nilai terakhir tertulis.
-    const { W, H } = chartDims(svg, 170, 230), padBottom = 22, padTop = 26, padSide = 18;
+    // Gaya sama dengan kurva kekayaan bersih (v1.1.187): garis mulus + area gradasi, hanya titik terakhir yang diberi
+    // penanda, nilai akhir di kanan atas dan nilai awal di kiri bawah, tanpa label sumbu (periode ada di tooltip).
+    const { W, H } = chartDims(svg, 170, 230), padBottom = 20, padTop = 28, padSide = 4;
     const chartH = H - padBottom - padTop;
     const maxVal = Math.max(1, ...trend.map(t => t.total));
     const stepX = (W - padSide * 2) / Math.max(1, trend.length - 1);
@@ -80,23 +84,26 @@
     const baseY = yAt(0), xs = trend.map((_, i) => xAt(i)), ys = trend.map(t => yAt(t.total));
     const lineD = monotonePathD(xs, ys);
     const tipByKey = {}; buckets.forEach(b => { tipByKey[b.key] = bucketTipLabel(b); });
-    let svgContent = `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
-    svgContent += `<path d="${lineD} L${xs[xs.length - 1].toFixed(2)},${baseY.toFixed(2)} L${xs[0].toFixed(2)},${baseY.toFixed(2)} Z" style="fill:var(--rust); opacity:0.12"></path>`;
-    svgContent += `<path d="${lineD}" style="fill:none; stroke:var(--rust)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
-    ys.forEach((y, i) => { svgContent += `<circle cx="${xs[i].toFixed(1)}" cy="${y.toFixed(1)}" r="${i === ys.length - 1 ? 3.5 : 2.5}" style="fill:var(--rust)"></circle>`; });
-    buckets.forEach((b, i) => {
-      svgContent += `<text x="${xs[i].toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${bucketAxisLabel(b)}</text>`;
-    });
-    const endLabelY = Math.max(11, ys[ys.length - 1] - 10);
+    const lastX = xs[xs.length - 1], lastY = ys[ys.length - 1], firstX = xs[0], firstY = ys[0];
+    let svgContent = `<defs><linearGradient id="debt-trend-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--rust)" stop-opacity="0.28"></stop>
+        <stop offset="100%" stop-color="var(--rust)" stop-opacity="0"></stop>
+      </linearGradient></defs>`;
+    svgContent += `<path d="${lineD} L${lastX.toFixed(2)},${baseY.toFixed(2)} L${firstX.toFixed(2)},${baseY.toFixed(2)} Z" fill="url(#debt-trend-grad)"></path>`;
+    svgContent += `<path d="${lineD}" style="fill:none; stroke:var(--rust)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+    svgContent += `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" style="fill:var(--rust)"></circle>`;
+    const endLabelY = Math.min(Math.max(padTop - 10, 11), Math.max(11, lastY - 16));
+    const startLabelY = Math.max(Math.min(H - padBottom + 16, H - 6), Math.min(H - 6, firstY + 22));
     svgContent += `<g id="debt-trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
-    svgContent += `<text x="${xs[xs.length - 1].toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${formatRp(last.total)}</text>`;
+    svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? HIDDEN_RP : formatRp(last.total)}</text>`;
+    svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? HIDDEN_RP : formatRp(first.total)}</text>`;
     svgContent += `</g>`;
     svgContent += tooltipGroupSvgMulti('debt-trend-chart', 1);
     svg.innerHTML = svgContent;
     chartGeom['debt-trend-chart'] = {
       days: trend.map(t => t.key), xAt, yAt, W, H, padTop, padBottom, padSide,
       series: [{ label: 'Total utang', values: trend.map(t => t.total), color: 'var(--rust)' }],
-      formatValue: v => formatRp(v),
+      formatValue: v => state.balanceHidden ? HIDDEN_RP : formatRp(v),
       formatDate: k => tipByKey[k] || k
     };
     bindChartInteraction('debt-trend-chart');

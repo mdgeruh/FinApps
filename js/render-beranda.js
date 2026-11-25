@@ -115,6 +115,21 @@
     renderCompare('month-in-compare', monthIn, prevIn, true);
     renderCompare('month-out-compare', monthOut, prevOut, false);
 
+    // Rasio tabungan (S3): disembunyikan bila belum ada pemasukan bulan ini.
+    const savRow = $('month-savings-row');
+    if (savRow) {
+      const rate = computeSavingsRate(monthIn, monthOut);
+      savRow.style.display = rate === null ? 'none' : '';
+      if (rate !== null) {
+        const rateEl = $('month-savings');
+        rateEl.textContent = rate.toFixed(rate % 1 === 0 ? 0 : 1).replace('.', ',') + '%';
+        rateEl.style.color = rate < 0 ? 'var(--red-ink)' : 'var(--green-ink)';
+        const cmp = describeSavingsCompare(rate, computeSavingsRate(prevIn, prevOut)), cmpEl = $('month-savings-compare');
+        cmpEl.textContent = cmp ? cmp.text : '';
+        cmpEl.style.color = cmp ? (cmp.tone === 'good' ? 'var(--green-ink)' : (cmp.tone === 'bad' ? 'var(--red-ink)' : 'var(--ink-soft)')) : '';
+      }
+    }
+
     const avgDaily = daysElapsed > 0 ? monthOut / daysElapsed : 0;
     const avgEl = $('avg-daily-expense');
     if (avgEl) avgEl.textContent = formatRp(avgDaily);

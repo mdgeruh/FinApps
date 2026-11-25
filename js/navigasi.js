@@ -148,6 +148,7 @@
     if (el) el.value = getOwnerName();
     if (typeof renderBackupNotifSettings === 'function') renderBackupNotifSettings();
     const odc = $('overdraft-toggle'); if (odc) odc.checked = overdraftGuardOn();
+    const asc = $('autosync-toggle'); if (asc && typeof syncAutoOn === 'function') asc.checked = syncAutoOn();
     renderThemeSettings();
     if (typeof renderCustomKeywords === 'function') renderCustomKeywords();
     renderProfilStatus();
@@ -372,7 +373,8 @@
     const deskEye = $('desk-eye-icon'); if (deskEye) deskEye.innerHTML = state.balanceHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
     const data = loadData();
     renderBalanceHeader(data);
-    if (activeChartSegmentId() === 'kekayaan') renderNetWorthChart(data);
+    const seg = activeChartSegmentId();   // kurva yang menyamarkan angka digambar ulang saat mata ditekan (v1.1.188)
+    if (seg === 'kekayaan' || seg === 'tren' || seg === 'utang') renderChartSegment(seg, data);
     if (typeof renderAccounts === 'function' && $('akun-total-aset')) { const bal = computeAllBalances(data); renderAccountsSummary(data, bal); renderAccounts(data, bal); }
   }
 

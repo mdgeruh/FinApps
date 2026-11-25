@@ -7,6 +7,18 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.190', d: '25 Nov 2026', items: [
+      'Kurva Cashflow dan Pemasukan vs pengeluaran kini punya garis putus-putus tipis untuk periode sebelumnya (jumlah hari yang sama), dan angkanya ikut tertulis di ringkasan serta tooltip, jadi mudah melihat apakah bulan ini lebih baik.'] },
+    { v: 'v1.1.189', d: '25 Nov 2026', items: [
+      'Kartu Bulan ini kini menampilkan Rasio tabungan: berapa persen pemasukan yang tersisa setelah pengeluaran, lengkap dengan naik atau turunnya dibanding bulan lalu.'] },
+    { v: 'v1.1.188', d: '25 Nov 2026', items: [
+      'Tombol mata (sembunyikan saldo) kini juga menyamarkan angka di kurva Pemasukan vs pengeluaran dan Tren total utang, termasuk saat kurva disentuh.'] },
+    { v: 'v1.1.187', d: '25 Nov 2026', items: [
+      'Kurva Pemasukan vs pengeluaran dan Tren total utang kini tampil sama seperti kurva Kekayaan bersih dan Cashflow: garis memenuhi lebar kartu, hanya titik terakhir yang bertanda, nilai akhir tertulis di pojok kanan, dan nama bulan di bawah kurva dihilangkan (ketuk atau arahkan kurva untuk melihat periodenya).'] },
+    { v: 'v1.1.186', d: '25 Nov 2026', items: [
+      'Muncul banner "Versi baru tersedia" dengan tombol Muat ulang saat ada pembaruan aplikasi, jadi tidak perlu menutup dan membuka app berulang kali.'] },
+    { v: 'v1.1.185', d: '25 Nov 2026', items: [
+      'Saklar Sinkron otomatis di Profil (bagian Akun sinkron): bisa dimatikan, lalu kirim sendiri lewat tombol Sinkron sekarang.'] },
     { v: 'v1.1.184', d: '25 Nov 2026', items: [
       'Header di layar lebar tidak lagi berupa kotak: kini bar penuh selebar layar, rapi juga di efek kaca. Di lebar 1024 sampai 1279 px kartu saldo hijau tidak lagi masuk ke header; diganti tiga kartu angka.'] },
     { v: 'v1.1.183', d: '25 Nov 2026', items: [

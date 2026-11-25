@@ -114,3 +114,20 @@
     Object.keys(incoming).forEach(c => { if (cur[c] === undefined) cur[c] = incoming[c]; });
     if (Object.keys(cur).length) data.budgets = cur;
   }
+
+  // ---------- Rasio tabungan (S3, v1.1.189): baris di kartu "Bulan ini" ----------
+  // Fungsi murni. Rasio = (pemasukan - pengeluaran) / pemasukan x 100 (angka sungguhan, tanpa bayar utang/pencairan pinjaman),
+  // dibulatkan 1 desimal; null bila belum ada pemasukan (tidak bisa dibagi). Boleh negatif (pengeluaran melebihi pemasukan).
+  function computeSavingsRate(income, expense) {
+    if (!(income > 0)) return null;
+    return Math.round((income - (expense || 0)) / income * 1000) / 10;
+  }
+
+  // Perbandingan rasio bulan ini dengan bulan lalu (sampai tanggal yang sama). Hasil: null bila salah satu tidak ada,
+  // selain itu { text, tone } dengan tone 'good' (naik), 'bad' (turun), atau 'flat' (selisih kurang dari 0,5 poin).
+  function describeSavingsCompare(cur, prev) {
+    if (cur == null || prev == null) return null;
+    const diff = cur - prev;
+    if (Math.abs(diff) < 0.5) return { text: '▬ sama dengan bulan lalu', tone: 'flat' };
+    return { text: (diff > 0 ? '▲ ' : '▼ ') + Math.round(Math.abs(diff)) + ' poin vs bulan lalu', tone: diff > 0 ? 'good' : 'bad' };
+  }

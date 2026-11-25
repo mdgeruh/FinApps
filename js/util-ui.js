@@ -63,6 +63,23 @@
   }
 
   let toastTimer = null;
+  // ---------- Banner versi baru (v1.1.186) ----------
+  // Dipanggil dari js/startup.js saat service worker baru mengambil alih halaman yang sudah terbuka (controllerchange).
+  // Halaman yang terbuka masih menjalankan kode lama di memori, jadi pengguna diminta memuat ulang. Data sudah tersimpan di perangkat.
+  function showUpdateBanner(newVer) {
+    if (document.getElementById('update-banner')) return;
+    const el = document.createElement('div');
+    el.id = 'update-banner';
+    el.className = 'update-banner no-print';
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="ub-text"><b>Versi baru tersedia</b>' + (newVer ? '<small>' + escapeHtml(newVer) + (typeof APP_VERSION === 'string' ? ' (sekarang ' + escapeHtml(APP_VERSION) + ')' : '') + '</small>' : '') + '</span>' +
+      '<button type="button" class="ub-go" data-act="reloadForUpdate">Muat ulang</button>' +
+      '<button type="button" class="ub-x" data-act="dismissUpdateBanner" aria-label="Tutup, nanti saja">&times;</button>';
+    document.body.appendChild(el);
+  }
+  function reloadForUpdate() { location.reload(); }
+  function dismissUpdateBanner() { const el = document.getElementById('update-banner'); if (el) el.remove(); }
+
   function showToast(text, kind) {
     let t = document.getElementById('app-toast');
     if (!t) {

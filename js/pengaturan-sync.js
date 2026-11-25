@@ -4,7 +4,7 @@
   // kartu Ringkasan, ambang perbandingan, dll.) tetap dibaca dari localStorage seperti biasa (cepat, jalan offline), lalu
   // disalin ke dalam data (data.settings) setiap kali berubah. Karena seluruh data dikirim ke Supabase, pengaturan ikut terkirim
   // dan terpakai di perangkat lain; tabel cloud tidak berubah. Ikut juga di cadangan/ekspor JSON.
-  // Sengaja TIDAK disinkronkan (khusus perangkat atau sensitif): menu samping, PIN, izin notifikasi, jadwal tunda cadangan, info sinkron.
+  // Sengaja TIDAK disinkronkan (khusus perangkat atau sensitif): menu samping, PIN, izin notifikasi, jadwal tunda cadangan, info sinkron, saklar sinkron otomatis (kp_auto_sync).
   // Kategori buatan sendiri sudah ada di dalam data (data.categories) sehingga ikut sinkron tanpa langkah ini.
   // ============================================================
   const SYNCED_SETTING_KEYS = ['kp_theme', 'kp_palette', 'kp_accent', 'kp_glass', 'kp_owner_name', 'keuangan-cegah-minus-v1', 'keuangan-kata-kunci-v1',

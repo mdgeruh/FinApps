@@ -6,6 +6,9 @@
   // ============================================================
   const SYNC_META_KEY = 'kp_sync_meta';   // {uid, version, dirty}: versi cloud terakhir yang dikenal perangkat ini
   const SYNC_TABLE = 'app_data';
+  const AUTO_SYNC_KEY = 'kp_auto_sync';   // '0' = sinkron otomatis mati; selain itu hidup. Khusus perangkat ini (tidak ikut sinkron/cadangan).
+  function syncAutoOn() { try { return localStorage.getItem(AUTO_SYNC_KEY) !== '0'; } catch (e) { return true; } }
+  function syncIsDirty() { const m = syncReadMeta(); return !!(m && m.dirty); }
   const sync = { client: null, uid: null, email: '', ready: false, pushing: false, rerun: false, timer: null, status: 'local', listening: false, loginBusy: false };
 
   function syncConfigured() { return !!(SUPABASE_URL && SUPABASE_ANON_KEY); }
@@ -37,7 +40,8 @@
     saving: '☁ Menyimpan…',
     error: '☁ Belum terkirim, tersimpan di perangkat ini',
     local: 'Mode lokal (tidak tersinkron)',
-    stale: '☁ Ada pembaruan dari perangkat lain. '
+    stale: '☁ Ada pembaruan dari perangkat lain. ',
+    paused: '☁ Sinkron otomatis mati. '
   };
   function syncSetStatus(s) {
     sync.status = s;
@@ -51,11 +55,19 @@
     }
     el.className = 'sync-status no-print ' + s;
     el.textContent = SYNC_STATUS_TEXT[s] || '';
-    if (s === 'stale') {
+    if (s === 'paused' && syncIsDirty()) el.textContent = '☁ Sinkron otomatis mati, ada perubahan belum terkirim. ';
+    if (s === 'stale' && syncAutoOn()) {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = 'Muat ulang';
       b.addEventListener('click', () => location.reload());
+      el.appendChild(b);
+    } else if (s === 'stale' || s === 'paused') {
+      // sinkron otomatis mati: muat ulang tidak menarik data cloud, jadi tombolnya langsung menyinkronkan
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Sinkron sekarang';
+      b.addEventListener('click', () => syncNow());
       el.appendChild(b);
     }
   }
@@ -453,12 +465,15 @@
   // ---------- Kirim ke cloud ----------
   function syncSchedulePush() {
     clearTimeout(sync.timer);
+    if (!syncAutoOn()) { syncSetStatus('paused'); return; }   // perubahan sudah ditandai dirty; dikirim saat Sinkron sekarang atau saat saklar dihidupkan
     sync.timer = setTimeout(syncPush, 1500);   // tunggu jeda supaya beberapa perubahan beruntun jadi satu kiriman
     if (sync.status !== 'saving') syncSetStatus('saving');
   }
 
-  async function syncPush() {
+  // force === true: kirim walau sinkron otomatis mati (tombol Sinkron sekarang, keluar akun). Pemanggil timer tidak memberi argumen.
+  async function syncPush(force) {
     if (!sync.ready) return;
+    if (force !== true && !syncAutoOn()) { syncSetStatus('paused'); return; }
     if (sync.pushing) { sync.rerun = true; return; }
     sync.pushing = true;
     syncSetStatus('saving');
@@ -521,8 +536,46 @@
   }
   function syncOnBackOnlineOrVisible() {
     if (!sync.ready || sync.pushing) return;
+    if (!syncAutoOn()) { if (syncIsDirty()) syncSetStatus('paused'); else syncCheckStale(); return; }
     const m = syncReadMeta();
     if (m && m.dirty) syncSchedulePush(); else syncCheckStale();
+  }
+
+  // ---------- Saklar sinkron otomatis & Sinkron sekarang (v1.1.185) ----------
+  function toggleAutoSync() {
+    const on = !!(this && this.checked);
+    try { localStorage.setItem(AUTO_SYNC_KEY, on ? '1' : '0'); } catch (e) { /* abaikan */ }
+    if (on) {
+      showIoMsg('Sinkron otomatis hidup.', 'ok', 'profil-sync-msg');
+      if (sync.ready) { if (syncIsDirty()) syncSchedulePush(); else { syncSetStatus('ok'); syncCheckStale(); } }
+    } else {
+      clearTimeout(sync.timer);
+      showIoMsg('Sinkron otomatis mati. Perubahan tetap tersimpan di perangkat ini; kirim lewat Sinkron sekarang.', 'ok', 'profil-sync-msg');
+      if (sync.ready) syncSetStatus('paused');
+    }
+  }
+  // Tarik perubahan cloud (bila ada) lalu kirim perubahan lokal, sekali jalan, tanpa menunggu sinkron otomatis.
+  async function syncNow() {
+    if (!sync.ready) { showIoMsg('Belum masuk ke akun sinkron.', 'error', 'profil-sync-msg'); return; }
+    if (sync.pushing || sync.syncingNow) return;
+    sync.syncingNow = true;
+    clearTimeout(sync.timer);
+    syncSetStatus('saving');
+    try {
+      const replaced = await syncReconcile();
+      if (replaced) {
+        runRecurringFees(); populateCategorySelect(); render();
+        if (typeof renderProfilTab === 'function') renderProfilTab();
+      }
+      if (syncIsDirty()) await syncPush(true); else syncSetStatus('ok');
+      if (sync.status === 'ok') showIoMsg('Sinkron selesai.', 'ok', 'profil-sync-msg');
+    } catch (e) {
+      console.error('sinkron manual gagal', e);
+      syncSetStatus('error');
+      showIoMsg('Sinkron gagal. Periksa koneksi, lalu coba lagi.', 'error', 'profil-sync-msg');
+    } finally {
+      sync.syncingNow = false;
+    }
   }
 
   // ---------- Keluar ----------
@@ -536,7 +589,7 @@
     const m = syncReadMeta();
     if (m && m.dirty) {
       clearTimeout(sync.timer);
-      await syncPush();
+      await syncPush(true);
       const m2 = syncReadMeta();
       if (m2 && m2.dirty) {
         const ok = await showConfirm('Perubahan terakhir belum terkirim ke cloud. Tetap keluar? Data tetap ada di perangkat ini.');
@@ -673,6 +726,12 @@
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncOnBackOnlineOrVisible(); });
     }
     let replaced = false;
+    const meta0 = syncReadMeta();
+    if (!syncAutoOn() && meta0 && meta0.uid === sync.uid && meta0.version > 0) {
+      // Sinkron otomatis mati: jangan menarik atau mengirim apa pun sekarang; cukup beri tahu bila ada yang tertunda atau ada pembaruan.
+      if (syncIsDirty()) syncSetStatus('paused'); else { syncSetStatus('ok'); syncCheckStale(); }
+      return false;
+    }
     try {
       replaced = await syncReconcile();
       if (!replaced) { try { settingsMirror(); } catch (e) { /* tidak kritis */ } }   // salin pengaturan perangkat ke data (terkirim bersama)

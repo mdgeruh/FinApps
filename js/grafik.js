@@ -28,21 +28,20 @@
 
     // Periode mengikuti pemilih yang sama dengan kurva lain (v1.1.125); garis seperti cashflow (v1.1.124).
     const buckets = chartBuckets(trendPeriodDays);
-    const totals = buckets.map(b => ({ b, inSum: 0, outSum: 0 }));
-    const first = buckets[0].from, last = buckets[buckets.length - 1].to;
-    data.txns.forEach(t => {
-      if (!t.date || t.date < first || t.date > last || isNonOperatingTxn(t)) return;
-      if (t.type !== 'masuk' && t.type !== 'keluar') return;
-      const e = totals.find(x => t.date >= x.b.from && t.date <= x.b.to);
-      if (!e) return;
-      if (t.type === 'masuk') e.inSum += t.amount; else e.outSum += t.amount;
-    });
+    const totals = tallyTrendBuckets(data, buckets);
+    // Periode sebelumnya (S2, v1.1.190): garis putus-putus tipis; hanya bila periode itu punya transaksi.
+    const prevTotals = tallyTrendBuckets(data, prevChartBuckets(buckets, trendPeriodDays));
+    const hasPrev = prevTotals.some(t => t.inSum > 0 || t.outSum > 0);
+    const prevLegendEl = $('trend-prev-legend');
+    if (prevLegendEl) prevLegendEl.style.display = hasPrev ? '' : 'none';
     const titleEl = $('trend-title');
     if (titleEl) titleEl.textContent = `Pemasukan vs pengeluaran (${bucketPeriodText(buckets)})`;
 
-    const maxVal = Math.max(1, ...totals.flatMap(t => [t.inSum, t.outSum]));
+    const maxVal = Math.max(1, ...(hasPrev ? totals.concat(prevTotals) : totals).flatMap(t => [t.inSum, t.outSum]));
+    // Gaya sama dengan kurva kekayaan bersih & cashflow (v1.1.187): garis penuh selebar kartu, hanya titik terakhir
+    // yang diberi penanda, nilai akhir tertulis di dekat ujung kanan, tanpa label sumbu (tanggal ada di tooltip).
     const { W, H } = chartDims(svg, 170, 230);
-    const padBottom = 22, padTop = 14, padSide = 18;
+    const padBottom = 20, padTop = 26, padSide = 4;
     const chartH = H - padBottom - padTop;
     const stepX = (W - padSide * 2) / Math.max(1, buckets.length - 1);
     const xAt = i => padSide + i * stepX;
@@ -52,15 +51,23 @@
     const tipByKey = {}; buckets.forEach(b => { tipByKey[b.key] = bucketTipLabel(b); });
 
     let svgContent = `<line x1="${padSide}" y1="${baseY.toFixed(1)}" x2="${W - padSide}" y2="${baseY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
-    [['inSum', 'var(--green)'], ['outSum', 'var(--red)']].forEach(([k, color]) => {
+    const endLabels = [];
+    [['inSum', 'var(--green)', 'var(--green-ink)'], ['outSum', 'var(--red)', 'var(--red-ink)']].forEach(([k, color, ink]) => {
       const ys = totals.map(t => yAt(t[k]));
-      svgContent += `<path d="${monotonePathD(xs, ys)}" style="fill:none; stroke:${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
-      ys.forEach((y, i) => { svgContent += `<circle cx="${xs[i].toFixed(1)}" cy="${y.toFixed(1)}" r="${i === ys.length - 1 ? 3.5 : 2.5}" style="fill:${color}"></circle>`; });
+      if (hasPrev) svgContent += `<path d="${monotonePathD(xs, prevTotals.map(t => yAt(t[k])))}" style="fill:none; stroke:${color}" stroke-width="1.5" stroke-dasharray="4,3" stroke-linecap="round" opacity="0.5"></path>`;
+      svgContent += `<path d="${monotonePathD(xs, ys)}" style="fill:none; stroke:${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+      svgContent += `<circle cx="${xs[xs.length - 1].toFixed(1)}" cy="${ys[ys.length - 1].toFixed(1)}" r="3.5" style="fill:${color}"></circle>`;
+      endLabels.push({ y: ys[ys.length - 1], ink, text: state.balanceHidden ? HIDDEN_RP : formatRp(totals[totals.length - 1][k]) });
     });
-    buckets.forEach((b, i) => {
-      svgContent += `<text x="${xs[i].toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" class="svg-fill-soft" font-family="Inter, sans-serif">${bucketAxisLabel(b)}</text>`;
+    // Nilai akhir kedua garis: yang lebih tinggi ditulis di atas titiknya, yang lebih rendah di bawah titiknya.
+    endLabels.sort((a, b) => a.y - b.y);
+    svgContent += `<g id="trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
+    endLabels.forEach((l, i) => {
+      const ly = i === 0 ? Math.max(11, l.y - 10) : Math.min(H - 6, l.y + 18);
+      svgContent += `<text x="${(W - padSide).toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" style="fill:${l.ink}" font-family="Inter, sans-serif">${l.text}</text>`;
     });
-    svgContent += tooltipGroupSvgMulti('trend-chart', 2);
+    svgContent += `</g>`;
+    svgContent += tooltipGroupSvgMulti('trend-chart', hasPrev ? 4 : 2);
 
     svg.innerHTML = svgContent;
     chartGeom['trend-chart'] = {
@@ -68,8 +75,11 @@
       series: [
         { label: 'Pemasukan', values: totals.map(t => t.inSum), color: 'var(--green)' },
         { label: 'Pengeluaran', values: totals.map(t => t.outSum), color: 'var(--red)' }
-      ],
-      formatValue: v => formatRp(v),
+      ].concat(hasPrev ? [
+        { label: 'Pemasukan lalu', values: prevTotals.map(t => t.inSum), color: 'var(--green)' },
+        { label: 'Pengeluaran lalu', values: prevTotals.map(t => t.outSum), color: 'var(--red)' }
+      ] : []),
+      formatValue: v => state.balanceHidden ? HIDDEN_RP : formatRp(v),
       formatDate: k => tipByKey[k] || k
     };
     bindChartInteraction('trend-chart');
@@ -77,8 +87,15 @@
     const sumEl = $('trend-summary');
     if (sumEl) {
       const net = roundMoney(totals.reduce((s, t) => s + t.inSum - t.outSum, 0));
-      sumEl.textContent = `Selisih ${bucketPeriodText(buckets)}: ${trendArrow(net)}${net > 0 ? '+' : (net < 0 ? '−' : '')}${formatRp(Math.abs(net))}`;
-      sumEl.style.color = net > 0 ? 'var(--green-ink)' : (net < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
+      if (state.balanceHidden) {
+        sumEl.textContent = `Selisih ${bucketPeriodText(buckets)}: ${HIDDEN_RP}`;
+        sumEl.style.color = 'var(--ink)';
+      } else {
+        const prevNet = roundMoney(prevTotals.reduce((s, t) => s + t.inSum - t.outSum, 0));
+        sumEl.textContent = `Selisih ${bucketPeriodText(buckets)}: ${trendArrow(net)}${net > 0 ? '+' : (net < 0 ? '−' : '')}${formatRp(Math.abs(net))}` +
+          (hasPrev ? ` · periode sebelumnya ${prevNet > 0 ? '+' : (prevNet < 0 ? '−' : '')}${formatRp(Math.abs(prevNet))}` : '');
+        sumEl.style.color = net > 0 ? 'var(--green-ink)' : (net < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
+      }
     }
   }
 
@@ -478,6 +495,26 @@
       }
     }
     return out;
+  }
+  // Fungsi murni (S2, v1.1.190): bucket periode SEBELUMNYA dengan jumlah dan jenis yang sama, berakhir sehari sebelum bucket pertama.
+  function prevChartBuckets(buckets, days) {
+    const [y, m, d] = buckets[0].from.split('-').map(Number);
+    const p2 = n => String(n).padStart(2, '0'), e = new Date(y, m - 1, d - 1);
+    return chartBuckets(days, e.getFullYear() + '-' + p2(e.getMonth() + 1) + '-' + p2(e.getDate()));
+  }
+
+  // Fungsi murni: total pemasukan dan pengeluaran sungguhan (tanpa bayar utang/pencairan pinjaman) per bucket.
+  function tallyTrendBuckets(data, buckets) {
+    const totals = buckets.map(b => ({ b, inSum: 0, outSum: 0 }));
+    const first = buckets[0].from, last = buckets[buckets.length - 1].to;
+    data.txns.forEach(t => {
+      if (!t.date || t.date < first || t.date > last || isNonOperatingTxn(t)) return;
+      if (t.type !== 'masuk' && t.type !== 'keluar') return;
+      const e = totals.find(x => t.date >= x.b.from && t.date <= x.b.to);
+      if (!e) return;
+      if (t.type === 'masuk') e.inSum += t.amount; else e.outSum += t.amount;
+    });
+    return totals;
   }
   function bucketAxisLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : dayShortLabel(b.to); }
   function bucketTipLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : (b.from === b.to ? dayShortLabel(b.to) : dayShortLabel(b.from) + ' – ' + dayShortLabel(b.to)); }
@@ -909,6 +946,26 @@
     const days_ = [baselineDay, ...days];
     const points = [0, ...rawPoints];
 
+    // Periode sebelumnya (S2, v1.1.190): arus kas kumulatif DAYS hari tepat sebelum periode ini, sejajar hari ke-n.
+    // Hanya di mode Total (mode Per akun sudah ramai); tidak digambar bila periode itu tanpa transaksi.
+    let prevPoints = null;
+    if (!showPerAccount) {
+      const prevNet = {}, prevDays = [];
+      for (let i = 2 * DAYS - 1; i >= DAYS; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        prevDays.push(k); prevNet[k] = 0;
+      }
+      let seen = false;
+      data.txns.forEach(t => {
+        if (!(t.date in prevNet)) return;
+        if (t.type === 'masuk') { prevNet[t.date] += t.amount; seen = true; }
+        else if (t.type === 'keluar') { prevNet[t.date] -= t.amount; seen = true; }
+      });
+      if (seen) { let r = 0; prevPoints = [0, ...prevDays.map(k => { r += prevNet[k]; return r; })]; }
+    }
+
     // Kurva per akun: arus kas bersih kumulatif masing-masing akun (hanya transaksi masuk/keluar milik akun itu).
     // Dihitung hanya kalau mode "per akun" aktif, dan dalam satu kali pass atas txns untuk
     // SEMUA akun sekaligus (bukan satu pass penuh per akun seperti sebelumnya, yang jadi
@@ -937,7 +994,7 @@
 
     const allValuesForRange = showPerAccount
       ? [...points, ...accountSeries.flatMap(s => s.values)]
-      : points;
+      : (prevPoints ? [...points, ...prevPoints] : points);
     const minV = Math.min(0, ...allValuesForRange);
     const maxV = Math.max(0, ...allValuesForRange);
     const range = (maxV - minV) || 1;
@@ -963,6 +1020,7 @@
     let svgContent = '';
     svgContent += `<line x1="${padSide}" y1="${zeroY.toFixed(1)}" x2="${W - padSide}" y2="${zeroY.toFixed(1)}" class="svg-stroke-line" stroke-width="1" stroke-dasharray="3,3"></line>`;
     if (!showPerAccount) svgContent += `<path d="${areaD}" style="fill:${lineColor}; opacity:0.12"></path>`;
+    if (prevPoints) svgContent += `<path d="${smoothPathD(xs, prevPoints.map(v => yAt(v)))}" style="fill:none; stroke:var(--ink-soft)" stroke-width="1.5" stroke-dasharray="4,3" stroke-linecap="round" opacity="0.7"></path>`;
     svgContent += `<path d="${lineD}" style="fill:none; stroke:${lineColor}" stroke-width="${showPerAccount ? 2.6 : 2}" stroke-linejoin="round" stroke-linecap="round"></path>`;
 
     // Kurva per akun digambar lebih tipis di atas kurva total, supaya total tetap jadi acuan utama.
@@ -986,6 +1044,7 @@
     svgContent += `</g>`;
 
     const seriesForTooltip = [{ label: 'Total', values: points, color: lineColor }];
+    if (prevPoints) seriesForTooltip.push({ label: 'Periode lalu', values: prevPoints, color: 'var(--ink-soft)' });
     if (showPerAccount) {
       accountSeries.forEach(s => seriesForTooltip.push({ label: s.acc.name, values: s.values, color: `var(${s.colorVar})` }));
     }
@@ -1015,12 +1074,12 @@
             <span class="pie-legend-amount" style="color:${val >= 0 ? 'var(--green-ink)' : 'var(--red-ink)'}">${trendArrow(val)}${fmtSigned(val)}</span>
           </div>
         `;
-      }).join('') : '';
+      }).join('') : (prevPoints ? '<div class="acc-sub">Garis putus-putus: ' + DAYS + ' hari sebelumnya</div>' : '');
     }
 
     if (summaryEl) {
       const sign = lastVal > 0 ? '+' : (lastVal < 0 ? '−' : '');
-      summaryEl.textContent = `Arus kas bersih: ${trendArrow(lastVal)}${sign}${formatRp(Math.abs(lastVal))}`;
+      summaryEl.textContent = `Arus kas bersih: ${trendArrow(lastVal)}${sign}${formatRp(Math.abs(lastVal))}` + (prevPoints ? ` · periode lalu ${fmtSigned(prevPoints[prevPoints.length - 1])}` : '');
       summaryEl.style.color = lastVal > 0 ? 'var(--green-ink)' : (lastVal < 0 ? 'var(--red-ink)' : 'var(--ink-soft)');
     }
   }

@@ -48,5 +48,29 @@
     });
   }
 
+  // Banner versi baru: sw.js memakai skipWaiting + clients.claim, jadi versi baru langsung mengambil alih
+  // (controllerchange) sementara halaman yang terbuka masih menjalankan kode lama. Kejadian itu menampilkan banner.
+  // Pengambilalihan pertama (halaman belum punya controller, yaitu pemasangan awal) tidak dihitung.
+  (function watchAppUpdate() {
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    const hadController = !!navigator.serviceWorker.controller;
+    let shown = false;
+    navigator.serviceWorker.addEventListener('controllerchange', async () => {
+      if (!hadController || shown) return;
+      shown = true;
+      let ver = '';
+      try {
+        const r = await fetch('js/render-utama.js', { cache: 'no-store' });
+        const m = /APP_VERSION = '([^']+)'/.exec(await r.text());
+        if (m && m[1] !== APP_VERSION) ver = m[1];
+      } catch (e) { /* tanpa nomor versi */ }
+      showUpdateBanner(ver);
+    });
+    // Cek pembaruan saat app kembali terlihat dan tiap 30 menit selama terbuka (tab/PWA dibiarkan terbuka lama)
+    const check = () => { navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {}); };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+    setInterval(check, 30 * 60 * 1000);
+  })();
+
   // Saat aplikasi disembunyikan/ditutup, salin keadaan terbaru supaya sw.js memakai data segar.
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') reminderSyncState(); });
