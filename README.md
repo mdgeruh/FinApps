@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.184** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.186** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status, todolist, hasil uji).
 
@@ -223,6 +223,7 @@ App juga akan menampilkan pengingat kalau kamu sudah lama tidak export (backup r
 Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config.js` terisi; kalau key dikosongkan, app 100% lokal tanpa login.
 
 - **Cara kerja:** login email + kata sandi atau **Google** (daftar akun langsung dari layar masuk). Setelah tiap perubahan, data dikirim ke tabel `app_data` di latar belakang (jeda 1,5 detik, coba ulang tiap 30 detik kalau gagal). Status kecil di bawah footer: Tersinkron, Menyimpan, Belum terkirim, Mode lokal, atau "Ada pembaruan dari perangkat lain" (tombol Muat ulang).
+- **Saklar Sinkron otomatis (v1.1.185):** di Profil › Akun sinkron (tampil setelah login). Bawaan hidup. Kalau dimatikan, perubahan tetap disimpan di perangkat dan ditandai belum terkirim, tapi tidak ada kirim/tarik otomatis (saat mengetik perubahan, coba ulang, kembali online, atau membuka app); status di bawah footer jadi "Sinkron otomatis mati" dengan tombol **Sinkron sekarang**. Tombol itu (juga ada di Profil) menarik perubahan cloud lalu mengirim perubahan lokal sekali jalan. Keluar akun tetap mengirim dulu. Pengaturan ini khusus perangkat (kunci `kp_auto_sync`, tidak ikut sinkron/cadangan). Menghidupkan kembali saklar langsung mengirim yang tertunda.
 - **Bentrok:** tiap baris cloud punya nomor versi. Kalau perangkat ini dan cloud sama-sama berubah, muncul dialog untuk memilih data cloud atau data perangkat ini; data yang tidak dipilih dibackup ke file JSON dulu.
 - **Mode lokal dulu:** di layar login bisa memilih "Pakai mode lokal dulu". Perubahan tetap ditandai belum terkirim dan dikirim setelah login berikutnya. Kapan saja, buka tab **Profil** lalu pilih **Masuk** (opsi ini hanya tampil kalau belum login).
 - **Pustaka Supabase** dimuat hanya saat dibutuhkan (`syncLoadLib()`), bukan `<script>` statis, jadi CDN yang lambat/offline tidak menahan app. Kalau perangkat sudah punya data, app langsung tampil dari data lokal lalu menyegarkan diri setelah sinkron selesai.

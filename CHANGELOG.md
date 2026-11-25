@@ -6,6 +6,20 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.186 — 25 Nov 2026
+
+### Ditambah
+- **Banner "Versi baru tersedia"** (tombol Muat ulang dan tutup). `sw.js` memakai `skipWaiting` + `clients.claim`, jadi versi baru langsung aktif sementara halaman yang sudah terbuka masih menjalankan kode lama di memori. `js/startup.js` (`watchAppUpdate`) mendengarkan `controllerchange`; bila halaman sebelumnya sudah punya controller (bukan pemasangan pertama) banner muncul lewat `showUpdateBanner` di `js/util-ui.js`. Nomor versi baru dibaca dari `js/render-utama.js` (`cache: 'no-store'`); bila gagal, banner tanpa nomor.
+- Cek pembaruan: `registration.update()` saat app kembali terlihat dan tiap 30 menit selama terbuka, supaya tab atau PWA yang dibiarkan terbuka lama ikut mendeteksi rilis baru.
+- Hanya di http(s) dengan service worker; di file lokal tidak ada banner. Tidak tampil saat cetak. Tidak mengubah data: muat ulang aman karena data sudah tersimpan di perangkat.
+
+## v1.1.185 — 25 Nov 2026
+
+### Ditambah
+- **Saklar Sinkron otomatis** (Profil › Akun sinkron, tampil setelah login; bawaan hidup) dan tombol **Sinkron sekarang**. Dengan saklar mati: `syncSchedulePush` dan `syncPush()` tanpa argumen tidak mengirim apa pun (perubahan tetap ditandai `dirty`), pengiriman otomatis saat kembali online/app terlihat dan coba ulang 30 detik ikut berhenti, dan saat app dibuka di perangkat yang sudah pernah sinkron `syncStartSession` tidak menarik/mengirim (hanya status). Status footer baru `paused` ("Sinkron otomatis mati", plus "ada perubahan belum terkirim" bila ada) dengan tombol Sinkron sekarang; bila ada pembaruan di cloud, tombol "Muat ulang" diganti Sinkron sekarang karena muat ulang tidak menarik data saat otomatis mati.
+- `syncNow()`: `syncReconcile()` (tarik, dialog bila bentrok) lalu `syncPush(true)` bila ada perubahan lokal. `syncPush(force)`: hanya `true` yang melewati saklar (dipakai Sinkron sekarang dan Keluar, supaya perubahan terakhir terkirim sebelum keluar akun). Menghidupkan saklar kembali langsung mengirim yang tertunda.
+- Pengaturan disimpan per perangkat di `localStorage` (`kp_auto_sync`; `'0'` = mati), tidak termasuk `SYNCED_SETTING_KEYS`, jadi tidak ikut sinkron atau cadangan JSON. Bila tidak ada akun sinkron, bagian ini tidak tampil dan tidak ada yang berubah.
+
 ## v1.1.184 — 25 Nov 2026
 
 ### Diperbaiki

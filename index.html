@@ -968,6 +968,12 @@
     <div id="profil-sync-section" style="display:none;">
       <div class="acc-sub u-mb10">Email saat ini: <b id="profil-current-email"></b></div>
 
+      <label class="switch-row" for="autosync-toggle">
+        <span class="switch-text"><b>Sinkron otomatis</b><small>Kirim perubahan ke cloud otomatis setelah tiap perubahan. Bila dimatikan, perubahan tetap tersimpan di perangkat ini dan baru dikirim saat Anda menekan Sinkron sekarang. Berlaku untuk perangkat ini saja.</small></span>
+        <input type="checkbox" class="switch" id="autosync-toggle" checked data-change-act="toggleAutoSync">
+      </label>
+      <button type="button" class="io-btn io-btn-full u-mb14" id="sync-now-btn" data-act="syncNow">Sinkron sekarang</button>
+
       <div class="acc-sub u-mb4">Ganti email</div>
       <div class="io-row">
         <input class="u-flex1-min0" type="email" id="profil-email-input" placeholder="Email baru" aria-label="Email baru" autocomplete="email" enterkeyhint="send" data-keydown-act="syncChangeEmail" data-keydown-keys="Enter">
