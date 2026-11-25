@@ -50,3 +50,5 @@ Ikon (`icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-51
 | `style.css` | `css/app.css` |
 | `SUMMARY.md` | `docs/SUMMARY.md` |
 | `CHANGELOG-ARSIP.md` | `docs/CHANGELOG-ARSIP.md` |
+
+Berkas dokumen baru (25 Nov 2026, v1.1.191): `docs/ROADMAP.md` (rencana yang belum selesai) dan `docs/ARSIP-TODOLIST.md` (rincian pekerjaan selesai, dipindah dari `SUMMARY.md`).
