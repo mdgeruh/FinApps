@@ -102,6 +102,30 @@
     return out;
   }
 
+  // Penanda kategori yang bergerak di kartu "Kategori bulan ini" (Ringkasan, S4): bulan berjalan dibanding
+  // bulan lalu sampai tanggal yang sama, dengan ambang yang sama seperti catatan di Laporan.
+  // Hanya untuk pemasukan/pengeluaran; kategori yang bulan ini belum ada tidak diberi penanda.
+  // Hasil: { [kategori]: { kind: 'naik'|'turun'|'baru', pct, diff, tone: 'bad'|'good' } }
+  function categoryMoverMarks(txns, type, today, th) {
+    if (type !== 'keluar' && type !== 'masuk') return {};
+    const y = Number(today.slice(0, 4)), m = Number(today.slice(5, 7));
+    const rg = laporanCompareRanges('bulanan', { start: cmpYmd(new Date(y, m - 1, 1)), end: cmpYmd(new Date(y, m, 0)) }, today);
+    if (!rg) return {};
+    const minPct = th && th.minPct != null ? th.minPct : CMP_MIN_PCT;
+    const minAmount = th && th.minAmount != null ? th.minAmount : CMP_MIN_AMOUNT;
+    const up = type === 'keluar';
+    const out = {};
+    computeCategoryComparison(txns, type, rg.cur, rg.prev).forEach(r => {
+      if (r.cur <= 0 || Math.abs(r.diff) < minAmount) return;
+      if (r.prev <= 0) out[r.category] = { kind: 'baru', pct: null, diff: r.diff, tone: up ? 'bad' : 'good' };
+      else if (Math.abs(r.pct) >= minPct) {
+        const naik = r.diff > 0;
+        out[r.category] = { kind: naik ? 'naik' : 'turun', pct: r.pct, diff: r.diff, tone: naik === up ? 'bad' : 'good' };
+      }
+    });
+    return out;
+  }
+
   function cmpPeriodWord(period) {
     return period === 'bulanan' ? 'bulan lalu' : period === '3bulan' ? '3 bulan sebelumnya' : period === '1tahun' ? 'tahun lalu' : 'periode sebelumnya';
   }

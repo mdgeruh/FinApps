@@ -1129,11 +1129,13 @@
       const colorVar = PIE_COLOR_VARS[i % PIE_COLOR_VARS.length];
       const pct = Math.round((item.amount / total) * 100);
       const pick = !item.noPick;
+      const bd = item.badge;
+      const bdHtml = bd ? `<span class="pie-badge ${bd.tone === 'bad' ? 'bad' : 'good'}">${escapeHtml(bd.text)}</span>` : '';
       return `
-        <div class="pie-legend-row${pick ? ' clickable' : ''}" data-idx="${i}"${pick ? ` role="button" tabindex="0" aria-label="${escapeHtml(item.category)}, ${pct} persen, ${formatRp(item.amount)}. Buka rincian"` : ''}>
+        <div class="pie-legend-row${pick ? ' clickable' : ''}" data-idx="${i}"${pick ? ` role="button" tabindex="0" aria-label="${escapeHtml(item.category)}, ${pct} persen, ${formatRp(item.amount)}${bd ? ', ' + escapeHtml(bd.label) : ''}. Buka rincian"` : ''}>
           <div class="pie-legend-left">
             <span class="pie-dot" style="background:var(${colorVar})"></span>
-            <span>${escapeHtml(item.category)} · ${pct}%</span>
+            <span class="pie-legend-name">${escapeHtml(item.category)} · ${pct}%</span>${bdHtml}
           </div>
           <span class="pie-legend-amount">${formatRp(item.amount)}</span>
         </div>
@@ -1169,6 +1171,24 @@
     });
     const items = Object.entries(sums).map(([category, amount]) => ({ category, amount }))
       .sort((a, b) => b.amount - a.amount);
+    // S4: penanda kategori yang naik/turun dibanding bulan lalu (sampai tanggal yang sama)
+    const today = todayStr();
+    const marks = categoryMoverMarks(data.txns, state.categoryChartType, today, cmpThresholds());
+    let marked = 0;
+    items.forEach(it => {
+      const mk = marks[it.category];
+      if (!mk) return;
+      marked++;
+      it.badge = mk.kind === 'baru'
+        ? { text: 'baru', tone: mk.tone, label: 'kategori baru dibanding bulan lalu' }
+        : { text: (mk.kind === 'naik' ? '▲ ' : '▼ ') + Math.abs(mk.pct) + '%', tone: mk.tone,
+            label: (mk.kind === 'naik' ? 'naik ' : 'turun ') + Math.abs(mk.pct) + ' persen dibanding bulan lalu' };
+    });
+    const note = $('category-mover-note');
+    if (note) {
+      note.style.display = marked ? '' : 'none';
+      if (marked) note.textContent = 'Penanda ▲ ▼ : dibanding tanggal 1 sampai ' + Number(today.slice(8, 10)) + ' bulan lalu. Merah = lebih buruk, hijau = lebih baik.';
+    }
     drawPieChart(svg, legend, items, {
       typeLabel: CATEGORY_TYPE_LABEL[state.categoryChartType] || 'Kategori',
       emptyText: 'Belum ada transaksi bulan ini.',

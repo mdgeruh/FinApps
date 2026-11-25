@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.191', d: '25 Nov 2026', items: [
+      'Kartu Kategori bulan ini kini menandai kategori yang bergerak dibanding bulan lalu (sampai tanggal yang sama): ▲ naik, ▼ turun, atau baru. Untuk pengeluaran, naik berwarna merah dan turun hijau; untuk pemasukan sebaliknya. Ambangnya sama dengan catatan di Laporan dan bisa diatur di sana.'] },
     { v: 'v1.1.190', d: '25 Nov 2026', items: [
       'Kurva Cashflow dan Pemasukan vs pengeluaran kini punya garis putus-putus tipis untuk periode sebelumnya (jumlah hari yang sama), dan angkanya ikut tertulis di ringkasan serta tooltip, jadi mudah melihat apakah bulan ini lebih baik.'] },
     { v: 'v1.1.189', d: '25 Nov 2026', items: [
