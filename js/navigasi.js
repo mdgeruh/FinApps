@@ -483,10 +483,104 @@
   }
   try { window.addEventListener('resize', () => deskRelayout(250)); } catch (e) { /* uji */ }
 
+  // Kotak cari di bar atas desktop (v1.1.202): saran langsung saat mengetik (maks 6 transaksi + 3 akun), bisa dipilih
+  // dengan panah/Enter atau klik; Enter tanpa pilihan = lompat ke tab Transaksi dengan kata kunci terisi (cara lama).
+  // Fungsi hitung murni: deskSearchSuggest. Cocok: keterangan, kategori, nama akun, label, dan nominal (angka >= 3 digit).
+  const DESK_SEARCH_TXN_MAX = 6, DESK_SEARCH_ACC_MAX = 3;
+  function deskSearchSuggest(data, query, maxTxn, maxAcc) {
+    const q = String(query || '').trim().toLowerCase();
+    const out = { q, txns: [], totalTxn: 0, accounts: [] };
+    if (q.length < 2) return out;
+    const accs = data.accounts || [], accById = {};
+    accs.forEach(a => { accById[a.id] = a; });
+    const digits = q.replace(/^rp\.?\s*/, '').replace(/[.\s]/g, '');
+    const byAmount = /^\d{3,}$/.test(digits);
+    const hit = [];
+    (data.txns || []).forEach((t, i) => {
+      const a1 = accById[t.accountId] ? accById[t.accountId].name.toLowerCase() : '';
+      const a2 = t.toAccountId && accById[t.toAccountId] ? accById[t.toAccountId].name.toLowerCase() : '';
+      const ok = (t.desc || '').toLowerCase().includes(q) || (t.category || '').toLowerCase().includes(q) || a1.includes(q) || a2.includes(q) ||
+        (typeof tagsText === 'function' && typeof txnTags === 'function' && tagsText(txnTags(t)).toLowerCase().includes(q)) ||
+        (byAmount && String(Math.round(t.amount || 0)).includes(digits));
+      if (ok) hit.push({ t, i });
+    });
+    hit.sort((x, y) => (y.t.date || '').localeCompare(x.t.date || '') || y.i - x.i);
+    out.totalTxn = hit.length;
+    out.txns = hit.slice(0, maxTxn || DESK_SEARCH_TXN_MAX).map(x => x.t);
+    out.accounts = accs.filter(a => !a.archived && ((a.name || '').toLowerCase().includes(q) || (TYPE_LABELS[a.type] || '').toLowerCase().includes(q))).slice(0, maxAcc || DESK_SEARCH_ACC_MAX);
+    return out;
+  }
+  function deskSearchMark(text, q) {
+    const s = String(text || ''), i = q ? s.toLowerCase().indexOf(q) : -1;
+    if (i < 0) return escapeHtml(s);
+    return escapeHtml(s.slice(0, i)) + '<mark>' + escapeHtml(s.slice(i, i + q.length)) + '</mark>' + escapeHtml(s.slice(i + q.length));
+  }
+  let deskSearchTimer = null, deskSearchActive = -1;
+  function deskSearchItems() { const p = $('desk-search-pop'); return p ? Array.prototype.slice.call(p.querySelectorAll('.ds-row')) : []; }
+  function deskSearchSetActive(n) {
+    const items = deskSearchItems(), inp = $('desk-search-input');
+    deskSearchActive = items.length ? (n + items.length) % items.length : -1;
+    items.forEach((el, i) => { el.classList.toggle('active', i === deskSearchActive); el.setAttribute('aria-selected', i === deskSearchActive ? 'true' : 'false'); });
+    if (inp) inp.setAttribute('aria-activedescendant', deskSearchActive >= 0 ? items[deskSearchActive].id : '');
+    if (deskSearchActive >= 0 && items[deskSearchActive].scrollIntoView) items[deskSearchActive].scrollIntoView({ block: 'nearest' });
+  }
+  function deskSearchClose(clear) {
+    clearTimeout(deskSearchTimer);
+    const p = $('desk-search-pop'), inp = $('desk-search-input');
+    if (p) { p.style.display = 'none'; p.innerHTML = ''; }
+    if (inp) { inp.setAttribute('aria-expanded', 'false'); inp.setAttribute('aria-activedescendant', ''); if (clear) inp.value = ''; }
+    deskSearchActive = -1;
+  }
+  function renderDeskSearchPop() {
+    const p = $('desk-search-pop'), inp = $('desk-search-input'); if (!p || !inp) return;
+    const q = inp.value.trim().toLowerCase();
+    if (q.length < 2) { deskSearchClose(false); return; }
+    const r = deskSearchSuggest(loadData(), q), hid = !!state.balanceHidden;
+    let n = 0, html = '';
+    const row = (act, id, ico, icoCls, title, sub, amt, amtCls) =>
+      `<div class="ds-row" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="${act}" data-a0="${escapeHtml(id)}"><span class="da-ico dr-ico ${icoCls}" aria-hidden="true">${ico}</span><span class="ds-text"><span class="ds-title">${title}</span><span class="ds-sub">${escapeHtml(sub)}</span></span>${amt ? `<span class="ds-amt ${amtCls}">${escapeHtml(amt)}</span>` : ''}</div>`;
+    if (r.accounts.length) {
+      html += '<div class="ds-head" role="presentation">Akun</div>';
+      const bal = computeAllBalances(loadData());
+      r.accounts.forEach(a => { html += row('openDeskSearchAccount', a.id, '◎', 'transfer', deskSearchMark(a.name, q), TYPE_LABELS[a.type] || a.type, hid ? '•••••••' : formatRp(bal[a.id] || 0), ''); });
+    }
+    if (r.txns.length) {
+      html += '<div class="ds-head" role="presentation">Transaksi' + (r.totalTxn > r.txns.length ? ' · ' + r.totalTxn + ' cocok' : '') + '</div>';
+      const accById = {}; loadData().accounts.forEach(a => { accById[a.id] = a; });
+      r.txns.forEach(t => {
+        const sign = t.type === 'transfer' ? '⇄' : (t.type === 'masuk' ? '+' : '−');
+        const title = t.type === 'transfer' ? (t.desc && t.desc !== 'Transfer' ? t.desc : 'Transfer') : (t.desc || t.category || '(Tanpa keterangan)');
+        const a1 = accById[t.accountId] ? accById[t.accountId].name : '?', a2 = t.toAccountId && accById[t.toAccountId] ? accById[t.toAccountId].name : '';
+        html += row('openDeskSearchTxn', t.id, sign, t.type, deskSearchMark(title, q), (t.type === 'transfer' ? a1 + ' → ' + a2 : a1) + ' · ' + fmtTgl(t.date), hid ? '•••••••' : sign + ' ' + formatRp(t.amount), t.type);
+      });
+    }
+    if (!n) html = '<div class="ds-empty">Tidak ada yang cocok dengan “' + escapeHtml(inp.value.trim()) + '”.</div>';
+    else if (r.totalTxn > r.txns.length) html += `<div class="ds-row ds-all" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="deskSearchSubmit">Lihat semua ${r.totalTxn} transaksi di tab Transaksi ›</div>`;
+    p.innerHTML = html; p.style.display = 'block';
+    inp.setAttribute('aria-expanded', 'true');
+    deskSearchActive = -1;
+  }
+  function onDeskSearchInput() {
+    clearTimeout(deskSearchTimer);
+    deskSearchTimer = setTimeout(renderDeskSearchPop, 120);
+  }
+  function openDeskSearchTxn(id) { deskSearchClose(true); openTxnDetail(id); }
+  function openDeskSearchAccount(id) { deskSearchClose(true); openAccountDetail(id); }
+  // Tombol di kotak cari: panah = pindah pilihan, Enter = buka pilihan (atau cari penuh bila tak ada pilihan), Esc = tutup.
+  function deskSearchKey(e) {
+    const key = e && e.key;
+    if (key === 'ArrowDown') { if (!deskSearchItems().length) renderDeskSearchPop(); deskSearchSetActive(deskSearchActive + 1); }
+    else if (key === 'ArrowUp') deskSearchSetActive(deskSearchActive < 0 ? -1 : deskSearchActive - 1);
+    else if (key === 'Escape') { const pop = $('desk-search-pop'); if (pop && pop.style.display !== 'none') deskSearchClose(false); else deskSearchClose(true); }   // Esc pertama menutup daftar, kedua mengosongkan kotak
+    else if (key === 'Enter') {
+      const it = deskSearchItems()[deskSearchActive];
+      if (it) it.click(); else deskSearchSubmit();
+    }
+  }
   // Kotak cari di bar atas desktop: lompat ke tab Transaksi dengan kata kunci terisi.
   function deskSearchSubmit() {
     const el = $('desk-search-input'); if (!el) return;
-    const q = el.value.trim(); el.value = '';
+    const q = el.value.trim(); deskSearchClose(true);
     setTab('transaksi');
     const t = $('txn-search-input');
     if (t) { t.value = q; onTxnSearchInput(); }
@@ -503,6 +597,11 @@
   }
   function onDeskShortcut(e) {
     if (e.defaultPrevented) return;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && String(e.key).toLowerCase() === 'k' && isDeskWide()) {
+      const si = $('desk-search-input');
+      if (si) { e.preventDefault(); si.focus(); si.select(); }
+      return;
+    }
     const t = e.target, tag = t && t.tagName ? String(t.tagName).toLowerCase() : '';
     const ctx = {
       wide: isDeskWide(),
@@ -518,6 +617,12 @@
     else if (act === 'sidebar') toggleSidebar();
   }
   try { document.addEventListener('keydown', onDeskShortcut); } catch (e) { /* uji */ }
+  // Saran cari: tutup saat klik/fokus pindah ke luar kotak; mousedown di daftar tidak mencabut fokus dari input.
+  try {
+    document.addEventListener('click', e => { const w = $('desk-search-wrap'); if (w && !(e.target instanceof Element && w.contains(e.target))) deskSearchClose(false); });
+    const sp = $('desk-search-pop'); if (sp) sp.addEventListener('mousedown', e => e.preventDefault());
+    const si = $('desk-search-input'); if (si) si.addEventListener('focus', () => { if (si.value.trim().length >= 2) renderDeskSearchPop(); });
+  } catch (e) { /* uji */ }
 
   function renderBalanceHeader(data, balances) {
     if (!balances) balances = computeAllBalances(data);

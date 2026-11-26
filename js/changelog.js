@@ -7,6 +7,10 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.202', d: '26 Nov 2026', items: [
+      'Kotak cari di bagian atas (tampilan komputer) kini menampilkan hasil langsung saat kamu mengetik: transaksi dan akun yang cocok, dengan kata yang dicari ditebalkan. Pilih dengan panah dan Enter atau klik; Esc menutup. Nominal juga bisa dicari (mis. 150000). Ctrl+K atau tombol / langsung membuka kotak cari. Enter tanpa memilih tetap membuka daftar lengkap di tab Transaksi.'] },
+    { v: 'v1.1.201', d: '26 Nov 2026', items: [
+      'App kini memeriksa pinjaman yang sisa pokoknya tidak pas dengan jadwal angsuran, misalnya karena bayar sebagian atau salah catat nominal. Bila ada, muncul catatan kuning di jadwal angsuran akun itu dan satu baris di "Perlu perhatian" di Ringkasan, lengkap dengan selisihnya.'] },
     { v: 'v1.1.200', d: '26 Nov 2026', items: [
       'Di desktop, saat menu samping diciutkan, nama menu kini muncul sebagai tooltip gelap yang rapi di sebelah ikon (menggantikan kotak tooltip bawaan browser). Tombol Catat transaksi dan tombol ciutkan juga memakai tooltip yang sama.'] },
     { v: 'v1.1.199', d: '26 Nov 2026', items: [

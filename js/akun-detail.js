@@ -67,8 +67,10 @@
         if (lf) lf.items.forEach(x => { lfBy[x.no] = x; });
         const lfNote = lf && lf.total > 0 ? '<div class="acc-sub" style="color:var(--red-ink); margin-bottom:8px;">Perkiraan denda telat ' + formatRp(lf.total) + ' (' + lf.items.length + ' angsuran, ' + escapeHtml(lateFeeRuleText(lf)) + '). Ini hanya perkiraan; catat sebagai pengeluaran kalau memang ditagih.</div>' : '';
         const deferNote = sch.deferred > 0 ? '<div class="acc-sub" style="margin-bottom:8px;">Bayar bunga saja ' + sch.deferred + ' bulan: pokok tidak berkurang, jadwal angsuran pokok bergeser ' + sch.deferred + ' bulan.</div>' : '';
+        const mm = computeLoanScheduleMismatch(data, acc, bal);
+        const mmNote = mm ? '<div class="acc-sub" style="color:var(--amber-ink); margin-bottom:8px;">' + escapeHtml(loanMismatchText(mm)) + '</div>' : '';
         schedEl.style.display = 'block';
-        schedEl.innerHTML = deferNote + lfNote + '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
+        schedEl.innerHTML = mmNote + deferNote + lfNote + '<details' + (sch.paid < sch.tenor ? ' open' : '') + '><summary class="section-title" style="cursor:pointer; margin-bottom:8px;">Jadwal angsuran (' + sch.paid + '/' + sch.tenor + ')</summary>' +
           (sch.deferredYm || []).map(ym => `
             <div class="txn-row">
               <div class="txn-left">

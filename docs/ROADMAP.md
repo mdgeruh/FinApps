@@ -1,6 +1,6 @@
 # Roadmap: Keuangan Pribadi
 
-Rencana pekerjaan yang **belum selesai**, per **v1.1.200** (26 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
+Rencana pekerjaan yang **belum selesai**, per **v1.1.202** (26 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
 
 Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kategori: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
@@ -29,7 +29,7 @@ Selesai (T7, v1.1.195, lihat arsip): `node tests/run.js` kini **377 lulus, 0 gag
 
 ## 5. Ide yang belum dijadwalkan
 (Akun forex USD/cent ada di bagian 4, menunggu keputusan.)
-- [ ] [F] Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
+- [x] [F] Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal: selesai v1.1.201 (lihat arsip)
 
 ## 6. Ditunda (hasil ukur: belum perlu)
 - [~] [E] E2 cache hasil parse `loadData()`: `render()` sudah parse 1x (bukan 4x, v1.1.055). Cache global ditunda: ±65 pemanggil, banyak yang memodifikasi hasilnya, butuh refactor dan test lebih lengkap. Manfaat terukur ±2x di 5.000 transaksi, tidak terasa di 187

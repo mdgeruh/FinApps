@@ -67,6 +67,17 @@
         });
       }
     }
+    // Sisa pokok pinjaman yang tidak pas dengan jadwal angsuran (prioritas terendah, selalu kuning).
+    const mism = (data.accounts || []).map(a => ({ a, m: computeLoanScheduleMismatch(data, a, balances ? balances[a.id] : undefined) })).filter(x => x.m);
+    if (mism.length) {
+      const w = mism[0], more = mism.length > 1 ? ' (+' + (mism.length - 1) + ' lainnya)' : '';
+      out.push({
+        kind: 'pinjaman-selisih', level: 'amber',
+        title: w.a.name + ' · sisa pokok tidak cocok jadwal' + more,
+        sub: (w.m.arah === 'lebih' ? 'Lebih ' : 'Kurang ') + formatRp(w.m.selisih) + ' dari batas angsuran terdekat',
+        act: 'openAccountDetail', arg: w.a.id
+      });
+    }
     return out.slice(0, ATTENTION_MAX);
   }
 

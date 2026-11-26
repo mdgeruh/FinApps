@@ -673,6 +673,34 @@
     return { rows, paid, tenor, next: paid < tenor ? rows[paid] : null, deferred, deferredYm };
   }
 
+  // Cek kecocokan sisa pokok pinjaman dengan jadwal angsuran (v1.1.201). Sisa pokok yang sehat selalu jatuh di
+  // salah satu "batas angsuran" jadwal (pokok awal, lalu sisa pokok setelah angsuran ke-1, ke-2, dst). Kalau
+  // jatuhnya di antara dua batas (bayar sebagian, salah ketik nominal, saldo awal/pokok awal tidak cocok), jadwal
+  // "angsuran lunas" yang ditaksir dari pokok terbayar jadi menyesatkan. Mengembalikan null kalau cocok, tidak ada
+  // jadwal, atau pinjaman sudah lunas; selain itu { sisaPokok, terdekat, setelahNo, selisih, arah }.
+  // arah: 'lebih' = sisa pokok lebih besar dari batas terdekat (kurang bayar), 'kurang' = lebih kecil (kelebihan bayar).
+  function computeLoanScheduleMismatch(data, acc, bal) {
+    if (!acc || !TYPE_LOAN[acc.type] || acc.archived) return null;
+    const sch = computeLoanSchedule(data, acc, bal);
+    if (!sch || !sch.rows.length) return null;
+    const sisaPokok = Math.max(0, -(bal === undefined ? accountBalance(data, acc.id) : bal));
+    if (sisaPokok <= 0) return null;
+    const pokokAwal = Math.abs(acc.originalPrincipal || acc.initialBalance || 0);
+    const tol = Math.max(1000, pokokAwal * 0.001);
+    const bounds = [pokokAwal].concat(sch.rows.map(r => r.sisa));
+    let best = 0;
+    bounds.forEach((b, i) => { if (Math.abs(sisaPokok - b) < Math.abs(sisaPokok - bounds[best])) best = i; });
+    const diff = roundMoney(sisaPokok - bounds[best]);
+    if (Math.abs(diff) <= tol) return null;
+    return { sisaPokok, terdekat: bounds[best], setelahNo: best, selisih: Math.abs(diff), arah: diff > 0 ? 'lebih' : 'kurang' };
+  }
+  function loanMismatchText(m) {
+    if (!m) return '';
+    return 'Sisa pokok ' + formatRp(m.sisaPokok) + ' tidak pas dengan jadwal: batas terdekat ' + formatRp(m.terdekat) +
+      (m.setelahNo > 0 ? ' (setelah angsuran ke-' + m.setelahNo + ')' : ' (belum ada angsuran)') + ', ' +
+      (m.arah === 'lebih' ? 'lebih ' : 'kurang ') + formatRp(m.selisih) + '. Bisa karena bayar sebagian atau salah catat; cek riwayat transaksi atau pokok awal di Edit akun.';
+  }
+
   // ---------- ARUS UTANG (dipisah dari pemasukan/pengeluaran di Ringkasan) ----------
   // Bayar tagihan/cicilan dan pencairan pinjaman bukan pendapatan/belanja sungguhan: pencairan hanya
   // menambah kas sekaligus utang, dan bayar utang hanya memindahkan kas ke pelunasan.

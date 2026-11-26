@@ -6,6 +6,29 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.202 — 26 Nov 2026
+
+### Diubah
+- **Kotak cari di bar atas desktop kini punya saran langsung.** Sebelumnya hanya "ketik lalu Enter". Sekarang, mulai 2 huruf (debounce 120 ms), muncul daftar maks 6 transaksi (terbaru dulu) + 3 akun yang cocok; kata cocok disorot, header menyebut total cocok, dan baris "Lihat semua N transaksi" menuju tab Transaksi. Cocok di keterangan, kategori, nama akun (asal/tujuan), label, jenis akun, dan nominal (angka ≥ 3 digit; titik dan awalan Rp diabaikan). Akun arsip tidak disarankan; nominal tersamar saat tombol mata menyala.
+- **Papan ketik:** ↑/↓ pindah pilihan, Enter buka pilihan (tanpa pilihan: cari penuh seperti sebelumnya), Esc pertama menutup daftar dan Esc kedua mengosongkan kotak; Ctrl/Cmd+K memfokuskan kotak (selain `/`). Klik di luar menutup daftar.
+- Aksesibilitas: `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, daftar `role="listbox"`.
+- Fungsi murni `deskSearchSuggest` dan `deskSearchMark` di `js/navigasi.js`; gaya `.ds-pop` di `css/app.css` (warna teks memakai varian `*-ink`).
+
+### Tes
+- 7 tes baru (saran, urutan, nominal, batas jumlah, sorotan + escape, markup/tombol). Hasil: **406 lulus, 0 gagal**.
+- Diuji di Chromium 1440 px dengan data contoh: fokus lewat `/` dan Ctrl+K, daftar muncul, panah + Enter membuka rincian transaksi, akun muncul, Esc dua tahap, pesan kosong, Enter tanpa pilihan ke tab Transaksi, klik luar menutup; tanpa error JS. Tema gelap, mode kaca, dan pembaca layar belum diuji.
+- Versi app dan `CACHE_VERSION` → v1.1.202; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
+## v1.1.201 — 26 Nov 2026
+
+### Ditambah
+- **Pengecekan sisa pokok pinjaman vs jadwal angsuran.** Fungsi murni `computeLoanScheduleMismatch(data, acc, bal)` di `js/data.js`: sisa pokok yang sehat jatuh di salah satu batas jadwal (pokok awal, lalu sisa pokok setelah tiap angsuran). Bila jatuhnya di antara dua batas (bayar sebagian, salah ketik, pokok awal tidak cocok) hasilnya `{ sisaPokok, terdekat, setelahNo, selisih, arah }`; toleransi `max(Rp1.000, 0,1% pokok awal)`. Null untuk akun non-pinjaman, arsip, lunas, atau tanpa jadwal. Teks penjelasan: `loanMismatchText`.
+- Catatan kuning di atas jadwal angsuran pada detail akun, dan item kuning `pinjaman-selisih` di strip "Perlu perhatian" (prioritas terendah, menuju detail akun; beberapa akun digabung "(+N lainnya)").
+
+### Tes
+- 8 tes baru (cocok, tepat N angsuran, bayar sebagian, arah, toleransi, lunas/arsip/tanpa jadwal, teks, strip, markup). Hasil: **399 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.201; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
 ## v1.1.200 — 26 Nov 2026
 
 ### Diubah
