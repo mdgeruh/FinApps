@@ -8,7 +8,7 @@ Tanda: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumenta
 1. Perbaikan tab Akun (A1–A9)
 2. Tampilan desktop (D1–D12)
 3. Perbaikan tab Ringkasan (R1–R9)
-4. Lanjutan tab Ringkasan (S1–S5 yang selesai)
+4. Lanjutan tab Ringkasan (S1–S6 yang selesai)
 5. Selesai lainnya
 
 ## 1. Perbaikan tab Akun (A1–A9 selesai, v1.1.075–086)
@@ -95,7 +95,7 @@ Urut dari dampak terbesar ke terkecil:
 Urutan kerja yang disarankan (R1–R9 sudah selesai; semua item Ringkasan tuntas): R1 → R2 + R5 (satu batch, saling terkait) → R3 + R4 → R7 → R6 → R8 → R9 (urutan R1–R9 sudah dijalankan). Tiap batch naik satu versi dan memperbarui CHANGELOG, riwayat `?`, README, dan SUMMARY.
 
 
-## 4. Lanjutan tab Ringkasan (S1–S5 selesai)
+## 4. Lanjutan tab Ringkasan (S1–S6 selesai)
 
 Proyeksi akhir bulan sudah ada (R8, v1.1.073), jadi tidak diulang.
 
@@ -104,6 +104,7 @@ Proyeksi akhir bulan sudah ada (R8, v1.1.073), jadi tidak diulang.
 - [x] **S3 [F] (selesai v1.1.189) Rasio tabungan di kartu "Bulan ini":** (pemasukan − pengeluaran) ÷ pemasukan, dengan panah naik/turun dibanding bulan lalu.
 - [x] **S4 [F] (selesai v1.1.191; Transfer tanpa penanda) Kategori naik/turun di kartu Kategori:** lencana ▲/▼/baru di legenda untuk kategori yang bergerak dibanding bulan lalu sampai tanggal yang sama, ambang sama dengan Laporan.
 - [x] **S5 [F] (selesai v1.1.192; kartu kredit dan akun tanpa jadwal disebut terpisah) Estimasi bulan lunas di kartu Tren total utang:** bulan jatuh tempo terakhir terjauh dari jadwal pinjaman (`computeLoanSchedule`) dan cicilan PayLater, bila angsuran dibayar sesuai jadwal.
+- [x] **S6 [F] (selesai v1.1.193; bawaan mati) Label bulan opsional di kurva Tren dan Utang:** sakelar di Profil > Tampilan; label sumbu bawah maksimal 6, ikut tersinkron.
 
 ## 5. Selesai lainnya
 - [x] [K] Sapaan/nama pemilik disamakan dengan CHANGELOG v1.1.041; `supabase/setup.sql` (tabel + RLS + 4 kebijakan + query verifikasi)
@@ -119,3 +120,18 @@ Proyeksi akhir bulan sudah ada (R8, v1.1.073), jadi tidak diulang.
 - [x] [F] (v1.1.081) Kartu Grafik dan kartu grafiknya digabung menjadi satu kartu di Ringkasan (CSS saja)
 - [x] [F] Tombol `?` riwayat perubahan di tab Profil (v1.1.058)
 - [x] [Q] README dan CHANGELOG diperbarui; CHANGELOG dipadatkan dan riwayat lengkap versi lama dipindah ke `docs/CHANGELOG-ARSIP.md`
+
+## Lanjutan tampilan desktop (T1–T8, v1.1.194–195)
+Acuan: gambar dasbor admin (sidebar melayang, kartu membulat, kartu utama berlatar gradasi). **Warna tidak diubah**; semua gaya memakai variabel palet dan khusus ≥ 1024 px.
+- [x] [F] (v1.1.194) Sidebar melayang berbentuk kapsul, bar atas pil, kartu 24 px tanpa garis, kartu Kekayaan bersih berlatar gradasi, panel Akun gaya "Aktivitas terbaru"
+- [x] [Q] T1 (v1.1.195) Periksa semua tab di 1440/1100/1024 px, terang dan gelap; kepala tabel Transaksi dipipihkan, chip filter jadi pil
+- [x] [F] T2 (v1.1.195) Tombol jenis grafik, periode, dan filter berbentuk pil; aktif berlatar gradasi
+- [x] [F] T3 (v1.1.195) Kotak ikon membulat di kartu angka (menggantikan titik warna)
+- [x] [F] T4 (v1.1.195) Penunjuk "Dasbor keuangan" di atas judul (CSS `h1::before`)
+- [x] [F] T5 (v1.1.195) Bar progres tebal berujung bulat; baris anggaran jadi kartu kecil
+- [x] [K] T6 (v1.1.195) Kartu angka Rp0 di 1024–1279 px: ambang `isDeskWide()` 1280 → 1024 px (bug sejak sebelum v1.1.193)
+- [x] [Q] T7 (v1.1.195) `tests/run.js`: muat `js/kategori-data.js` + enam tes usang diperbarui; 330/47 → 377 lulus, 0 gagal
+- [x] [F] T8 (v1.1.195) Sakelar "Gaya dasbor melayang" (kunci `kp_float`, atribut `data-flat`), ikut sinkron
+- [x] [F] (v1.1.196) Panel "Aktivitas terbaru" di Ringkasan desktop: 6 transaksi terakhir di bawah daftar Akun (`deskRecentTxns`, `renderDeskRecent`), ketuk = rincian, nominal tersamar saat saldo disembunyikan
+- [x] [K] (v1.1.197) Sidebar melayang saat diciutkan: selector `& .sb-collapsed ...` (turunan) tidak pernah cocok karena kelas ada di `<html>`; diganti `&.sb-collapsed ...` sehingga lebar 80 px, padding isi, dan tombol Catat berlaku
+- [x] [F] (v1.1.197) Chip periode kurva ringkas dan rata kiri; kartu Grafik di dalam `#chart-group` tanpa bayangan/sudut ganda (pita putih di belakang chip)

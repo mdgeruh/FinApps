@@ -255,6 +255,25 @@
     try { if (on) settingSet(GLASS_KEY, '1'); else settingRemove(GLASS_KEY); } catch (e) { /* abaikan */ }
     applyGlass(on);
   }
+  // Gaya dasbor melayang (v1.1.195, T8): khusus desktop, bawaan menyala. Atribut data-flat="1" di <html> mengembalikan tampilan desktop lama.
+  const FLOAT_KEY = 'kp_float';
+  function currentFloat() { try { return localStorage.getItem(FLOAT_KEY) !== '0'; } catch (e) { return true; } }
+  function applyFloat(on) {
+    if (on) document.documentElement.removeAttribute('data-flat'); else document.documentElement.setAttribute('data-flat', '1');
+  }
+  function toggleFloat() {
+    const on = !!(this && this.checked);
+    try { if (on) settingRemove(FLOAT_KEY); else settingSet(FLOAT_KEY, '0'); } catch (e) { /* abaikan */ }
+    applyFloat(on);
+  }
+  // Label bulan/tanggal di bawah kurva Tren dan Utang (v1.1.193, S6): bawaan mati (kurva polos seperti Kekayaan/Cashflow).
+  const CHART_LABELS_KEY = 'kp_chart_labels';
+  function currentChartLabels() { try { return localStorage.getItem(CHART_LABELS_KEY) === '1'; } catch (e) { return false; } }
+  function toggleChartLabels() {
+    const on = !!(this && this.checked);
+    try { if (on) settingSet(CHART_LABELS_KEY, '1'); else settingRemove(CHART_LABELS_KEY); } catch (e) { /* abaikan */ }
+    try { if (typeof render === 'function') render(); } catch (e) { /* abaikan */ }
+  }
   function currentPalette() { try { return cleanPalette(localStorage.getItem(PALETTE_KEY)); } catch (e) { return 'hutan'; } }
   function currentAccent() { try { return cleanAccent(localStorage.getItem(ACCENT_KEY)); } catch (e) { return 'hijau'; } }
 
@@ -296,6 +315,8 @@
     if (palEl) palEl.innerHTML = PALETTES.map(p =>
       '<button type="button" class="palette-opt" data-act="setPalette" data-a0="' + p.id + '" aria-pressed="' + (curPal === p.id) + '" aria-label="Palet ' + p.label + '"><span class="palette-prev" style="background:' + p.prev[0] + ';"><i style="background:' + p.prev[2] + ';"></i><i style="background:' + p.prev[1] + ';"></i><i style="background:' + p.prev[2] + ';opacity:.45;"></i></span>' + p.label + '</button>').join('');
     const glassEl = $('glass-toggle'); if (glassEl) glassEl.checked = currentGlass();
+    const floatEl = $('float-toggle'); if (floatEl) floatEl.checked = currentFloat();
+    const clEl = $('chart-labels-toggle'); if (clEl) clEl.checked = currentChartLabels();
     modeEl.innerHTML = [['system', 'Sistem'], ['light', 'Terang'], ['dark', 'Gelap']].map(m =>
       '<button type="button" class="theme-opt" data-act="setThemeMode" data-a0="' + m[0] + '" aria-pressed="' + (mode === m[0]) + '">' + m[1] + '</button>').join('');
     accEl.innerHTML = ACCENTS.map(a =>
@@ -344,6 +365,7 @@
       try { localStorage.setItem(PALETTE_KEY, 'senja'); localStorage.setItem(GLASS_KEY, '1');  /* langsung: pengaturan-sync.js belum dimuat */ } catch (e) { /* abaikan */ }
     }
     applyGlass(currentGlass());
+    applyFloat(currentFloat());
     applyPalette(pal);
   })();
 
@@ -378,8 +400,8 @@
     if (typeof renderAccounts === 'function' && $('akun-total-aset')) { const bal = computeAllBalances(data); renderAccountsSummary(data, bal); renderAccounts(data, bal); }
   }
 
-  // Dasbor desktop = layar >=1280 px. Di bawah itu kartu angka/panel Akun disembunyikan CSS dan tidak dihitung.
-  function isDeskWide() { try { return !!(window.matchMedia && window.matchMedia('(min-width: 1280px)').matches); } catch (e) { return false; } }
+  // Dasbor desktop = layar >=1024 px (sama dengan sidebar dan kartu angka di CSS; v1.1.195: dulu 1280 sehingga kartu angka di 1024-1279 px tampil Rp0). Di bawah itu kartu angka disembunyikan CSS dan tidak dihitung.
+  function isDeskWide() { try { return !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches); } catch (e) { return false; } }
 
   // Garis mini (tanpa sumbu) untuk kartu angka desktop; lebar penuh kartu, tinggi 30 px.
   function sparkSvg(points, color) {
@@ -423,6 +445,7 @@
       d.style.color = good ? 'var(--green-ink)' : (bad ? 'var(--red-ink)' : 'var(--ink-soft)');
       d.textContent = hid ? '' : (delta === 0 ? 'Tetap · 30 hari' : `${trendArrow(delta)}${delta > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}% · 30 hari`);
     });
+    renderDeskRecent(data, hid);
     const list = $('desk-accounts-list'); if (!list) return;
     const groups = deskAccountGroups(data, balances, 8);
     list.innerHTML = groups.length ? groups.map(g => {
@@ -437,6 +460,19 @@
       const more = g.lebih ? `<button type="button" class="da-more" data-act="setTab" data-a0="akun">+${g.lebih} akun lagi ›</button>` : '';
       return head + rows + more;
     }).join('') : '<div class="acc-sub">Belum ada akun.</div>';
+  }
+
+  // V1.1.196: panel "Aktivitas terbaru" (6 transaksi terakhir) di bawah daftar Akun. Ketuk baris = buka rincian transaksi.
+  function renderDeskRecent(data, hid) {
+    const box = $('desk-recent-list'); if (!box) return;
+    const rows = deskRecentTxns(data, 6);
+    box.innerHTML = rows.length ? rows.map(r => {
+      const sign = r.type === 'transfer' ? '⇄' : (r.type === 'masuk' ? '+' : '−');
+      const title = r.type === 'transfer' ? (r.desc && r.desc !== 'Transfer' ? r.desc : 'Transfer') : (r.desc || r.category || '(Tanpa keterangan)');
+      const sub = (r.type === 'transfer' ? r.accName + ' → ' + r.toName : r.accName) + ' · ' + fmtTgl(r.date);
+      const amt = hid ? '•••••••' : sign + ' ' + formatRp(r.amount);
+      return `<div class="da-row dr-row" role="button" tabindex="0" data-act="openTxnDetail" data-a0="${escapeHtml(r.id)}" data-keydown-act="openTxnDetail" data-keydown-a0="${escapeHtml(r.id)}" data-keydown-keys="Enter| "><span class="da-ico dr-ico ${escapeHtml(r.type)}" aria-hidden="true">${sign}</span><span class="da-name">${escapeHtml(title)}</span><span class="da-type">${escapeHtml(sub)}</span><span class="da-bal dr-amt ${escapeHtml(r.type)}">${escapeHtml(amt)}</span></div>`;
+    }).join('') : '<div class="acc-sub">Belum ada transaksi.</div>';
   }
 
   // Lebar kolom isi berubah (jendela diubah atau sidebar dibuka/ciutkan): gambar ulang supaya grafik pas lebar kartu.

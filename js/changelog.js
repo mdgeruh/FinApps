@@ -7,6 +7,18 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.197', d: '26 Nov 2026', items: [
+      'Perbaikan tampilan desktop: saat menu samping diciutkan, kini benar-benar menyempit menjadi kapsul kecil berisi ikon dan isi halaman bergeser mengikutinya (sebelumnya lebarnya tidak berubah).',
+      'Chip pilihan periode kurva (1H, 7H, 30H, 180H, 360H) dirapikan: ukurannya ringkas dan rata kiri, dan pita putih di belakangnya hilang.'] },
+    { v: 'v1.1.196', d: '26 Nov 2026', items: [
+      'Di layar lebar (komputer), panel Akun di Ringkasan kini punya bagian baru "Aktivitas terbaru": enam transaksi terakhir lengkap dengan akun dan tanggalnya. Ketuk satu baris untuk membuka rinciannya, atau "Lihat semua" untuk ke daftar Transaksi. Nominalnya ikut tersamar saat tombol mata (sembunyikan saldo) dinyalakan.'] },
+    { v: 'v1.1.195', d: '26 Nov 2026', items: [
+      'Tampilan desktop dibuat lebih modern: menu samping melayang berbentuk kapsul, kartu lebih membulat dengan bayangan lembut, tombol grafik berbentuk pil, dan kartu angka diberi ikon. Warna tidak berubah, tampilan HP juga tidak berubah. Bisa dimatikan di Profil > Preferensi > Tampilan ("Gaya dasbor melayang").',
+      'Perbaikan: di layar lebar 1024 sampai 1279 px, kartu Kekayaan bersih, Total aset, dan Total utang tidak lagi menampilkan Rp0.'] },
+    { v: 'v1.1.194', d: '26 Nov 2026', items: [
+      'Tampilan desktop dibuat lebih modern: menu samping kini melayang berbentuk kapsul, kartu lebih membulat dengan bayangan lembut, dan kartu Kekayaan bersih tampil sebagai kartu utama. Warna tidak berubah; tampilan HP juga tidak berubah.'] },
+    { v: 'v1.1.193', d: '25 Nov 2026', items: [
+      'Sakelar baru di Profil > Preferensi > Tampilan: "Label bulan di kurva". Bila dinyalakan, kurva Pemasukan vs pengeluaran dan Tren total utang menulis bulan atau tanggal di bawah kurva (maksimal 6 label). Bawaannya mati, dan pilihan ini ikut tersinkron bersama pengaturan lain.'] },
     { v: 'v1.1.192', d: '25 Nov 2026', items: [
       'Kartu Tren total utang kini menuliskan perkiraan bulan lunas, misalnya "Perkiraan lunas: Juni 2027 (9 bulan lagi)", dihitung dari jadwal pinjaman dan cicilan PayLater bila angsuran dibayar sesuai jadwal. Akun tanpa jadwal, seperti kartu kredit, disebut terpisah karena belum bisa diperkirakan.'] },
     { v: 'v1.1.191', d: '25 Nov 2026', items: [

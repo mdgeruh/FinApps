@@ -6,6 +6,67 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.197 — 26 Nov 2026
+
+### Diperbaiki
+- **Sidebar melayang saat diciutkan (desktop).** Aturan ciut di blok gaya melayang ditulis `& .sb-collapsed ...` (turunan), padahal kelas `sb-collapsed` dipasang di `<html>` (= `:root`), jadi tidak pernah cocok: kapsul tetap selebar 224 px dan isi halaman tidak bergeser. Kini `&.sb-collapsed ...`: lebar 80 px, `padding-left` isi 112 px, ikon menu dan merek di tengah, tombol Catat 48 px.
+- **Chip periode kurva (1H/7H/30H/180H/360H).** Chip tidak lagi melebar penuh: ringkas, rata kiri, membungkus bila sempit. Kartu Grafik yang bersarang di `#chart-group` tidak lagi mewarisi bayangan dan sudut besar kartu melayang (penyebab pita putih berujung tegas di belakang chip).
+
+- Panel Aktivitas terbaru: baris keterangan akun · tanggal tidak lagi membungkus ke baris kedua (dipotong dengan …).
+
+### Tes
+- 2 tes baru (selector ciut, chip dan bayangan ganda). Hasil: **385 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.197; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
+## v1.1.196 — 26 Nov 2026
+
+### Ditambah
+- **Panel "Aktivitas terbaru" di Ringkasan desktop (≥ 1024 px).** Di bawah daftar Akun: enam transaksi terakhir (terbaru di atas; tanggal sama → yang dicatat belakangan dulu) dengan tanda +/−/⇄, keterangan, akun (transfer: asal → tujuan), tanggal, dan nominal. Ketuk baris membuka rincian transaksi; "Lihat semua ›" ke tab Transaksi. Nominal tersamar saat tombol mata menyala. Fungsi murni `deskRecentTxns(data, max)` di `js/data.js`, render `renderDeskRecent` di `js/navigasi.js`.
+
+### Tes
+- 2 tes baru (urutan/batas/transfer, markup+render+CSS). Hasil: **383 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.196; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
+## v1.1.195 — 26 Nov 2026
+
+### Diubah
+- **Gaya dasbor melayang dirampungkan (roadmap T1–T8, khusus desktop ≥ 1024 px).** Warna tetap mengikuti palet, aksen, dan tema.
+  - **T1 pemeriksaan semua tab** (Ringkasan, Akun, Transaksi, Titipan, Tagihan, Laporan, Profil) di 1440, 1100, dan 1024 px, terang dan gelap. Perbaikan: kepala tabel Transaksi dipipihkan (tanpa garis, latar `--paper-dim`), chip filter berbentuk pil.
+  - **T2** tombol jenis grafik, periode kurva, dan filter berbentuk pil; yang aktif berlatar gradasi aksen.
+  - **T3** kartu angka (Kekayaan, Aset, Utang) memakai kotak ikon membulat, menggantikan titik warna.
+  - **T4** penunjuk kecil "Dasbor keuangan" di atas judul halaman.
+  - **T5** bar progres lebih tebal berujung bulat; baris anggaran menjadi kartu kecil.
+  - **T8 sakelar** **Gaya dasbor melayang** di Profil > Preferensi > Tampilan (bawaan menyala). Mati = tampilan desktop lama (`data-flat` di `<html>`, kunci `kp_float`, ikut sinkron dan backup). Semua gaya baru dibungkus `:root:not([data-flat])`.
+
+### Diperbaiki
+- **T6: kartu angka tampil Rp0 di lebar 1024–1279 px.** `isDeskWide()` memakai ambang 1280 px padahal CSS menampilkan kartu angka mulai 1024 px, jadi angkanya tidak pernah dihitung di rentang itu (juga ada di v1.1.193). Ambang kini 1024 px, sama dengan sidebar; ukuran kanvas grafik ikut menyesuaikan.
+
+### Tes
+- **T7: perapian tes.** `tests/run.js` memuat `js/kategori-data.js` (menghilangkan 41 galat `categoryAll is not defined`); enam tes usang disesuaikan dengan struktur sekarang (43 berkas JS, `routeOnDetailOpen(id, …)`, versi/tanggal build tidak lagi dikunci ke v1.1.172, Kelola label pindah ke halaman Kelola kategori & label, Profil: Preferensi dan Alat jadi subhalaman). Hasil: **377 lulus, 0 gagal** (sebelumnya 330 lulus, 47 gagal).
+- Tes baru `gaya dasbor melayang (T1–T8)`.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.195; `js/changelog.js`, README, ROADMAP, ARSIP-TODOLIST, SUMMARY diperbarui.
+
+## v1.1.194 — 26 Nov 2026
+
+### Diubah
+- **Tampilan dasbor melayang (khusus desktop ≥ 1024 px).** Hanya bentuk dan tata letak; warna tetap mengikuti palet, aksen, dan tema yang dipilih (terang/gelap), jadi skema warna tidak berubah.
+  - **Sidebar melayang** (floating sidebar): kapsul bersudut besar dengan jarak dari tepi layar, menu aktif berupa pil, tombol Catat transaksi di dasar. Mode ciutkan tetap bekerja.
+  - **Bar atas:** judul lebih besar, kotak cari, tanggal, tema, dan profil berbentuk pil tanpa garis.
+  - **Kartu:** sudut 24 px, tanpa garis tepi, bayangan lembut. Kartu Kekayaan bersih menjadi kartu utama berlatar gradasi warna aksen. Panel Akun memakai ikon bulat dan baris membulat.
+- Tampilan HP/tablet (< 1024 px), mode kaca, dan cetak tidak berubah. Hanya CSS (`css/app.css`); versi app dan `CACHE_VERSION` → v1.1.194.
+
+## v1.1.193 — 25 Nov 2026
+
+### Ditambah
+- **Label bulan opsional di kurva Tren dan Utang (roadmap S6).** Sakelar **Label bulan di kurva** (`#chart-labels-toggle`, Profil > Preferensi > Tampilan, di bawah Efek kaca). Mati bawaannya, jadi kurva tetap polos seperti Kekayaan/Cashflow (v1.1.187). Bila menyala, kurva **Pemasukan vs pengeluaran** dan **Tren total utang** menulis label sumbu bawah: nama bulan untuk periode ≥ 30 hari per bucket, tanggal untuk 7H dan 30H (`bucketAxisLabel`).
+  - **Maksimal 6 label**, merata, selalu memuat bucket terakhir (`axisLabelIndexes`); label pertama rata kiri, terakhir rata kanan, sisanya di tengah, supaya tidak terpotong di tepi.
+  - Saat menyala, ruang bawah kurva `padBottom` 20 → 34, dan nilai awal (Utang) serta nilai akhir garis bawah (Tren) digeser ke atas label supaya tidak bertumpuk. Tooltip dan keyboard tidak berubah. Kurva Kekayaan dan Cashflow tidak terpengaruh.
+  - Kunci pengaturan `kp_chart_labels` (hanya `1` yang menyalakan) masuk `SYNCED_SETTING_KEYS`, jadi ikut tersinkron lewat cloud dan berkas backup; setelah pengaturan dari luar diterapkan, tampilan digambar ulang (`settingsReapplyUi` memanggil `render()`).
+- Fungsi murni baru `axisLabelIndexes(n, max)` dan `axisLabelsSvg(buckets, xs, H, on)` di `js/grafik.js`. Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.193. ROADMAP, ARSIP-TODOLIST, SUMMARY, dan README diperbarui (S1–S6 selesai).
+
+### Tes
+- Tes baru `label bulan (S6)`: pemilihan indeks label, keluaran SVG mati/menyala beserta jangkar dan posisi, bawaan mati, sinkron, sakelar, dan pemasangan di kedua kurva. Tes lama `chartDims dipakai empat grafik` disesuaikan ke bentuk kode baru (`labelsOn`).
+
 ## v1.1.192 — 25 Nov 2026
 
 ### Ditambah

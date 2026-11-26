@@ -11,7 +11,7 @@
     return d.toLocaleDateString('id-ID', { month: 'short' });
   }
 
-  // Ukuran kanvas grafik: HP/tablet tetap 320 px; dasbor desktop (>=1280 px) memakai lebar kartu sebenarnya
+  // Ukuran kanvas grafik: HP/tablet tetap 320 px; dasbor desktop (>=1024 px) memakai lebar kartu sebenarnya
   // (1 satuan = 1 px, jadi teks tidak membesar) dan sedikit lebih tinggi. Fallback 320 bila kartu tersembunyi.
   function chartDims(svg, defH, deskH) {
     let W = 320, H = defH;
@@ -41,7 +41,8 @@
     // Gaya sama dengan kurva kekayaan bersih & cashflow (v1.1.187): garis penuh selebar kartu, hanya titik terakhir
     // yang diberi penanda, nilai akhir tertulis di dekat ujung kanan, tanpa label sumbu (tanggal ada di tooltip).
     const { W, H } = chartDims(svg, 170, 230);
-    const padBottom = 20, padTop = 26, padSide = 4;
+    const labelsOn = currentChartLabels();   // S6: label bulan opsional
+    const padBottom = labelsOn ? 34 : 20, padTop = 26, padSide = 4;
     const chartH = H - padBottom - padTop;
     const stepX = (W - padSide * 2) / Math.max(1, buckets.length - 1);
     const xAt = i => padSide + i * stepX;
@@ -63,10 +64,11 @@
     endLabels.sort((a, b) => a.y - b.y);
     svgContent += `<g id="trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
     endLabels.forEach((l, i) => {
-      const ly = i === 0 ? Math.max(11, l.y - 10) : Math.min(H - 6, l.y + 18);
+      const ly = i === 0 ? Math.max(11, l.y - 10) : Math.min(H - (labelsOn ? 20 : 6), l.y + 18);
       svgContent += `<text x="${(W - padSide).toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" style="fill:${l.ink}" font-family="Inter, sans-serif">${l.text}</text>`;
     });
     svgContent += `</g>`;
+    svgContent += axisLabelsSvg(buckets, xs, H, labelsOn);
     svgContent += tooltipGroupSvgMulti('trend-chart', hasPrev ? 4 : 2);
 
     svg.innerHTML = svgContent;
@@ -517,6 +519,23 @@
     return totals;
   }
   function bucketAxisLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : dayShortLabel(b.to); }
+  // Fungsi murni (S6, v1.1.193): indeks bucket yang diberi label sumbu, paling banyak `max`, merata, selalu memuat yang terakhir.
+  function axisLabelIndexes(n, max) {
+    max = Math.max(2, max || 6);
+    if (n <= max) return Array.from({ length: n }, (_, i) => i);
+    const step = Math.ceil((n - 1) / (max - 1)), out = [];
+    for (let i = n - 1; i >= 0; i -= step) out.unshift(i);
+    return out;
+  }
+  // Teks SVG label sumbu bawah; '' bila pilihan mati. Label pertama rata kiri, terakhir rata kanan, sisanya di tengah.
+  function axisLabelsSvg(buckets, xs, H, on) {
+    if (!on) return '';
+    const idx = axisLabelIndexes(buckets.length, 6);
+    return idx.map(i => {
+      const anchor = i === 0 ? 'start' : (i === buckets.length - 1 ? 'end' : 'middle');
+      return `<text x="${xs[i].toFixed(1)}" y="${(H - 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" class="svg-fill-soft" font-family="Inter, sans-serif">${escapeHtml(bucketAxisLabel(buckets[i]))}</text>`;
+    }).join('');
+  }
   function bucketTipLabel(b) { return b.kind === 'month' ? monthShortLabel(b.key) : (b.from === b.to ? dayShortLabel(b.to) : dayShortLabel(b.from) + ' – ' + dayShortLabel(b.to)); }
   function bucketPeriodText(buckets) {
     const k = buckets[0].kind;

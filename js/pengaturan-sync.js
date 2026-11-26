@@ -7,7 +7,7 @@
   // Sengaja TIDAK disinkronkan (khusus perangkat atau sensitif): menu samping, PIN, izin notifikasi, jadwal tunda cadangan, info sinkron, saklar sinkron otomatis (kp_auto_sync).
   // Kategori buatan sendiri sudah ada di dalam data (data.categories) sehingga ikut sinkron tanpa langkah ini.
   // ============================================================
-  const SYNCED_SETTING_KEYS = ['kp_theme', 'kp_palette', 'kp_accent', 'kp_glass', 'kp_owner_name', 'keuangan-cegah-minus-v1', 'keuangan-kata-kunci-v1',
+  const SYNCED_SETTING_KEYS = ['kp_theme', 'kp_palette', 'kp_accent', 'kp_glass', 'kp_float', 'kp_chart_labels', 'kp_owner_name', 'keuangan-cegah-minus-v1', 'keuangan-kata-kunci-v1',
     'keuangan-ringkasan-hidden-v1', 'keuangan-ringkasan-order-v1', 'keuangan-ringkasan-segmen-v1', 'keuangan-ambang-bandingkan-v1',
     'keuangan-jarak-cadangan-v1', 'keuangan-periode-grafik-mini-v1', 'kp_acc_layout', 'kp_acc_collapsed'];
   const SETTING_VALUE_MAX = 20000;   // karakter per pengaturan
@@ -70,6 +70,8 @@
       if (typeof applyTheme === 'function') applyTheme(localStorage.getItem('kp_theme') || 'system');
       if (typeof applyPalette === 'function') applyPalette(currentPalette());
       if (typeof applyGlass === 'function') applyGlass(currentGlass());
+      if (typeof applyFloat === 'function') applyFloat(currentFloat());
       if (typeof renderThemeSettings === 'function') renderThemeSettings();
+      if (typeof render === 'function') render();
     } catch (e) { /* abaikan */ }
   }

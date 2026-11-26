@@ -1,6 +1,6 @@
 # Ringkasan: Keuangan Pribadi
 
-Status per **v1.1.192** (25 Nov 2026). Riwayat tiap versi ada di [CHANGELOG.md](../CHANGELOG.md); panduan pemakaian dan struktur kode di [README.md](../README.md).
+Status per **v1.1.197** (26 Nov 2026). Riwayat tiap versi ada di [CHANGELOG.md](../CHANGELOG.md); panduan pemakaian dan struktur kode di [README.md](../README.md).
 
 ## Peta dokumen
 
@@ -23,12 +23,13 @@ App web statis (HTML + CSS + JS biasa, tanpa build tool), ±800 KB JS tanpa mini
 | Tab Akun (A1–A9) | Selesai, v1.1.075–086 | Definisi utang seragam, kartu ringkas, arsip akun, cari/filter, sematkan, aksi cepat, form akun dirapikan |
 | Tampilan desktop (D1–D12) | Selesai, v1.1.131–135 | Dasbor, tabel Transaksi, panel Akun, bar atas menempel, form panel samping, pintasan keyboard |
 | Tab Ringkasan (R1–R9) | Selesai, v1.1.068–074 | Perlu perhatian, grafik bersegmen, urutan kartu, proyeksi akhir bulan |
-| Lanjutan Ringkasan (S1–S6) | **S1–S5 selesai**, v1.1.188–192; S6 belum | Sembunyikan saldo di semua kurva, periode sebelumnya, rasio tabungan, kategori naik/turun, perkiraan bulan lunas utang |
+| Lanjutan Ringkasan (S1–S6) | Selesai, v1.1.188–193 | Sembunyikan saldo di semua kurva, periode sebelumnya, rasio tabungan, kategori naik/turun, perkiraan bulan lunas utang, label bulan opsional di kurva |
+| Tampilan desktop melayang (T1–T8) | Selesai, v1.1.194–195 | Sidebar kapsul, kartu membulat, pil, ikon kartu angka; sakelar di Profil; warna tidak berubah |
 | Tampilan, tema, sinkron | Berjalan | Palet warna dan Kaca, banner versi baru, sinkron pengaturan dan saklar sinkron otomatis |
 | Keamanan dasar | Selesai | CSP, `escapeHtml`, batas import, `supabase/setup.sql` (RLS) |
 | Optimalisasi | Ditunda | Hasil ukur: belum perlu (lihat bagian 4 dan ROADMAP) |
 
-Pekerjaan berikutnya: **S6** (label bulan opsional di kurva); daftar lengkap di [ROADMAP.md](ROADMAP.md).
+Tidak ada item roadmap Ringkasan yang tersisa; daftar lengkap di [ROADMAP.md](ROADMAP.md).
 
 ## 3. Koreksi terhadap analisis awal
 
@@ -43,7 +44,7 @@ Pekerjaan berikutnya: **S6** (label bulan opsional di kurva); daftar lengkap di 
 
 ## 4. Hasil pengujian
 
-**Unit** (`node tests/run.js`, 25 Nov 2026, v1.1.192): 327 lulus, 47 gagal. Kegagalan yang sama muncul di v1.1.190; sebagian besar karena `tests/run.js` belum memuat `js/kategori-data.js` (lihat ROADMAP bagian 2). Terakhir tercatat bersih: 259 lulus (v1.1.092).
+**Unit** (`node tests/run.js`, 26 Nov 2026, v1.1.197): **385 lulus, 0 gagal** (sebelumnya 330 lulus, 47 gagal karena `tests/run.js` belum memuat `js/kategori-data.js` dan enam tes usang; sudah dirapikan, T7).
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 

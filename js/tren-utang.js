@@ -124,7 +124,7 @@
     }
     // Gaya sama dengan kurva kekayaan bersih (v1.1.187): garis mulus + area gradasi, hanya titik terakhir yang diberi
     // penanda, nilai akhir di kanan atas dan nilai awal di kiri bawah, tanpa label sumbu (periode ada di tooltip).
-    const { W, H } = chartDims(svg, 170, 230), padBottom = 20, padTop = 28, padSide = 4;
+    const { W, H } = chartDims(svg, 170, 230), labelsOn = currentChartLabels(), padBottom = labelsOn ? 34 : 20, padTop = 28, padSide = 4;
     const chartH = H - padBottom - padTop;
     const maxVal = Math.max(1, ...trend.map(t => t.total));
     const stepX = (W - padSide * 2) / Math.max(1, trend.length - 1);
@@ -142,11 +142,12 @@
     svgContent += `<path d="${lineD}" style="fill:none; stroke:var(--rust)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>`;
     svgContent += `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" style="fill:var(--rust)"></circle>`;
     const endLabelY = Math.min(Math.max(padTop - 10, 11), Math.max(11, lastY - 16));
-    const startLabelY = Math.max(Math.min(H - padBottom + 16, H - 6), Math.min(H - 6, firstY + 22));
+    const lim = H - (labelsOn ? 20 : 6), startLabelY = Math.max(Math.min(H - padBottom + 16, lim), Math.min(lim, firstY + 22));
     svgContent += `<g id="debt-trend-chart-perm-labels" style="transition:opacity 0.12s;">`;
     svgContent += `<text x="${lastX.toFixed(1)}" y="${endLabelY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? HIDDEN_RP : formatRp(last.total)}</text>`;
     svgContent += `<text x="${firstX.toFixed(1)}" y="${startLabelY.toFixed(1)}" text-anchor="start" font-size="11" font-weight="600" class="svg-fill-soft" font-family="Inter, sans-serif">${state.balanceHidden ? HIDDEN_RP : formatRp(first.total)}</text>`;
     svgContent += `</g>`;
+    svgContent += axisLabelsSvg(buckets, xs, H, labelsOn);
     svgContent += tooltipGroupSvgMulti('debt-trend-chart', 1);
     svg.innerHTML = svgContent;
     chartGeom['debt-trend-chart'] = {

@@ -767,6 +767,22 @@
     };
     return [build('aset', 'Aset', a => !TYPE_DEBT[a.type]), build('utang', 'Utang', a => !!TYPE_DEBT[a.type])].filter(g => g.rows.length);
   }
+  // V1.1.196: isi panel "Aktivitas terbaru" di dasbor desktop. Transaksi terakhir (terbaru di atas), maksimal `max`.
+  // Urut tanggal turun; tanggal sama → yang dicatat belakangan (urutan di larik) tampil duluan. Murni, bisa diuji.
+  // Tiap baris: { id, type, desc, amount, date, accName, toName, category }. Transfer membawa nama akun tujuan.
+  function deskRecentTxns(data, max) {
+    max = max > 0 ? max : 6;
+    const accName = {};
+    (data.accounts || []).forEach(a => { accName[a.id] = a.name; });
+    return (data.txns || []).map((t, i) => ({ t, i }))
+      .sort((x, y) => (y.t.date > x.t.date ? 1 : y.t.date < x.t.date ? -1 : y.i - x.i))
+      .slice(0, max)
+      .map(({ t }) => ({
+        id: t.id, type: t.type, desc: t.desc || '', amount: Number(t.amount) || 0, date: t.date,
+        accName: accName[t.accountId] || '?', toName: t.type === 'transfer' ? (accName[t.toAccountId] || '?') : '',
+        category: t.category || ''
+      }));
+  }
   // A6: aksi cepat yang berlaku untuk sebuah akun. Catat transaksi: bukan aset (pakai Transfer) dan bukan titipan
   // (punya form sendiri). Transfer dari sini: bukan akun utang (bayar utang = Transfer KE akun utang) dan bukan titipan.
   function accountQuickActions(acc) {

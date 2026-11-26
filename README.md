@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.192** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.197** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status dan hasil uji), [ROADMAP.md](docs/ROADMAP.md) (rencana yang belum selesai), dan [ARSIP-TODOLIST.md](docs/ARSIP-TODOLIST.md) (pekerjaan yang sudah selesai).
 
@@ -253,7 +253,10 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config
 
 - Pengecekan otomatis akun pinjaman yang sisa pokoknya tidak cocok dengan jadwal
 - Akun forex USD/cent dengan kurs
-- Lanjutan tab Ringkasan (S6; S1 selesai v1.1.188, S3 v1.1.189, S2 v1.1.190, S4 v1.1.191 lencana ▲/▼/baru di kartu Kategori, S5 v1.1.192 perkiraan bulan lunas utang): label bulan opsional di kurva Tren dan Utang
+- Lanjutan tab Ringkasan (S1–S6) selesai sampai v1.1.193 (label bulan opsional di kurva Tren dan Utang)
+- Gaya dasbor melayang untuk desktop (T1–T8) selesai di v1.1.195; sakelar di Profil > Preferensi > Tampilan ("Gaya dasbor melayang"), bawaan menyala, kunci `kp_float`
+- Panel "Aktivitas terbaru" (enam transaksi terakhir) di bawah panel Akun pada Ringkasan desktop, v1.1.196 (`deskRecentTxns` di `js/data.js`, `renderDeskRecent` di `js/navigasi.js`)
+- Sidebar melayang yang diciutkan dan chip periode kurva diperbaiki di v1.1.197 (di blok gaya melayang, kelas `sb-collapsed` ada di `<html>` sehingga ditulis `&.sb-collapsed`)
 
 Rencana lengkap (termasuk yang menunggu keputusan) ada di [ROADMAP.md](docs/ROADMAP.md).
 

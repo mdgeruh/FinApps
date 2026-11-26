@@ -1,6 +1,6 @@
 # Roadmap: Keuangan Pribadi
 
-Rencana pekerjaan yang **belum selesai**, per **v1.1.192** (25 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
+Rencana pekerjaan yang **belum selesai**, per **v1.1.197** (26 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
 
 Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kategori: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 
@@ -9,13 +9,11 @@ Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kate
 - Tiap batch naik satu versi dan memperbarui `APP_VERSION`, `CACHE_VERSION` di `sw.js`, CHANGELOG, riwayat `?` (`js/changelog.js`), README, SUMMARY/ROADMAP, serta menambah tes.
 - Tiap rilis dikirim sebagai dua zip: **full** (seluruh proyek) dan **update** (hanya berkas yang berubah).
 
-## 1. Berikutnya: lanjutan tab Ringkasan (S6)
-S1–S5 sudah selesai (lihat arsip). Tinggal S6.
-
-- [ ] **S6 [F] Label bulan opsional di kurva Tren dan Utang:** dihapus di v1.1.187 supaya segaya Kekayaan/Cashflow; sediakan sebagai pilihan bila terasa terlalu polos.
+## 1. Lanjutan tab Ringkasan (S1–S6)
+Selesai semua (lihat arsip). Tidak ada item aktif; berikutnya keputusan di bagian 4 atau bagian 7.
 
 ## 2. Kualitas: perapian tes
-- [ ] [Q] **Perbaiki muatan berkas di `tests/run.js`.** Hasil `node tests/run.js` per 25 Nov 2026: 327 lulus, **47 gagal**, jumlah gagal sama persis di v1.1.190 sampai v1.1.192 (bukan akibat rilis terakhir). 41 di antaranya galat `categoryAll is not defined`: daftar berkas yang dimuat tes belum menyertakan `js/kategori-data.js` (hasil penataan ulang berkas, v1.1.169 dan v1.1.182). Enam sisanya perlu ditelaah satu per satu: pemeriksaan versi dan tanggal build, kelompok lipat Profil (`profil-g-*`), jumlah berkas JS (43 ≠ 39), kelola label memuat langganan, pemeriksaan `html`, dan detail akun. Belum diketahui mana yang salah tes dan mana yang salah kode.
+Selesai (T7, v1.1.195, lihat arsip): `node tests/run.js` kini **377 lulus, 0 gagal**. Tidak ada item aktif.
 
 ## 3. Perlu kamu jalankan (tidak bisa saya lakukan)
 - [-] [K] Kunci versi `supabase-js` + SRI (`node tools/pin-supabase.js`): sengaja dilewati dulu atas permintaanmu (2 Okt 2026); Supabase tetap `@2`. Begitu juga RLS/uji sinkron: fokus ke pengembangan fitur
@@ -42,3 +40,7 @@ S1–S5 sudah selesai (lihat arsip). Tinggal S6.
 - [ ] [Q] Namespace / ES modules (semua berbagi scope global; perubahan besar di ratusan pemanggilan)
 - [ ] [Q] Kurangi `style=""` inline dan `!important` yang tersisa. Sudah 393 → 274 inline (v1.1.052) dan 2 `!important` dihapus (v1.1.055); sisanya sengaja dibiarkan: `display:none` yang diubah JS, warna SVG grafik, `.section-title`, blok `@media print`, `[data-user-hidden]`/`[data-empty]`, aturan desktop yang menimpa inline
 
+## 7. Lanjutan tampilan desktop (T1–T8)
+Selesai semua di v1.1.195 (rincian di arsip). Tidak ada item aktif. Ide lanjutan yang belum dijadwalkan:
+- [ ] [F] Terapkan bentuk pil dan kartu ikon yang sama ke tab Akun dan Titipan (kini hanya kartu dan tombol umum yang berubah)
+- [x] [F] Panel "Aktivitas terbaru" di Ringkasan: selesai v1.1.196 (lihat arsip)
