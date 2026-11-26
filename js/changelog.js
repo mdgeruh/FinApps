@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.199', d: '26 Nov 2026', items: [
+      'Di layar desktop sangat lebar (1680 px ke atas), isi halaman kini memakai lebih banyak lebar, jadi ruang kosong di kiri dan kanan jauh berkurang. Panel Akun di kanan juga dirapatkan dan hanya menampilkan 5 akun teratas per kelompok (sisanya lewat "akun lagi"), sehingga Aktivitas terbaru langsung terlihat tanpa menggulir.'] },
     { v: 'v1.1.198', d: '26 Nov 2026', items: [
       'Perbaikan efek kaca di tampilan desktop: latar bergradasi kembali muncul di belakang kartu, menu samping berwarna kaca dengan tulisan yang terbaca, kotak cari kembali berbentuk pil, baris akun tidak lagi berkotak, pita putih di bar atas hilang, dan tombol Catat transaksi tidak lagi menempel ke tepi menu samping.'] },
     { v: 'v1.1.197', d: '26 Nov 2026', items: [

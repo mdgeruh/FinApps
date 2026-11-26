@@ -447,7 +447,7 @@
     });
     renderDeskRecent(data, hid);
     const list = $('desk-accounts-list'); if (!list) return;
-    const groups = deskAccountGroups(data, balances, 8);
+    const groups = deskAccountGroups(data, balances, 5);
     list.innerHTML = groups.length ? groups.map(g => {
       const head = `<div class="da-group"><span>${g.label}</span><span class="da-group-total${g.key === 'utang' ? ' neg' : ''}">${fmt(g.total)}</span></div>`;
       const rows = g.rows.map(r => {

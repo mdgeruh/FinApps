@@ -6,6 +6,16 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.199 — 26 Nov 2026
+
+### Diubah
+- **Layar desktop sangat lebar tidak lagi menyisakan ruang kosong besar.** `.wrap` dibatasi 1360 px sehingga di layar ±1900 px ada sekitar 200 px kosong di kiri dan kanan. Kini 1560 px mulai 1680 px dan 1720 px mulai 1840 px; kolom Akun 340 → 380 px mulai 1680 px. Di bawah 1680 px tidak ada perubahan.
+- **Panel Akun lebih ringkas.** Maksimal 5 akun per kelompok (Aset/Utang; sisanya lewat "+N akun lagi ›"), baris gaya melayang lebih rapat (padding 7 px, ikon 32 px), sehingga "Aktivitas terbaru" tidak terdorong keluar layar.
+
+### Tes
+- 1 tes baru (lebar, kolom Akun, baris rapat, batas 5 akun). Hasil: **388 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.199; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
 ## v1.1.198 — 26 Nov 2026
 
 ### Diperbaiki

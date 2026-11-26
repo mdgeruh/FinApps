@@ -832,6 +832,9 @@
 
   /* Layar sangat lebar: kartu lain di bawah grafik mengalir dua kolom */
   @media screen and (min-width: 1440px) { .wrap { max-width: 1360px; } }
+  /* v1.1.199: layar sangat lebar (1680 px ke atas): isi memakai lebih banyak lebar (sebelumnya tetap 1360 px sehingga kiri-kanan kosong), kolom Akun sedikit lebih lebar */
+  @media screen and (min-width: 1680px) { .wrap { max-width: 1560px; } #tab-ringkasan.active { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 380px; } }
+  @media screen and (min-width: 1840px) { .wrap { max-width: 1720px; } }
   @media screen and (min-width: 1600px) {
     .txn-thead, #list-section .txn-row { grid-template-columns: 100px minmax(0, 1fr) 140px 160px 140px 28px; }
     #list-section .tc-acc { display: block !important; }
@@ -1418,8 +1421,8 @@ html.is-locked body > *:not(#lock-screen):not(#modal-overlay):not(#app-toast) { 
 
   /* Panel Akun di kanan (gaya "Aktivitas terbaru"): ikon bulat, baris membulat tanpa garis pemisah */
   & #desk-accounts { padding: 20px 18px 14px; }
-  & .da-row { border-top: none; border-radius: 16px; padding: 10px 10px; }
-  & .da-ico { border: none; border-radius: 50%; width: 34px; height: 34px; background: var(--hero-bg); color: var(--hero-fg); }
+  & .da-row { border-top: none; border-radius: 16px; padding: 7px 10px; }
+  & .da-ico { border: none; border-radius: 50%; width: 32px; height: 32px; background: var(--hero-bg); color: var(--hero-fg); }
   &[data-theme="dark"] .da-ico { background: var(--teal); color: var(--paper); }
   & .da-group { margin-top: 18px; }
   & .da-ico.dr-ico { background: var(--paper-dim); color: var(--ink-soft); }
