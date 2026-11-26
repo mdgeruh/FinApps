@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.197** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.198** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status dan hasil uji), [ROADMAP.md](docs/ROADMAP.md) (rencana yang belum selesai), dan [ARSIP-TODOLIST.md](docs/ARSIP-TODOLIST.md) (pekerjaan yang sudah selesai).
 
@@ -257,6 +257,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config
 - Gaya dasbor melayang untuk desktop (T1–T8) selesai di v1.1.195; sakelar di Profil > Preferensi > Tampilan ("Gaya dasbor melayang"), bawaan menyala, kunci `kp_float`
 - Panel "Aktivitas terbaru" (enam transaksi terakhir) di bawah panel Akun pada Ringkasan desktop, v1.1.196 (`deskRecentTxns` di `js/data.js`, `renderDeskRecent` di `js/navigasi.js`)
 - Sidebar melayang yang diciutkan dan chip periode kurva diperbaiki di v1.1.197 (di blok gaya melayang, kelas `sb-collapsed` ada di `<html>` sehingga ditulis `&.sb-collapsed`)
+- Efek kaca di gaya melayang dipulihkan di v1.1.198 (blok `@supports` di akhir gaya melayang; sidebar dan kotak cari dipilih lewat id `#app-sidebar` / `#desk-search-wrap` karena daftar kaca dasar memuat `#chart-group` yang berspesifisitas ID)
 
 Rencana lengkap (termasuk yang menunggu keputusan) ada di [ROADMAP.md](docs/ROADMAP.md).
 

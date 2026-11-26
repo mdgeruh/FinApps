@@ -1459,6 +1459,26 @@ html.is-locked body > *:not(#lock-screen):not(#modal-overlay):not(#app-toast) { 
   & .da-bar { height: 8px; border-radius: 999px; }
   & .da-bar-fill { border-radius: 999px; }
   & .budget-row { padding: 12px 14px; border-radius: 18px; background: var(--paper-dim); margin-bottom: 10px; }
+
+  /* Efek kaca di gaya melayang (v1.1.198): gaya melayang menimpa beberapa aturan kaca (latar gradasi, sidebar, bar atas, kotak cari, baris akun); di sini dipulihkan dengan bentuk melayang. Hanya aktif bila efek kaca menyala dan browser mendukung */
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) and (background: color-mix(in srgb, red 50%, transparent)) {
+    &[data-glass] body { background: radial-gradient(1100px 700px at 82% -6%, color-mix(in srgb, var(--teal) var(--g-a1), transparent), transparent 62%), radial-gradient(900px 700px at 4% 4%, color-mix(in srgb, var(--purple) var(--g-a2), transparent), transparent 58%), radial-gradient(900px 600px at 62% 104%, color-mix(in srgb, var(--teal) var(--g-a3), transparent), transparent 60%), var(--paper); background-attachment: fixed; }
+    &[data-glass] { --sb-glass: linear-gradient(175deg, color-mix(in srgb, var(--teal) 80%, transparent), color-mix(in srgb, var(--teal-ink) 86%, transparent)); --sb-glass-edge: rgba(255,255,255,.35); }
+    &[data-glass][data-theme="dark"] { --sb-glass: color-mix(in srgb, var(--card) 70%, transparent); --sb-glass-edge: var(--g-hi); }
+    @media (prefers-color-scheme: dark) {
+      &[data-glass]:not([data-theme="light"]) { --sb-glass: color-mix(in srgb, var(--card) 70%, transparent); --sb-glass-edge: var(--g-hi); }
+    }
+    /* Daftar kaca dasar memuat #chart-group (spesifisitas ID), jadi sidebar dan kotak cari dipilih lewat id supaya menang */
+    &[data-glass] #app-sidebar { background: var(--sb-glass); border: 1px solid var(--sb-glass-edge); -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%); box-shadow: inset 0 1px 0 var(--sb-glass-edge), 0 18px 44px rgba(16,34,29,.22); }
+    /* backdrop-filter membuat sidebar menjadi acuan posisi bagi tombol Catat (position: fixed): koordinatnya jadi relatif ke kapsul (dikurangi 1 px garis tepi) */
+    &[data-glass] .nav-fab { left: 15px; bottom: 15px; }
+    &[data-glass].sb-collapsed .nav-fab { left: 15px; }
+    &[data-glass] header::before { background: color-mix(in srgb, var(--paper) 55%, transparent); border-bottom: none; -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
+    &[data-glass] #desk-search-wrap { background: var(--g-card); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); box-shadow: var(--float-shadow); }
+    &[data-glass] :is(#today-date, header .settings-btn) { background: var(--g-card); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); }
+    &[data-glass] .da-row { background: transparent; border-color: transparent; box-shadow: none; }
+    &[data-glass] .da-row:hover, &[data-glass] .da-row:focus-visible { background: color-mix(in srgb, var(--teal) 12%, transparent); }
+  }
   }
 }
 @media screen and (min-width: 1024px) and (prefers-reduced-motion: no-preference) {

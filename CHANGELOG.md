@@ -6,6 +6,22 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.198 — 26 Nov 2026
+
+### Diperbaiki
+- **Efek kaca di desktop (gaya melayang).** Gaya melayang menimpa beberapa aturan kaca dasar; kini dipulihkan di blok `@supports` baru (hanya saat efek kaca menyala):
+  - Latar gradasi kaca kembali (tertimpa `& body` gaya melayang), jadi blur kartu punya sesuatu untuk diburamkan.
+  - Sidebar: kaca bertint aksen di mode terang (sebelumnya putih tembus pandang dengan tulisan putih, tak terbaca) dan kaca gelap di mode gelap.
+  - Bar atas: pita kaca memudar ke bawah (mask), tidak lagi berujung tegas.
+  - Kotak cari kembali berbentuk pil kaca (sebelumnya transparan tanpa bayangan karena aturan kaca bersarang), tanggal dan tombol profil ikut kaca.
+  - Baris panel Akun/Aktivitas terbaru tidak berkotak; sorot hanya saat disentuh.
+  - Tombol Catat transaksi: `backdrop-filter` membuat kapsul sidebar menjadi acuan posisi `position: fixed`, sehingga tombol bergeser ke kanan; koordinatnya dikoreksi (margin 16 px simetris, juga saat diciutkan).
+  - Sidebar dan kotak cari kini punya id `app-sidebar` dan `desk-search-wrap` untuk dipilih CSS (daftar kaca dasar memuat `#chart-group`, spesifisitas ID).
+
+### Tes
+- 2 tes baru (blok kaca dan id markup). Hasil: **387 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.198; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
 ## v1.1.197 — 26 Nov 2026
 
 ### Diperbaiki

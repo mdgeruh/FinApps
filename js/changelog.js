@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.198', d: '26 Nov 2026', items: [
+      'Perbaikan efek kaca di tampilan desktop: latar bergradasi kembali muncul di belakang kartu, menu samping berwarna kaca dengan tulisan yang terbaca, kotak cari kembali berbentuk pil, baris akun tidak lagi berkotak, pita putih di bar atas hilang, dan tombol Catat transaksi tidak lagi menempel ke tepi menu samping.'] },
     { v: 'v1.1.197', d: '26 Nov 2026', items: [
       'Perbaikan tampilan desktop: saat menu samping diciutkan, kini benar-benar menyempit menjadi kapsul kecil berisi ikon dan isi halaman bergeser mengikutinya (sebelumnya lebarnya tidak berubah).',
       'Chip pilihan periode kurva (1H, 7H, 30H, 180H, 360H) dirapikan: ukurannya ringkas dan rata kiri, dan pita putih di belakangnya hilang.'] },
