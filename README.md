@@ -2,7 +2,7 @@
 
 Aplikasi pencatatan keuangan pribadi berbasis web statis (HTML + CSS + JavaScript biasa, tanpa build tool). Tidak butuh instalasi atau server khusus. Data tersimpan di **localStorage browser** dan, kalau diaktifkan, disalin ke **cloud (Supabase)** supaya bisa dipakai di beberapa perangkat. Tanpa konfigurasi cloud, app berjalan 100% lokal. Kalau di-host lewat `http(s)://`, service worker menyimpan app supaya bisa dibuka tanpa internet.
 
-Versi app: **v1.1.202** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
+Versi app: **v1.1.203** (tampil di kartu paling atas tab Profil). Kode dipecah per modul (`js/config.js` s.d. `js/startup.js`) yang dimuat berurutan oleh `index.html`.
 
 Dokumen pendamping: [CHANGELOG.md](CHANGELOG.md) (riwayat perubahan; versi lama lengkap di [CHANGELOG-ARSIP.md](docs/CHANGELOG-ARSIP.md)) dan [SUMMARY.md](docs/SUMMARY.md) (status dan hasil uji), [ROADMAP.md](docs/ROADMAP.md) (rencana yang belum selesai), dan [ARSIP-TODOLIST.md](docs/ARSIP-TODOLIST.md) (pekerjaan yang sudah selesai).
 
@@ -259,6 +259,7 @@ Opsional. Aktif hanya kalau `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di `js/config
 - Sidebar melayang yang diciutkan dan chip periode kurva diperbaiki di v1.1.197 (di blok gaya melayang, kelas `sb-collapsed` ada di `<html>` sehingga ditulis `&.sb-collapsed`)
 - Efek kaca di gaya melayang dipulihkan di v1.1.198 (blok `@supports` di akhir gaya melayang; sidebar dan kotak cari dipilih lewat id `#app-sidebar` / `#desk-search-wrap` karena daftar kaca dasar memuat `#chart-group` yang berspesifisitas ID)
 - Layar sangat lebar (v1.1.199): `.wrap` 1560 px mulai 1680 px dan 1720 px mulai 1840 px (sebelumnya 1360 px), kolom Akun 380 px, panel Akun 5 akun per kelompok
+- Kotak cari maksimal (v1.1.203): `deskSearchParse` (filter `keluar`/`masuk`/`transfer`, `>50k`, `<1jt`, `akun:nama`), pintasan tab + Catat transaksi, riwayat (`kp_desk_recent`, maks 6) di `js/navigasi.js`; lebar bar 640 px (760 px mulai 1680 px)
 - Saran cari di header desktop (v1.1.202): `deskSearchSuggest` (murni) + `renderDeskSearchPop`, `deskSearchKey` (panah/Enter/Esc), Ctrl/Cmd+K di `js/navigasi.js`; daftar `#desk-search-pop` (`.ds-pop`)
 - Cek sisa pokok vs jadwal pinjaman (v1.1.201): `computeLoanScheduleMismatch` + `loanMismatchText` di `js/data.js`; catatan kuning di jadwal detail akun dan item "pinjaman-selisih" di strip Perlu perhatian (`js/perhatian.js`)
 - Tooltip kustom sidebar (v1.1.200): atribut `data-tip` + `aria-label` menggantikan `title`; gaya `::after` di dalam `@media (hover: hover)`, menu hanya saat sidebar diciutkan

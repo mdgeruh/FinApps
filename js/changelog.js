@@ -7,6 +7,8 @@
   // Tulis dengan bahasa awam untuk pengguna akhir: apa yang berubah bagi mereka, tanpa nama file, fungsi, atau istilah teknis.
   // ============================================================
   const CHANGELOG_ENTRIES = [
+    { v: 'v1.1.203', d: '26 Nov 2026', items: [
+      'Kotak cari di bagian atas (tampilan komputer) kini lebih lebar dan lebih pintar. Bisa disaring langsung: ketik misalnya "keluar >50k akun:bca" untuk pengeluaran di atas Rp50.000 dari akun BCA (k = ribu, jt = juta). Ketik nama tab (mis. "laporan") atau "catat" untuk melompat atau membuka form transaksi. Pencarian terakhir tersimpan dan muncul saat kotak dibuka, bisa dihapus kapan saja.'] },
     { v: 'v1.1.202', d: '26 Nov 2026', items: [
       'Kotak cari di bagian atas (tampilan komputer) kini menampilkan hasil langsung saat kamu mengetik: transaksi dan akun yang cocok, dengan kata yang dicari ditebalkan. Pilih dengan panah dan Enter atau klik; Esc menutup. Nominal juga bisa dicari (mis. 150000). Ctrl+K atau tombol / langsung membuka kotak cari. Enter tanpa memilih tetap membuka daftar lengkap di tab Transaksi.'] },
     { v: 'v1.1.201', d: '26 Nov 2026', items: [

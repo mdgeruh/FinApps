@@ -486,20 +486,52 @@
   // Kotak cari di bar atas desktop (v1.1.202): saran langsung saat mengetik (maks 6 transaksi + 3 akun), bisa dipilih
   // dengan panah/Enter atau klik; Enter tanpa pilihan = lompat ke tab Transaksi dengan kata kunci terisi (cara lama).
   // Fungsi hitung murni: deskSearchSuggest. Cocok: keterangan, kategori, nama akun, label, dan nominal (angka >= 3 digit).
-  const DESK_SEARCH_TXN_MAX = 6, DESK_SEARCH_ACC_MAX = 3;
+  const DESK_SEARCH_TXN_MAX = 8, DESK_SEARCH_ACC_MAX = 3, DESK_SEARCH_PAGE_MAX = 2;
+  const DESK_TABS = [['ringkasan', 'Ringkasan'], ['akun', 'Akun'], ['transaksi', 'Transaksi'], ['titipan', 'Titipan'], ['tagihan', 'Tagihan'], ['laporan', 'Laporan']];
+  const DESK_ADD_WORDS = ['catat', 'tambah', 'baru', 'input'];
+  // Sintaks: kata biasa = teks; "masuk|keluar|transfer" = filter jenis (hanya bila ada kriteria lain, kalau sendirian dianggap teks);
+  // ">50k" / "<1jt" = batas nominal (k, rb, jt; titik = pemisah ribuan, koma = desimal bila ada sufiks); "akun:bca" = nama akun mengandung.
+  function deskSearchParse(raw) {
+    const out = { text: '', type: '', min: null, max: null, acc: '' };
+    const num = x => {
+      const m = /^(\d[\d.,]*)(k|rb|ribu|jt|juta)?$/.exec(x); if (!m) return null;
+      const mult = m[2] ? (/^(k|rb|ribu)$/.test(m[2]) ? 1e3 : 1e6) : 1;
+      const v = m[2] ? parseFloat(m[1].replace(',', '.')) : parseFloat(m[1].replace(/[.,]/g, ''));
+      return isFinite(v) ? Math.round(v * mult) : null;
+    };
+    const words = [], typeTok = [];
+    String(raw || '').trim().toLowerCase().split(/\s+/).filter(Boolean).forEach(w => {
+      let n;
+      if ((w[0] === '>' || w[0] === '<') && (n = num(w.slice(1))) !== null) { if (w[0] === '>') out.min = n; else out.max = n; }
+      else if (/^akun:./.test(w)) out.acc = w.slice(5);
+      else if (w === 'masuk' || w === 'keluar' || w === 'transfer') typeTok.push(w);
+      else words.push(w);
+    });
+    if (typeTok.length && (words.length || out.min !== null || out.max !== null || out.acc)) out.type = typeTok[typeTok.length - 1];
+    else words.push.apply(words, typeTok);
+    out.text = words.join(' ');
+    return out;
+  }
   function deskSearchSuggest(data, query, maxTxn, maxAcc) {
-    const q = String(query || '').trim().toLowerCase();
-    const out = { q, txns: [], totalTxn: 0, accounts: [] };
-    if (q.length < 2) return out;
+    const raw = String(query || '').trim().toLowerCase();
+    const P = deskSearchParse(raw), q = P.text;
+    const out = { q, parsed: P, txns: [], totalTxn: 0, accounts: [], pages: [] };
+    if (raw.length < 2) return out;
+    const hasFilter = !!(P.type || P.min !== null || P.max !== null || P.acc);
+    if (!q && !hasFilter) return out;
     const accs = data.accounts || [], accById = {};
     accs.forEach(a => { accById[a.id] = a; });
     const digits = q.replace(/^rp\.?\s*/, '').replace(/[.\s]/g, '');
     const byAmount = /^\d{3,}$/.test(digits);
     const hit = [];
     (data.txns || []).forEach((t, i) => {
+      if (P.type && t.type !== P.type) return;
+      if (P.min !== null && !(t.amount >= P.min)) return;
+      if (P.max !== null && !(t.amount <= P.max)) return;
       const a1 = accById[t.accountId] ? accById[t.accountId].name.toLowerCase() : '';
       const a2 = t.toAccountId && accById[t.toAccountId] ? accById[t.toAccountId].name.toLowerCase() : '';
-      const ok = (t.desc || '').toLowerCase().includes(q) || (t.category || '').toLowerCase().includes(q) || a1.includes(q) || a2.includes(q) ||
+      if (P.acc && !(a1.includes(P.acc) || a2.includes(P.acc))) return;
+      const ok = !q || (t.desc || '').toLowerCase().includes(q) || (t.category || '').toLowerCase().includes(q) || a1.includes(q) || a2.includes(q) ||
         (typeof tagsText === 'function' && typeof txnTags === 'function' && tagsText(txnTags(t)).toLowerCase().includes(q)) ||
         (byAmount && String(Math.round(t.amount || 0)).includes(digits));
       if (ok) hit.push({ t, i });
@@ -507,9 +539,26 @@
     hit.sort((x, y) => (y.t.date || '').localeCompare(x.t.date || '') || y.i - x.i);
     out.totalTxn = hit.length;
     out.txns = hit.slice(0, maxTxn || DESK_SEARCH_TXN_MAX).map(x => x.t);
-    out.accounts = accs.filter(a => !a.archived && ((a.name || '').toLowerCase().includes(q) || (TYPE_LABELS[a.type] || '').toLowerCase().includes(q))).slice(0, maxAcc || DESK_SEARCH_ACC_MAX);
+    if (q && !hasFilter) {
+      out.accounts = accs.filter(a => !a.archived && ((a.name || '').toLowerCase().includes(q) || (TYPE_LABELS[a.type] || '').toLowerCase().includes(q))).slice(0, maxAcc || DESK_SEARCH_ACC_MAX);
+      DESK_TABS.forEach(tb => { if (tb[1].toLowerCase().includes(q)) out.pages.push({ kind: 'tab', key: tb[0], label: tb[1], sub: 'Buka tab' }); });
+      if (q.length >= 3 && (DESK_ADD_WORDS.some(w => w.startsWith(q) || q.startsWith(w)) || 'catat transaksi'.includes(q))) out.pages.push({ kind: 'add', key: 'add', label: 'Catat transaksi', sub: 'Buka form transaksi baru' });
+      out.pages = out.pages.slice(0, DESK_SEARCH_PAGE_MAX);
+    }
     return out;
   }
+  // Riwayat pencarian (tersimpan di perangkat ini saja). Fungsi gabung murni: terbaru di depan, tanpa kembar (huruf besar/kecil diabaikan).
+  const DESK_RECENT_KEY = 'kp_desk_recent', DESK_RECENT_MAX = 6;
+  function deskRecentMerge(list, q, max) {
+    q = String(q || '').trim();
+    const base = (Array.isArray(list) ? list : []).filter(x => typeof x === 'string' && x);
+    if (q.length < 2) return base.slice(0, max || DESK_RECENT_MAX);
+    return [q].concat(base.filter(x => x.toLowerCase() !== q.toLowerCase())).slice(0, max || DESK_RECENT_MAX);
+  }
+  function deskRecentGet() { try { return deskRecentMerge(JSON.parse(localStorage.getItem(DESK_RECENT_KEY) || '[]'), '', DESK_RECENT_MAX); } catch (e) { return []; } }
+  function deskRecentAdd(q) { try { localStorage.setItem(DESK_RECENT_KEY, JSON.stringify(deskRecentMerge(deskRecentGet(), q, DESK_RECENT_MAX))); } catch (e) { /* penyimpanan penuh/dimatikan */ } }
+  function clearDeskSearchRecent() { try { localStorage.removeItem(DESK_RECENT_KEY); } catch (e) { /* abaikan */ } renderDeskSearchPop(); }
+  function useDeskSearchRecent(text) { const inp = $('desk-search-input'); if (!inp) return; inp.value = text; inp.focus(); renderDeskSearchPop(); }
   function deskSearchMark(text, q) {
     const s = String(text || ''), i = q ? s.toLowerCase().indexOf(q) : -1;
     if (i < 0) return escapeHtml(s);
@@ -533,20 +582,36 @@
   }
   function renderDeskSearchPop() {
     const p = $('desk-search-pop'), inp = $('desk-search-input'); if (!p || !inp) return;
-    const q = inp.value.trim().toLowerCase();
-    if (q.length < 2) { deskSearchClose(false); return; }
-    const r = deskSearchSuggest(loadData(), q), hid = !!state.balanceHidden;
+    const rawQ = inp.value.trim();
     let n = 0, html = '';
     const row = (act, id, ico, icoCls, title, sub, amt, amtCls) =>
-      `<div class="ds-row" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="${act}" data-a0="${escapeHtml(id)}"><span class="da-ico dr-ico ${icoCls}" aria-hidden="true">${ico}</span><span class="ds-text"><span class="ds-title">${title}</span><span class="ds-sub">${escapeHtml(sub)}</span></span>${amt ? `<span class="ds-amt ${amtCls}">${escapeHtml(amt)}</span>` : ''}</div>`;
+      `<div class="ds-row" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="${act}" data-a0="${escapeHtml(id)}"><span class="da-ico dr-ico ${icoCls}" aria-hidden="true">${ico}</span><span class="ds-text"><span class="ds-title">${title}</span>${sub ? `<span class="ds-sub">${escapeHtml(sub)}</span>` : ''}</span>${amt ? `<span class="ds-amt ${amtCls}">${escapeHtml(amt)}</span>` : ''}</div>`;
+    const show = () => { p.innerHTML = html; p.style.display = 'block'; inp.setAttribute('aria-expanded', 'true'); deskSearchActive = -1; };
+    if (!rawQ) {   // kotak kosong: riwayat + petunjuk sintaks
+      const rec = deskRecentGet();
+      if (rec.length) {
+        html += '<div class="ds-head" role="presentation">Terakhir dicari</div>';
+        rec.forEach(t => { html += row('useDeskSearchRecent', t, '↺', 'transfer', escapeHtml(t), '', '', ''); });
+        html += `<div class="ds-row ds-all" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="clearDeskSearchRecent">Hapus riwayat</div>`;
+      }
+      html += '<div class="ds-tip" role="presentation">Coba: <kbd>keluar &gt;50k</kbd> <kbd>akun:bca</kbd> <kbd>makan &lt;100rb</kbd> · <kbd>Ctrl</kbd>+<kbd>K</kbd> buka kotak cari</div>';
+      show(); return;
+    }
+    if (rawQ.length < 2) { deskSearchClose(false); return; }
+    const data = loadData(), r = deskSearchSuggest(data, rawQ), q = r.q, hid = !!state.balanceHidden;
     if (r.accounts.length) {
       html += '<div class="ds-head" role="presentation">Akun</div>';
-      const bal = computeAllBalances(loadData());
+      const bal = computeAllBalances(data);
       r.accounts.forEach(a => { html += row('openDeskSearchAccount', a.id, '◎', 'transfer', deskSearchMark(a.name, q), TYPE_LABELS[a.type] || a.type, hid ? '•••••••' : formatRp(bal[a.id] || 0), ''); });
     }
+    if (r.pages.length) {
+      html += '<div class="ds-head" role="presentation">Pintasan</div>';
+      r.pages.forEach(pg => { html += row(pg.kind === 'add' ? 'openDeskSearchAdd' : 'openDeskSearchTab', pg.key, pg.kind === 'add' ? '+' : '→', 'transfer', deskSearchMark(pg.label, q), pg.sub, '', ''); });
+    }
     if (r.txns.length) {
-      html += '<div class="ds-head" role="presentation">Transaksi' + (r.totalTxn > r.txns.length ? ' · ' + r.totalTxn + ' cocok' : '') + '</div>';
-      const accById = {}; loadData().accounts.forEach(a => { accById[a.id] = a; });
+      const f = r.parsed, tags = [f.type, f.min !== null ? '≥ ' + formatRp(f.min) : '', f.max !== null ? '≤ ' + formatRp(f.max) : '', f.acc ? 'akun ' + f.acc : ''].filter(Boolean);
+      html += '<div class="ds-head" role="presentation">Transaksi' + (r.totalTxn > r.txns.length ? ' · ' + r.totalTxn + ' cocok' : '') + (tags.length ? ' · ' + escapeHtml(tags.join(', ')) : '') + '</div>';
+      const accById = {}; data.accounts.forEach(a => { accById[a.id] = a; });
       r.txns.forEach(t => {
         const sign = t.type === 'transfer' ? '⇄' : (t.type === 'masuk' ? '+' : '−');
         const title = t.type === 'transfer' ? (t.desc && t.desc !== 'Transfer' ? t.desc : 'Transfer') : (t.desc || t.category || '(Tanpa keterangan)');
@@ -554,18 +619,19 @@
         html += row('openDeskSearchTxn', t.id, sign, t.type, deskSearchMark(title, q), (t.type === 'transfer' ? a1 + ' → ' + a2 : a1) + ' · ' + fmtTgl(t.date), hid ? '•••••••' : sign + ' ' + formatRp(t.amount), t.type);
       });
     }
-    if (!n) html = '<div class="ds-empty">Tidak ada yang cocok dengan “' + escapeHtml(inp.value.trim()) + '”.</div>';
+    if (!n) html = '<div class="ds-empty">Tidak ada yang cocok dengan “' + escapeHtml(rawQ) + '”.</div>';
     else if (r.totalTxn > r.txns.length) html += `<div class="ds-row ds-all" id="ds-opt-${n++}" role="option" aria-selected="false" data-act="deskSearchSubmit">Lihat semua ${r.totalTxn} transaksi di tab Transaksi ›</div>`;
-    p.innerHTML = html; p.style.display = 'block';
-    inp.setAttribute('aria-expanded', 'true');
-    deskSearchActive = -1;
+    show();
   }
   function onDeskSearchInput() {
     clearTimeout(deskSearchTimer);
     deskSearchTimer = setTimeout(renderDeskSearchPop, 120);
   }
-  function openDeskSearchTxn(id) { deskSearchClose(true); openTxnDetail(id); }
-  function openDeskSearchAccount(id) { deskSearchClose(true); openAccountDetail(id); }
+  function deskSearchRemember() { const inp = $('desk-search-input'); if (inp) deskRecentAdd(inp.value); }
+  function openDeskSearchTxn(id) { deskSearchRemember(); deskSearchClose(true); openTxnDetail(id); }
+  function openDeskSearchAccount(id) { deskSearchRemember(); deskSearchClose(true); openAccountDetail(id); }
+  function openDeskSearchTab(name) { deskSearchRemember(); deskSearchClose(true); setTab(name); }
+  function openDeskSearchAdd() { deskSearchRemember(); deskSearchClose(true); if (typeof openAddTxnForm === 'function') openAddTxnForm(); }
   // Tombol di kotak cari: panah = pindah pilihan, Enter = buka pilihan (atau cari penuh bila tak ada pilihan), Esc = tutup.
   function deskSearchKey(e) {
     const key = e && e.key;
@@ -580,10 +646,12 @@
   // Kotak cari di bar atas desktop: lompat ke tab Transaksi dengan kata kunci terisi.
   function deskSearchSubmit() {
     const el = $('desk-search-input'); if (!el) return;
-    const q = el.value.trim(); deskSearchClose(true);
+    const raw = el.value.trim(), P = deskSearchParse(raw);
+    deskRecentAdd(raw); deskSearchClose(true);
     setTab('transaksi');
+    if (P.type) state.activeTypeFilter = P.type;   // jenis ikut jadi filter di tab Transaksi (nominal/akun hanya berlaku di saran)
     const t = $('txn-search-input');
-    if (t) { t.value = q; onTxnSearchInput(); }
+    if (t) { t.value = P.text || (P.type ? '' : raw); onTxnSearchInput(); }
   }
 
   // D7: pintasan keyboard di layar lebar (>=1280 px). "/" = fokus kotak cari, "N" = catat transaksi, "[" = buka/ciutkan menu samping.
@@ -621,7 +689,7 @@
   try {
     document.addEventListener('click', e => { const w = $('desk-search-wrap'); if (w && !(e.target instanceof Element && w.contains(e.target))) deskSearchClose(false); });
     const sp = $('desk-search-pop'); if (sp) sp.addEventListener('mousedown', e => e.preventDefault());
-    const si = $('desk-search-input'); if (si) si.addEventListener('focus', () => { if (si.value.trim().length >= 2) renderDeskSearchPop(); });
+    const si = $('desk-search-input'); if (si) { const open = () => { const n = si.value.trim().length; if (n === 0 || n >= 2) renderDeskSearchPop(); }; si.addEventListener('focus', open); si.addEventListener('click', () => { const pp = $('desk-search-pop'); if (pp && pp.style.display === 'none') open(); }); }
   } catch (e) { /* uji */ }
 
   function renderBalanceHeader(data, balances) {

@@ -1,6 +1,6 @@
 # Roadmap: Keuangan Pribadi
 
-Rencana pekerjaan yang **belum selesai**, per **v1.1.202** (26 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
+Rencana pekerjaan yang **belum selesai**, per **v1.1.203** (26 Nov 2026). Yang sudah selesai ada di [ARSIP-TODOLIST.md](ARSIP-TODOLIST.md), ringkasan status di [SUMMARY.md](SUMMARY.md), riwayat per versi di [CHANGELOG.md](../CHANGELOG.md).
 
 Tanda: `[ ]` belum, `[~]` sebagian, `[-]` sengaja ditunda/tidak dikerjakan. Kategori: **[K]** keamanan/kebenaran, **[E]** efisiensi, **[Q]** kualitas/dokumentasi, **[F]** fitur.
 

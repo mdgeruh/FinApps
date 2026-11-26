@@ -6,6 +6,23 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.203 — 26 Nov 2026
+
+### Ditambah
+- **Sintaks filter di kotak cari header** (`deskSearchParse`, murni): `masuk`/`keluar`/`transfer` (filter jenis; kalau sendirian tetap dianggap teks), `>50k` / `<1jt` / `>150.000` (batas nominal; sufiks k, rb, ribu, jt, juta; koma = desimal bila ada sufiks), `akun:bca` (nama akun asal/tujuan mengandung). Boleh digabung dengan teks, mis. `makan keluar >50k akun:dompet`, atau hanya filter. Judul grup Transaksi menyebut filter aktif.
+- **Grup "Pintasan":** nama tab (Ringkasan, Akun, Transaksi, Titipan, Tagihan, Laporan) dan "Catat transaksi" (kata catat/tambah/baru/input) muncul untuk teks biasa; dipilih dengan klik atau Enter.
+- **Riwayat pencarian:** 6 terakhir (tanpa kembar), disimpan di perangkat ini (`kp_desk_recent`); tampil saat kotak difokus kosong, bisa dipilih ulang, ada baris "Hapus riwayat". Dicatat saat Enter dan saat membuka hasil.
+- **Petunjuk sintaks** saat kotak kosong.
+
+### Diubah
+- Bar cari lebih lebar: 460 → 640 px (760 px mulai layar 1680 px). Saran transaksi 6 → 8.
+- Enter tanpa pilihan membawa filter jenis ke tab Transaksi (chip Masuk/Keluar/Transfer ikut aktif); teks bebasnya masuk kotak cari tab itu. Filter nominal dan akun hanya berlaku di saran.
+
+### Tes
+- 4 tes baru (parse, filter gabungan, akun/pintasan, riwayat). Hasil: **410 lulus, 0 gagal**.
+- Diuji di Chromium 1440 px: lebar bar 603 px, filter `keluar >50k akun:dompet` menghasilkan 3 transaksi yang benar, Enter menyalakan filter Keluar, riwayat tersimpan/dipakai/dihapus, pintasan Laporan dan Catat transaksi bekerja; tanpa error JS. Tema gelap, mode kaca, dan pembaca layar belum diuji; kotak cari tetap hanya di desktop (≥ 1024 px).
+- Versi app dan `CACHE_VERSION` → v1.1.203; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
 ## v1.1.202 — 26 Nov 2026
 
 ### Diubah
