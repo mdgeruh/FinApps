@@ -1,6 +1,6 @@
 # Ringkasan: Keuangan Pribadi
 
-Status per **v1.1.199** (26 Nov 2026). Riwayat tiap versi ada di [CHANGELOG.md](../CHANGELOG.md); panduan pemakaian dan struktur kode di [README.md](../README.md).
+Status per **v1.1.200** (26 Nov 2026). Riwayat tiap versi ada di [CHANGELOG.md](../CHANGELOG.md); panduan pemakaian dan struktur kode di [README.md](../README.md).
 
 ## Peta dokumen
 
@@ -44,7 +44,7 @@ Tidak ada item roadmap Ringkasan yang tersisa; daftar lengkap di [ROADMAP.md](RO
 
 ## 4. Hasil pengujian
 
-**Unit** (`node tests/run.js`, 26 Nov 2026, v1.1.199): **388 lulus, 0 gagal** (sebelumnya 330 lulus, 47 gagal karena `tests/run.js` belum memuat `js/kategori-data.js` dan enam tes usang; sudah dirapikan, T7).
+**Unit** (`node tests/run.js`, 26 Nov 2026, v1.1.200): **390 lulus, 0 gagal** (sebelumnya 330 lulus, 47 gagal karena `tests/run.js` belum memuat `js/kategori-data.js` dan enam tes usang; sudah dirapikan, T7).
 
 **Regresi data ekspor asli** (v1.1.049; 26 akun, 187 transaksi): saldo semua akun, tagihan 365 hari, kalender tagihan 12 bulan, dan dana likuid identik antara kode lama dan baru.
 

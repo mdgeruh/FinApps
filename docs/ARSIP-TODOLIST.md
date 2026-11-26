@@ -137,3 +137,4 @@ Acuan: gambar dasbor admin (sidebar melayang, kartu membulat, kartu utama berlat
 - [x] [F] (v1.1.197) Chip periode kurva ringkas dan rata kiri; kartu Grafik di dalam `#chart-group` tanpa bayangan/sudut ganda (pita putih di belakang chip)
 - [x] [K] (v1.1.198) Efek kaca di gaya melayang: latar gradasi kaca (tertimpa gaya melayang), sidebar putih bertulisan putih (tak terbaca), bar atas berpita tegas, kotak cari transparan, baris akun berkotak, dan tombol Catat bergeser (backdrop-filter menjadikan kapsul acuan posisi `fixed`) diperbaiki
 - [x] [F] (v1.1.199) Layar sangat lebar: `.wrap` melebar (1360 → 1560 px mulai 1680 px, 1720 px mulai 1840 px), kolom Akun 380 px, baris panel Akun lebih rapat dan maksimal 5 akun per kelompok supaya Aktivitas terbaru terlihat
+- [x] [F] (v1.1.200) Tooltip kustom di sidebar desktop (menu saat diciutkan, tombol Catat, tombol ciutkan) menggantikan tooltip bawaan browser; `data-tip` + `aria-label`

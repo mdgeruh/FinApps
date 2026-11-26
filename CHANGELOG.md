@@ -6,6 +6,15 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.200 — 26 Nov 2026
+
+### Diubah
+- **Tooltip kustom di sidebar desktop.** Atribut `title` pada tombol menu, Catat transaksi, dan Ciutkan diganti `data-tip`; tooltip digambar dengan CSS (`::after`, latar `--ink`, teks `--paper`, muncul geser halus ke kanan ikon) sehingga tidak lagi memakai kotak bawaan browser. Menu hanya bertooltip saat sidebar diciutkan (saat melebar labelnya sudah terlihat); tombol Ciutkan selalu. Hanya perangkat yang punya hover (`@media (hover: hover)`); tombol menu mendapat `aria-label` karena nama aksesibelnya sebelumnya dari `title` saat label disembunyikan.
+
+### Tes
+- 2 tes baru (markup tanpa `title`, CSS tooltip). Hasil: **390 lulus, 0 gagal**.
+- Versi app dan `CACHE_VERSION` → v1.1.200; `js/changelog.js`, README, ROADMAP, SUMMARY, ARSIP-TODOLIST diperbarui.
+
 ## v1.1.199 — 26 Nov 2026
 
 ### Diubah
