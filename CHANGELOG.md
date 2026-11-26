@@ -6,6 +6,227 @@ Riwayat perubahan **Keuangan Pribadi**, yang terbaru di atas. Nomor versi mengik
 - **v1.1.058 ke bawah:** ringkasan satu baris per perubahan di bagian "Ringkasan versi lama". Teks lengkapnya (plus riwayat sebelum penomoran, v1.0–v1.2) ada di [CHANGELOG-ARSIP.md](CHANGELOG-ARSIP.md).
 - Ringkasan bahasa awam untuk pengguna ada di tombol `?` (tab Profil), bersumber dari `10d-changelog.js`.
 
+## v1.1.195 — 26 Nov 2026
+
+### Diubah
+- **Gaya dasbor melayang dirampungkan (roadmap T1–T8, khusus desktop ≥ 1024 px).** Warna tetap mengikuti palet, aksen, dan tema.
+  - **T1 pemeriksaan semua tab** (Ringkasan, Akun, Transaksi, Titipan, Tagihan, Laporan, Profil) di 1440, 1100, dan 1024 px, terang dan gelap. Perbaikan: kepala tabel Transaksi dipipihkan (tanpa garis, latar `--paper-dim`), chip filter berbentuk pil.
+  - **T2** tombol jenis grafik, periode kurva, dan filter berbentuk pil; yang aktif berlatar gradasi aksen.
+  - **T3** kartu angka (Kekayaan, Aset, Utang) memakai kotak ikon membulat, menggantikan titik warna.
+  - **T4** penunjuk kecil "Dasbor keuangan" di atas judul halaman.
+  - **T5** bar progres lebih tebal berujung bulat; baris anggaran menjadi kartu kecil.
+  - **T8 sakelar** **Gaya dasbor melayang** di Profil > Preferensi > Tampilan (bawaan menyala). Mati = tampilan desktop lama (`data-flat` di `<html>`, kunci `kp_float`, ikut sinkron dan backup). Semua gaya baru dibungkus `:root:not([data-flat])`.
+
+### Diperbaiki
+- **T6: kartu angka tampil Rp0 di lebar 1024–1279 px.** `isDeskWide()` memakai ambang 1280 px padahal CSS menampilkan kartu angka mulai 1024 px, jadi angkanya tidak pernah dihitung di rentang itu (juga ada di v1.1.193). Ambang kini 1024 px, sama dengan sidebar; ukuran kanvas grafik ikut menyesuaikan.
+
+### Tes
+- **T7: perapian tes.** `tests/run.js` memuat `js/kategori-data.js` (menghilangkan 41 galat `categoryAll is not defined`); enam tes usang disesuaikan dengan struktur sekarang (43 berkas JS, `routeOnDetailOpen(id, …)`, versi/tanggal build tidak lagi dikunci ke v1.1.172, Kelola label pindah ke halaman Kelola kategori & label, Profil: Preferensi dan Alat jadi subhalaman). Hasil: **377 lulus, 0 gagal** (sebelumnya 330 lulus, 47 gagal).
+- Tes baru `gaya dasbor melayang (T1–T8)`.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.195; `js/changelog.js`, README, ROADMAP, ARSIP-TODOLIST, SUMMARY diperbarui.
+
+## v1.1.194 — 26 Nov 2026
+
+### Diubah
+- **Tampilan dasbor melayang (khusus desktop ≥ 1024 px).** Hanya bentuk dan tata letak; warna tetap mengikuti palet, aksen, dan tema yang dipilih (terang/gelap), jadi skema warna tidak berubah.
+  - **Sidebar melayang** (floating sidebar): kapsul bersudut besar dengan jarak dari tepi layar, menu aktif berupa pil, tombol Catat transaksi di dasar. Mode ciutkan tetap bekerja.
+  - **Bar atas:** judul lebih besar, kotak cari, tanggal, tema, dan profil berbentuk pil tanpa garis.
+  - **Kartu:** sudut 24 px, tanpa garis tepi, bayangan lembut. Kartu Kekayaan bersih menjadi kartu utama berlatar gradasi warna aksen. Panel Akun memakai ikon bulat dan baris membulat.
+- Tampilan HP/tablet (< 1024 px), mode kaca, dan cetak tidak berubah. Hanya CSS (`css/app.css`); versi app dan `CACHE_VERSION` → v1.1.194.
+
+## v1.1.193 — 25 Nov 2026
+
+### Ditambah
+- **Label bulan opsional di kurva Tren dan Utang (roadmap S6).** Sakelar **Label bulan di kurva** (`#chart-labels-toggle`, Profil > Preferensi > Tampilan, di bawah Efek kaca). Mati bawaannya, jadi kurva tetap polos seperti Kekayaan/Cashflow (v1.1.187). Bila menyala, kurva **Pemasukan vs pengeluaran** dan **Tren total utang** menulis label sumbu bawah: nama bulan untuk periode ≥ 30 hari per bucket, tanggal untuk 7H dan 30H (`bucketAxisLabel`).
+  - **Maksimal 6 label**, merata, selalu memuat bucket terakhir (`axisLabelIndexes`); label pertama rata kiri, terakhir rata kanan, sisanya di tengah, supaya tidak terpotong di tepi.
+  - Saat menyala, ruang bawah kurva `padBottom` 20 → 34, dan nilai awal (Utang) serta nilai akhir garis bawah (Tren) digeser ke atas label supaya tidak bertumpuk. Tooltip dan keyboard tidak berubah. Kurva Kekayaan dan Cashflow tidak terpengaruh.
+  - Kunci pengaturan `kp_chart_labels` (hanya `1` yang menyalakan) masuk `SYNCED_SETTING_KEYS`, jadi ikut tersinkron lewat cloud dan berkas backup; setelah pengaturan dari luar diterapkan, tampilan digambar ulang (`settingsReapplyUi` memanggil `render()`).
+- Fungsi murni baru `axisLabelIndexes(n, max)` dan `axisLabelsSvg(buckets, xs, H, on)` di `js/grafik.js`. Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.193. ROADMAP, ARSIP-TODOLIST, SUMMARY, dan README diperbarui (S1–S6 selesai).
+
+### Tes
+- Tes baru `label bulan (S6)`: pemilihan indeks label, keluaran SVG mati/menyala beserta jangkar dan posisi, bawaan mati, sinkron, sakelar, dan pemasangan di kedua kurva. Tes lama `chartDims dipakai empat grafik` disesuaikan ke bentuk kode baru (`labelsOn`).
+
+## v1.1.192 — 25 Nov 2026
+
+### Ditambah
+- **Perkiraan bulan lunas di kartu Tren total utang (roadmap S5).** Kalimat baru di bawah kurva (`#debt-trend-eta`): `Perkiraan lunas: Juni 2027 (9 bulan lagi), bila angsuran dibayar sesuai jadwal.` Bulan lunas = jatuh tempo terakhir **terjauh** di antara akun utang yang punya jadwal.
+  - **Pinjaman bank/online:** baris terakhir `computeLoanSchedule` (sudah memuat pergeseran akibat bulan "bayar bunga saja"). Syarat jadwal: tenor + tanggal pencairan (+ suku bunga untuk bunga menurun).
+  - **PayLater:** jatuh tempo terakhir dari cicilan (`plans`) yang belum lunas.
+  - **Kartu kredit** dan akun tanpa jadwal tidak bisa diperkirakan: disebut di kalimat (`Belum termasuk Kartu BCA (tanpa jadwal cicilan)`, maksimal 3 nama lalu "dan N lainnya"). Bila semua akun berutang tanpa jadwal: `Belum bisa memperkirakan bulan lunas: …`.
+  - Jadwal yang sudah lewat tapi belum lunas dihitung **bulan ini**. Akun diarsipkan atau tanpa utang dilewati. Kalimat tersembunyi bila tidak ada utang. Tanpa nominal, jadi tidak terpengaruh mode sembunyikan saldo.
+- Fungsi murni baru `estimateDebtFree(data, today)` dan `describeDebtFree(est)` di `js/tren-utang.js`. Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.192. `docs/ROADMAP.md`, `docs/ARSIP-TODOLIST.md`, `docs/SUMMARY.md`, dan `README.md` diperbarui (S5 selesai).
+
+### Tes
+- Tes baru `estimateDebtFree (S5)`: jadwal terjauh dan akun tanpa jadwal, PayLater saja, tanpa utang, hanya kartu, jadwal lewat (bulan ini), akun arsip/lunas dilewati, serta pemasangan di render dan markup.
+
+## v1.1.191 — 25 Nov 2026
+
+### Ditambah
+- **Kategori naik/turun di kartu "Kategori bulan ini" (roadmap S4).** Tiap baris legenda yang bergerak berarti dibanding bulan lalu mendapat lencana kecil: `▲ 32%`, `▼ 25%`, atau `baru` (kategori yang bulan lalu tidak ada). Pembandingnya bulan lalu **sampai tanggal yang sama** (aturan `laporanCompareRanges('bulanan', …)`, sama dengan Laporan dan kartu Bulan ini), tanpa bayar utang dan penyesuaian saldo.
+  - Ambang memakai pengaturan Laporan (`cmpThresholds()`: bawaan ≥20% dan ≥Rp50.000), jadi kategori kecil atau berubah sedikit tidak diberi tanda.
+  - Warna mengikuti jenis: pengeluaran naik = merah, turun = hijau; pemasukan sebaliknya. Tidak hanya warna: ada ▲ ▼ dan teks, serta dibacakan di `aria-label` baris legenda. Tab **Transfer** tidak diberi penanda.
+  - Catatan satu baris di bawah legenda (`#category-mover-note`) menjelaskan pembandingnya; hilang bila tak ada penanda. Kategori yang hanya ada bulan lalu (hilang bulan ini) tidak tampil karena tidak ada di legenda; tetap terlihat di Laporan.
+- Fungsi murni baru `categoryMoverMarks(txns, type, today, th)` di `js/bandingkan.js`; `drawPieChart` menerima `item.badge`. Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.191. `README.md` diperbarui.
+- **Dokumen ditata ulang (tanpa perubahan app).** `docs/ROADMAP.md` baru berisi hanya rencana yang belum selesai (S5–S6, perapian tes, keputusan, ditunda). Rincian pekerjaan selesai (A, D, R, S1–S4, dan lainnya) dipindah apa adanya ke `docs/ARSIP-TODOLIST.md`. `docs/SUMMARY.md` dipadatkan jadi gambaran, status per area, hasil pengujian, dan langkah setelah memasang (221 → ±110 baris). S4 ditandai selesai.
+
+### Tes
+- Tes baru `Kategori naik/turun (S4)`: penanda naik/turun/baru, ambang, pemotongan sampai tanggal sama, nada merah/hijau per jenis, Transfer kosong, serta pemasangan di render dan markup.
+
+## v1.1.190 — 25 Nov 2026
+
+### Ditambah
+- **Bandingkan dengan periode sebelumnya di kurva Cashflow dan Tren (roadmap S2).** Periode sebelumnya = jumlah hari yang sama tepat sebelum periode yang dipilih (pemilih 7H/30H/…/360H), digambar sebagai garis putus-putus tipis di belakang garis utama.
+  - **Cashflow (mode Total):** arus kas kumulatif periode lalu, sejajar per hari ke-n, garis abu-abu `--ink-soft`; skala sumbu ikut memuat nilainya. Ringkasan: `Arus kas bersih: ▲ +Rp3.000.000 · periode lalu +Rp2.000.000`. Tooltip menambah baris "Periode lalu". Legenda: "Garis putus-putus: N hari sebelumnya". Mode **Per akun** tidak berubah (sudah ramai).
+  - **Tren:** dua garis putus-putus (pemasukan hijau, pengeluaran merah, opasitas 50%) dari bucket periode sebelumnya yang sama jumlah dan jenisnya (harian, tiap 5 hari, atau bulanan); skala memuat nilainya. Ringkasan: `Selisih 30 hari terakhir: ▲ +Rp3.000.000 · periode sebelumnya +Rp2.000.000`. Tooltip menambah "Pemasukan lalu" dan "Pengeluaran lalu". Legenda `┅ Periode sebelumnya` (`#trend-prev-legend`) hanya tampil bila garisnya ada.
+  - Garis, ringkasan, dan legenda **tidak tampil bila periode sebelumnya tanpa transaksi**, supaya tidak ada garis datar yang menyesatkan. Pada Tren, mode sembunyikan saldo (S1) tetap menyamarkan ringkasan sepenuhnya, termasuk angka periode lalu.
+- Fungsi murni baru di `js/grafik.js`: `prevChartBuckets(buckets, days)` (bucket periode sebelumnya, berakhir sehari sebelum bucket pertama) dan `tallyTrendBuckets(data, buckets)` (total pemasukan/pengeluaran sungguhan per bucket; logika yang dulu ada di dalam `renderTrendChart`, hasil sama).
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.190. `docs/SUMMARY.md`: S2 ditandai selesai (Utang tidak termasuk, sesuai rencana); `README.md` diperbarui.
+
+### Tes
+- Tes baru `Periode sebelumnya (S2)`: `prevChartBuckets` untuk 7H, 30H, dan bulanan (jumlah sama, berakhir sehari sebelum periode ini), `tallyTrendBuckets` mengabaikan pembayaran utang, serta pemasangan di render dan markup legenda.
+
+## v1.1.189 — 25 Nov 2026
+
+### Ditambah
+- **Rasio tabungan di kartu "Bulan ini" (roadmap S3).** Baris baru di bawah "Selisih bulan ini": `Rasio tabungan: 32% ▲ 5 poin vs bulan lalu`. Rumus (pemasukan − pengeluaran) ÷ pemasukan × 100, memakai angka sungguhan yang sama dengan kartu (tanpa bayar utang/cicilan dan pencairan pinjaman, lihat `isNonOperatingTxn`). Bisa negatif (merah) bila pengeluaran melebihi pemasukan. Baris disembunyikan bila belum ada pemasukan bulan ini.
+- Perbandingan dengan bulan lalu dihitung sampai tanggal yang sama (aturan yang sama dengan perbandingan Pemasukan/Pengeluaran), dalam **poin persentase**: ▲ hijau naik, ▼ merah turun, `▬ sama dengan bulan lalu` bila selisih kurang dari 0,5 poin. Tidak tampil bila bulan lalu tanpa pemasukan.
+- Fungsi murni baru `computeSavingsRate(income, expense)` dan `describeSavingsCompare(cur, prev)` di `js/anggaran.js`; markup `#month-savings-row` di `index.html`; render di `renderMonthInsights` (`js/render-beranda.js`). Tidak ada perubahan data/penyimpanan.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.189. `docs/SUMMARY.md`: S3 ditandai selesai; `README.md` diperbarui.
+
+### Tes
+- Tes baru `Rasio tabungan`: tanpa pemasukan = null, rasio positif/nol/negatif dan pembulatan, perbandingan naik/turun/sama/tanpa pembanding, serta markup dan pemasangan di render.
+
+## v1.1.188 — 25 Nov 2026
+
+### Ditambah
+- **Mode sembunyikan saldo berlaku juga di kurva Tren dan Utang (roadmap S1).** Sebelumnya hanya kurva Kekayaan bersih yang menyamarkan angka. Kini bila `state.balanceHidden` aktif: label nilai akhir (Tren, dua garis) dan nilai awal/akhir (Utang) tampil `•••••••`; `formatValue` tooltip dan teks pembaca layar (`describeChartPoint`/`chartAriaLabel` memakai `formatValue`) juga tersamar; ringkasan di atas kurva menjadi `Selisih …: •••••••` (Tren) dan `Sekarang •••••••` (Utang), berwarna netral. Bentuk kurva tetap tampil, seperti Kekayaan. Pesan "Tidak ada utang tercatat" tidak disamarkan.
+- `toggleBalanceVisibility` (`js/navigasi.js`) kini menggambar ulang kurva aktif bila segmennya Kekayaan, Tren, atau Utang (sebelumnya hanya Kekayaan), jadi kurva langsung berubah saat tombol mata ditekan tanpa pindah segmen. Pindah segmen sudah memakai status terbaru.
+- Belum disamarkan (di luar cakupan S1): kurva **Cashflow** (label, tooltip, ringkasan). Dicatat untuk keputusan berikutnya.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.188. `docs/SUMMARY.md`: S1 ditandai selesai.
+
+### Tes
+- Tes baru `Tren dan Utang menyamarkan angka saat saldo disembunyikan`: label, tooltip, ringkasan, dan render ulang saat tombol mata.
+
+## v1.1.187 — 25 Nov 2026
+
+### Diubah
+- **Kurva Tren (Pemasukan vs pengeluaran) dan Tren total utang disamakan gayanya dengan kurva Kekayaan bersih dan Cashflow** (`renderTrendChart` di `js/grafik.js`, `renderDebtTrendChart` di `js/tren-utang.js`). Data, periode (pemilih 7H/30H/…/360H), tooltip, aksesibilitas, dan ringkasan di atas grafik tidak berubah.
+  - **Garis penuh selebar kartu:** `padSide` 18 → 4 (sama seperti kekayaan/cashflow); `padBottom` 20; `padTop` 26 (tren, seperti cashflow) dan 28 (utang, seperti kekayaan).
+  - **Penanda:** titik per bucket dihapus; hanya titik terakhir (r 3,5) per garis. Tebal garis 2,2 (sama dengan kekayaan).
+  - **Utang:** area bawah garis kini gradasi `--rust` (0,28 → 0) seperti kekayaan (sebelumnya area datar 12%); garis putus-putus dasar dihapus (kekayaan tidak memakainya). Nilai akhir di kanan atas dan nilai awal di kiri bawah (aturan posisi yang sama dengan kekayaan); sebelumnya hanya nilai akhir di dekat titik.
+  - **Tren:** garis putus-putus nol tetap (seperti cashflow), dua garis tanpa area (seperti mode Per akun di cashflow). Nilai akhir tiap garis tertulis di ujung kanan, berwarna hijau/merah; garis yang lebih tinggi labelnya di atas titik, yang lebih rendah di bawah titik. Id grup label `trend-chart-perm-labels` (ikut sembunyi saat tooltip tampil, seperti kurva lain).
+  - **Label sumbu bawah (nama bulan/tanggal) dihapus** supaya sama dengan kekayaan/cashflow yang juga tanpa label sumbu; periode tiap titik tetap terbaca lewat tooltip (sentuh/arahkan) dan keyboard.
+  - Kurva tetap memakai `monotonePathD` (bukan `smoothPathD`): data bucket hanya 6–12 titik, dan monotone mencegah garis menembus dasar saat nilai turun tajam (lihat v1.1.124). Perbedaannya pada mata hampir tak terlihat.
+- Versi app dan `CACHE_VERSION` di `sw.js` → v1.1.187.
+
+### Dokumentasi
+- `docs/SUMMARY.md`: bagian baru **Roadmap lanjutan tab Ringkasan (S1–S6)**; `README.md` (Ide yang Belum Dibuat) menunjuk ke sana. Tidak ada perubahan kode.
+
+### Tes
+- Tes baru `Tren dan Utang segaya Kekayaan/Cashflow`: titik hanya di titik terakhir, tanpa label sumbu, `padSide` 4, gradasi pada utang, grup label permanen pada keduanya. Tes `grafik Tren dan Utang digambar sebagai garis` tetap lulus.
+
+## v1.1.186 — 25 Nov 2026
+
+### Ditambah
+- **Banner "Versi baru tersedia"** (tombol Muat ulang dan tutup). `sw.js` memakai `skipWaiting` + `clients.claim`, jadi versi baru langsung aktif sementara halaman yang sudah terbuka masih menjalankan kode lama di memori. `js/startup.js` (`watchAppUpdate`) mendengarkan `controllerchange`; bila halaman sebelumnya sudah punya controller (bukan pemasangan pertama) banner muncul lewat `showUpdateBanner` di `js/util-ui.js`. Nomor versi baru dibaca dari `js/render-utama.js` (`cache: 'no-store'`); bila gagal, banner tanpa nomor.
+- Cek pembaruan: `registration.update()` saat app kembali terlihat dan tiap 30 menit selama terbuka, supaya tab atau PWA yang dibiarkan terbuka lama ikut mendeteksi rilis baru.
+- Hanya di http(s) dengan service worker; di file lokal tidak ada banner. Tidak tampil saat cetak. Tidak mengubah data: muat ulang aman karena data sudah tersimpan di perangkat.
+
+## v1.1.185 — 25 Nov 2026
+
+### Ditambah
+- **Saklar Sinkron otomatis** (Profil › Akun sinkron, tampil setelah login; bawaan hidup) dan tombol **Sinkron sekarang**. Dengan saklar mati: `syncSchedulePush` dan `syncPush()` tanpa argumen tidak mengirim apa pun (perubahan tetap ditandai `dirty`), pengiriman otomatis saat kembali online/app terlihat dan coba ulang 30 detik ikut berhenti, dan saat app dibuka di perangkat yang sudah pernah sinkron `syncStartSession` tidak menarik/mengirim (hanya status). Status footer baru `paused` ("Sinkron otomatis mati", plus "ada perubahan belum terkirim" bila ada) dengan tombol Sinkron sekarang; bila ada pembaruan di cloud, tombol "Muat ulang" diganti Sinkron sekarang karena muat ulang tidak menarik data saat otomatis mati.
+- `syncNow()`: `syncReconcile()` (tarik, dialog bila bentrok) lalu `syncPush(true)` bila ada perubahan lokal. `syncPush(force)`: hanya `true` yang melewati saklar (dipakai Sinkron sekarang dan Keluar, supaya perubahan terakhir terkirim sebelum keluar akun). Menghidupkan saklar kembali langsung mengirim yang tertunda.
+- Pengaturan disimpan per perangkat di `localStorage` (`kp_auto_sync`; `'0'` = mati), tidak termasuk `SYNCED_SETTING_KEYS`, jadi tidak ikut sinkron atau cadangan JSON. Bila tidak ada akun sinkron, bagian ini tidak tampil dan tidak ada yang berubah.
+
+## v1.1.184 — 25 Nov 2026
+
+### Diperbaiki
+- **Header layar lebar tampil sebagai kotak.** Latar bar atas hanya selebar kolom isi, jadi di efek kaca terlihat seperti kotak putih (hampir tidak tembus) yang berbeda dari latar gradasi. Latar dan garis bawah kini dibuat lewat `header::before` yang dibentangkan sampai tepi layar (bar penuh); di efek kaca latarnya translusen (55% warna kartu) dengan blur. Ditambah `overflow-x: clip` pada `html, body` (≥1024px) agar bentangan itu tidak memunculkan gulir mendatar; `position: sticky` tetap bekerja.
+- **Lebar 1024–1279 px, tab Ringkasan:** sejak v1.1.181 kartu saldo hijau (`.balance-block`) ikut terjepit di dalam header satu baris. Kini disembunyikan di rentang itu dan diganti tiga kartu angka (Kekayaan bersih, Total aset, Total utang) seperti di ≥1280px, dengan angka sedikit lebih kecil.
+
+## v1.1.183 — 25 Nov 2026
+
+### Ditambah
+- **Ikon pintasan untuk pemasangan dari browser (PWA).** Folder `icons/` kini berisi ikon dompet hijau (gradasi sama dengan logo sidebar): `icon-192.png` dan `icon-512.png` (jenis `any`, sudut membulat), `icon-maskable-192.png` dan `icon-maskable-512.png` (penuh satu bidang, glif di zona aman 80% agar tidak terpotong bentuk ikon Android), `apple-touch-icon.png` (180 px, untuk Tambahkan ke Layar Utama di iPhone), `favicon-32.png` dan `icon.svg` (tab browser). Sumber vektor: `icons/icon.svg`.
+- `index.html` memakai `icon.svg` + `favicon-32.png` sebagai favicon dan `apple-touch-icon.png` untuk iOS (sebelumnya menunjuk `icon-192.png`). `manifest.json` tidak berubah (sudah menunjuk empat ikon di `icons/`). `sw.js` (`APP_SHELL`) dan `tools/build-dist.js` ikut memuat berkas ikon baru.
+
+## v1.1.182 — 25 Nov 2026
+
+### Diubah
+- **Struktur folder disederhanakan** (tampilan dan perilaku app tidak berubah). Semua JavaScript (43 berkas) kini di satu folder `js/` tanpa subfolder `core/` dan `features/<domain>/`; nama berkas tetap, tidak ada yang bentrok. CSS pindah ke `css/app.css`. Ikon PWA pindah ke folder `icons/` (`icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-192.png`, `icons/icon-maskable-512.png`).
+- Rujukan path diperbarui di `index.html`, `manifest.json`, `sw.js` (`APP_SHELL` dan ikon notifikasi), `tests/run.js`, `tools/build-dist.js` (hasil dist juga memakai folder `icons/`), `tools/build-preview.js`, `tools/pin-supabase.js`, README, SUMMARY, dan `docs/PEMETAAN-NAMA-FILE.md`. Entri changelog lama tidak diubah, jadi path di entri lama masih memakai struktur lama.
+- `tools/migrasi-struktur.sh` dihapus (skrip sekali jalan untuk struktur v1.1.169, sudah tidak berlaku).
+- Hasil `node tests/run.js` sama dengan sebelum penataan (317 lulus, 47 gagal; kegagalan sudah ada sebelum perubahan ini).
+
+## v1.1.181 — 25 Nov 2026
+
+### Diperbaiki
+- **Header di layar lebar.** Di lebar 1024–1279px header masih memakai tata letak HP (sapaan di atas, judul di bawah, tidak menempel) padahal sidebar desktop sudah tampil, sehingga tampak berbeda dari lebar ≥1280px. Aturan bar atas desktop (satu baris: judul tab, kotak cari, tanggal, tema, profil; menempel saat gulir; `--desk-top` 84px) kini berlaku mulai 1024px, sama seperti sidebar. Perubahan hanya di `src/css/app.css`; di ≥1280px tampilan tidak berubah.
+
+## v1.1.180 — 29 Okt 2026
+
+### Ditambah
+- **Pengaturan ikut sinkron ke Supabase.** Tampilan (mode, palet, warna aksen, efek kaca), nama profil, cegah saldo minus, kata kunci kategori otomatis, kartu Ringkasan (tampil dan urutan), ambang perbandingan, jarak pengingat cadangan, periode grafik mini, serta tata letak dan lipatan daftar akun kini tersimpan di dalam data (`settings`) dan ikut terkirim ke cloud. Masuk dari perangkat lain, pengaturan yang sama langsung dipakai. Tidak ada perubahan tabel Supabase.
+- Kategori buatan sendiri, nama yang diubah, dan kategori yang disembunyikan sudah ikut sinkron sejak v1.1.178 (ada di dalam data).
+- Ikut di cadangan JSON: ekspor menyertakan pengaturan, dan "ganti semua dengan isi file" memulihkannya.
+- Sengaja tidak disinkronkan (khusus perangkat atau sensitif): menu samping, PIN dan kunci app, izin notifikasi, jadwal tunda cadangan, info sinkron.
+- Tanpa akun sinkron tidak ada yang berubah: pengaturan tetap tersimpan di perangkat. Pengaturan yang diubah sebelum masuk akun disalin ke cloud saat masuk.
+
+## v1.1.179 — 29 Okt 2026
+
+### Diubah
+- **Preferensi dan Alat kini halaman sendiri** di tab Profil, dengan alur yang sama seperti Kelola kategori & label: ketuk barisnya untuk membuka halaman, tombol Kembali (‹), Esc, atau tombol Kembali perangkat untuk menutup, dan posisi gulir Profil kembali seperti semula. Alamat `#/profil/pref` dan `#/profil/alat` bisa dibagikan atau di-bookmark.
+- Isinya tidak berubah (tampilan dan efek kaca, nama profil, cegah saldo minus, kata kunci, kartu Ringkasan; export/import, data contoh). Di layar lebar (mulai 1180px) isi halaman tersusun dua kolom.
+- Keamanan & data dan Zona berbahaya tetap berupa grup lipat di Profil.
+
+## v1.1.178 — 29 Okt 2026
+
+### Ditambah
+- **Halaman Kelola kategori & label** (Profil, Kelola kategori & label; alamat `#/profil/kelola`). Dua tab:
+  - **Kategori** per jenis (Pengeluaran, Pemasukan, Transfer): tambah kategori sendiri, ubah nama, gabung ke kategori lain, sembunyikan dari pilihan (riwayat tetap utuh), hapus kategori buatan sendiri. Tiap baris menampilkan jumlah dan total transaksi, serta label Bawaan, Dikunci, Disembunyikan.
+  - **Label:** ubah nama (nama yang sama menggabungkan), hapus. Menggantikan lembar Kelola label lama; chip "Kelola label" di Transaksi membuka tab ini.
+- Ubah nama dan gabung ikut memperbarui transaksi, transaksi berulang, anggaran (anggaran yang bertabrakan dijumlahkan) dan kata kunci kategori otomatis. Ada ringkasan sebelum menggabung/menghapus dan tombol **Urungkan** untuk perubahan terakhir.
+- Kategori yang dipakai perhitungan (Lainnya, Penyesuaian saldo, Cicilan/utang, bunga, admin pinjaman, dan sejenisnya) dikunci agar tidak merusak laporan.
+- Nama kategori yang diketik bebas lewat "Lainnya" muncul sebagai **Belum terdaftar** dan bisa dimasukkan ke daftar.
+- Pengaturan kategori tersimpan di dalam data (ikut cadangan JSON, ekspor/impor dan sinkron), bukan di perangkat saja.
+
+## v1.1.177 — 29 Okt 2026
+
+### Diubah
+- **Detail akun kini halaman, bukan lembar.** Ketuk akun membuka halaman di dalam tab Akun dengan tombol Kembali (‹) dan judul akun. Isinya sama: saldo, jadwal angsuran, tagihan kartu, nilai aset, cocokkan saldo, bayar, riwayat.
+- **HP dan layar sempit:** halaman menggantikan daftar akun; Kembali (tombol, Esc, atau tombol Kembali perangkat) mengembalikan daftar di posisi gulir semula.
+- **Layar lebar (mulai 1180px):** dua kolom. Daftar akun tetap di kiri (ringkas, satu kolom, akun yang dibuka diberi bingkai), detail di kanan. Mengetuk akun lain mengganti detail tanpa menumpuk riwayat Kembali.
+- Membuka akun dari Ringkasan (mis. Perlu perhatian) pindah ke tab Akun; Kembali langsung ke Ringkasan. Pindah tab saat detail terbuka menutup halamannya.
+- Edit akun tidak lagi menutup halaman detail; halaman ikut disegarkan setelah disimpan. Alamat `#/akun/<id>` tetap sama sehingga tautan lama berfungsi.
+
+## v1.1.176 — 23 Okt 2026
+
+### Diubah
+- **Kaca kini sakelar, bukan palet.** Di Profil › Preferensi › Tampilan ada sakelar **Efek kaca** yang bisa dinyalakan di semua palet (Hutan, Laut, Senja, Anggur, Kopi, Grafit) dan di mode Terang maupun Gelap. Latar gradasi, warna kartu translusen, dan warna kartu saldo diambil dari palet yang sedang dipakai.
+- Palet "Kaca" lama dihapus dari daftar palet. Pengguna yang memakainya otomatis dipindah ke palet Senja dengan efek kaca menyala (tampilannya paling mirip).
+- Efek hanya aktif bila browser mendukung `backdrop-filter` dan `color-mix`; kalau tidak, tampilan tetap biasa. Cetak tetap polos putih.
+
+## v1.1.175 — 23 Okt 2026
+
+### Diperbaiki
+- **Palet Kaca: elemen yang saling menimpa.** Kotak persegi di dalam kartu kaca (area Grafik, label warna aksen, kartu status Profil, header HP) menimpa sudut bulat kartu luarnya karena blur bersarang. Sekarang blur hanya di wadah terluar; chip dan tombol kecil hanya translusen; grup grafik Ringkasan jadi satu kartu kaca; kartu status Profil polos; header HP transparan (di desktop tetap translusen karena menempel).
+- Mode Terang: angka Aset dan Utang di kartu saldo kini gelap sehingga terbaca di atas oranye; bilah menu bawah lebih pekat supaya teks di belakangnya tidak tembus.
+
+## v1.1.174 — 23 Okt 2026
+
+### Diubah
+- **Palet Kaca kini punya mode Terang dan Gelap**: sebelumnya selalu gelap. Terang = latar gradasi peach/lavender, kartu putih tembus pandang berblur, teks cokelat tua, aksen oranye tua, tombol utama gelap; Gelap = tampilan sebelumnya. Mengikuti pilihan Mode (Sistem/Terang/Gelap) di Profil. Warna kaca kini dikendalikan variabel `--k-*` (latar, sorot tepi, bayangan, panel, navigasi, tombol, kartu saldo), kontras terang dan gelap dicek di tes.
+- Tes: 366.
+
+## v1.1.173 — 23 Okt 2026
+
+### Ditambahkan
+- **Palet "Kaca" (glassmorphism)** di Profil › Preferensi › Tampilan › Palet: latar gradasi hangat gelap (oranye, mauve), kartu tembus pandang dengan blur, tepi tipis bercahaya, teks terang, aksen hijau muda, tombol utama putih, panel/formulir berkaca. Selalu gelap (mengabaikan mode Terang/Gelap); warna aksen pilihan tetap bisa menimpa. Browser tanpa dukungan `backdrop-filter` otomatis memakai kartu semi-solid; cetak Laporan tetap polos putih.
+- Tes: 366 (+2).
+
 ## v1.1.172 — 23 Okt 2026
 
 ### Diperbaiki

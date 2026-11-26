@@ -1,6 +1,6 @@
 # Arsip Changelog (lengkap)
 
-Riwayat terperinci **v1.1.058 ke bawah** beserta riwayat sebelum penomoran, dipindahkan dari [CHANGELOG.md](CHANGELOG.md) supaya file utama tetap ringkas. Isi tidak diubah dari aslinya. Aman dihapus kalau tidak dibutuhkan; app tidak memuat file ini.
+Riwayat terperinci **v1.1.058 ke bawah** beserta riwayat sebelum penomoran, dipindahkan dari [CHANGELOG.md](../CHANGELOG.md) supaya file utama tetap ringkas. Isi tidak diubah dari aslinya. Aman dihapus kalau tidak dibutuhkan; app tidak memuat file ini.
 
 ## v1.1.058 — 29 Sep 2026
 
@@ -454,7 +454,7 @@ Titik awal penomoran file. Berisi seluruh fitur dari riwayat sebelum penomoran d
 **v1.2**
 - Tambah field **Tanggal** di form "Catat pembayaran" (pinjaman/pinjaman online) dan form "Catat titipan" — sebelumnya keduanya selalu memakai tanggal hari ini tanpa bisa diubah, jadi tidak bisa dipakai untuk mencatat bulan-bulan yang sudah lewat. Sekarang tanggalnya bebas dipilih (maksimal hari ini), dengan validasi supaya tidak bisa diisi tanggal masa depan
 - Pesan konfirmasi kedua form otomatis menampilkan tanggal kalau tanggal yang dipilih bukan hari ini, supaya tidak salah catat
-- Lihat bagian "Mencatat Bulan yang Sudah Lewat" di [README.md](README.md) untuk panduan lengkapnya
+- Lihat bagian "Mencatat Bulan yang Sudah Lewat" di [README.md](../README.md) untuk panduan lengkapnya
 
 **v1.1**
 - Tambah jenis aset **"Forex / trading (akun cent)"** dan **"Kripto / crypto futures"** di dropdown, lengkap dengan hint cara pakai (Jumlah = equity USD/USDT, Harga per satuan = kurs)
